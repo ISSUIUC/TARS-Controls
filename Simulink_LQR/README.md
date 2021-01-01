@@ -11,17 +11,17 @@ The following equations of motion were used to describe the dynamics of the syst
 ## Variables
 The descriptions of the constants, states, inputs and the outputs of the system are shown below. The LQR is setup and the gains are calculated according to the below ordering of variables.
 
-![vars](.../images/Vars.jpg)
+![vars](/images/Vars.jpg)
 
 ## Cost function
 The cost function below is used in the implementation of the LQR system.
 
-![cost](.../images/costf.jpg)
+![cost](../images/costf.jpg)
 
 ## Simulation
 The silumation is done in the Simulink model "LQRsim.slx". The equations of motion above were modeled in a Simulink block called 'Plant'. The input vector u enters the plant and the output y is the result. The output is reordered to make x, multiplied by -K (the LQR gains) to get the input u which is fed back into the Plant. A saturation limit and time delay are also included in the model for realistic results. The scopes are for seeing the results.
 
-![sim](.../images/sim.jpg)
+![sim](./images/sim.jpg)
 
 ## Calculation
 All the variables and calculation of the LQR gains is done in steps in the LQRcalc.m script.
