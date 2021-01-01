@@ -6,7 +6,7 @@ The 4 servos come in two pairs. The first pair are diametrically opposite each o
 ## Equations of Motion
 The following equations of motion were used to describe the dynamics of the system.
 
-![EOM](.../images/EOM.jpg)
+![EOM](SimulinkLQR/images/EOM.jpg)
 
 ## Variables
 The descriptions of the constants, states, inputs and the outputs of the system are shown below. The LQR is setup and the gains are calculated according to the below ordering of variables.
