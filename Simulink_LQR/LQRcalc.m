@@ -17,7 +17,7 @@ rho = 1.225; %Constant density of air
 m = 45.06; %Mass of rocket after burnout, in kg
 I = 0.1552; %Longitudinal moment of inertia, kg m^2
 g = 9.81; %Acceleration due to gravity
-hd = 3300; %Desired final altitude, in m
+hd = 3400; %Desired final altitude, in m
 hi = 872.21; %Altitude at burnout, in m
 
 %Values for cost function weights and LQR.
@@ -31,9 +31,10 @@ k4 = 20;
 Q = [k1 0 0; 0 k2 0; 0 0 k3];
 R = k4*diag([1 1]);
 N = [0 0;0 0;0 0];
-[K,S,e] = lqr(linsys1,Q,R,N)
+[K,S,e] = lqr(linsys1,Q,R,N);
+K = 0.00028*K %Scaling K from the LQR value to get it inside the saturation limits
 
 %Additional features that may be changed for simulation purposes
-servodelay = 0.08; %Delay to emulate delay in implementation
+servodelay = 0.2; %Delay to emulate delay in implementation
 lmax = 0.0508; %Maximum amount a flap can stretch to
 
