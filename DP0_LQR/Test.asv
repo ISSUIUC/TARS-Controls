@@ -2,5 +2,4 @@
 
 init = [0 ; 3 ; 0 ; 3];
 
-DesignProblem00('Controller', 'tStop', 3, 'initial', init, ...
-                'moviefile', 'weee')
+DesignProblem00('Controller', 'tStop', 3, 'initial', init)

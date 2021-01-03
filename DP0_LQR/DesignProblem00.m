@@ -109,9 +109,9 @@ process.processdatatolog = {'t','z','zdot','phi','omega'};
 
 % Constants related to physical properties.
 % - Acceleration of gravity.
-process.g = 0.81;
+process.g = 9.81;
 % - Mass
-process.m = 1.0;
+process.m = 45.06;
 % - Maximum actuation
 process.max_actuation = 1.0;
 % - Coeff of Drag of the flaps 
@@ -123,15 +123,15 @@ process.W = 0.0508;
 % - Coeff of Drag of the rocket 
 process.CD = 0.5;
 % - moment of inertia 
-process.J = 6e-3; 
+process.J = 0.1552; 
 % - density of air 
-process.rho = 1.292; 
+process.rho = 1.225; 
 % - diameter of the rocket 
-process.D = 0.156972;
+process.D = 0.1524;
 % - length of the rocket 
 process.L = 0.4064; 
 % - surface area of the rocket 
-process.Sref = 1.0; 
+process.Sref = pi * process.D^2 / 4; 
 
 % DEFINE VARIABLES
 
@@ -154,7 +154,7 @@ controller = eval(process.controller);
 controller.name = process.controller;
 % Parameters
 % - define a list of constants that will be passed to the controller
-names = {'tStep','g','m','max_actuation'};
+names = {'tStep','g','m','max_actuation','J','CD_f','CL_f','W','CD','rho','D','L','Sref'};
 % - loop to create a structure with only these constants
 controller.parameters = struct;
 for i=1:length(names)

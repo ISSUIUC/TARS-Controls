@@ -33,6 +33,20 @@ end
 
 function [data] = initControlSystem(parameters, data)
 
+% Fetch providied scalar parameters
+g = parameters.g;
+m = parameters.m;
+max_act = parameters.max_actuation;
+J = parameters.J;
+CD_f = parameters.CD_f;
+CL_f = parameters.CL_f;
+W = parameters.W;
+CD = parameters.CD;
+rho = parameters.rho;
+D = parameters.D;
+L = parameters.L;
+Sref = parameters.Sref;
+
 
 
 end
