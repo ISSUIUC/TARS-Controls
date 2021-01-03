@@ -33,6 +33,40 @@ end
 
 function [data] = initControlSystem(parameters, data)
 
+% Fetch providied scalar parameters
+g = parameters.g;
+m = parameters.m;
+max_act = parameters.max_actuation;
+J = parameters.J;
+CD_f = parameters.CD_f;
+CL_f = parameters.CL_f;
+W = parameters.W;
+CD = parameters.CD;
+rho = parameters.rho;
+D = parameters.D;
+L = parameters.L;
+Sref = parameters.Sref;
+
+% Construct EOMs
+
+syms z zdot phi omega l1 l2
+
+w = [z ; zdot ; phi ; omega];
+p = [l1 ; l2];
+
+f_func = [zdot ; ...
+            -((rho*zdot^2)/(2*m))*Sref*CD - (rho*zdot^2*CD_f*W*(l1 + l2))/m - g ; ...
+            omega ; ...
+            (rho*zdot^2*CL_f*D*W*(l1 - l2)) / (2*J) ];
+        
+h_func = [z ; zdot; omega];
+
+% TODO - Find equilibrium using fsolve instead
+state_eqb = [3400 ; 0 ; 0 ; 0];
+output_eqb = [0 ; 0];
+
+A = double(subs(jacobian(f_func, w), [w ; p], [state_eqb ; output_eqb]))
+B = double(subs(jacobian(f_func, p), [w ; p], [state_eqb ; output_eqb]))
 
 
 end
@@ -45,6 +79,6 @@ end
 function [actuators, data] = runControlSystem(sensors, references, parameters, data)
 
 actuators.l1 = 0;
-actuators.l2 = 0;
+actuators.l2 = 1;
 
 end

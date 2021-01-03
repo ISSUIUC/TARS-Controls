@@ -316,7 +316,7 @@ if (isempty(fig))
         'fontsize',fs,'verticalalignment','top','fontweight','bold');
     
     fig.x.axis = axes('position',[0.55,0.6,0.4,0.35],'fontsize',fs);
-    axis([0,process.tStop,-3,3]);
+    axis([0,process.tStop,-5,5000]);
     hold on;
     fig.x.z = plot(nan,nan,'linewidth',2);
     fig.x.zdot = plot(nan,nan,'linewidth',2);
@@ -364,7 +364,7 @@ if (isempty(fig))
     
     [fig.geom.pRobot_in1,fig.geom.fRobot]=GetRobotModel('quadmodel.mat');
     
-    o_1in0 = [0;0;process.z];
+    o_1in0 = [0;0;0];
 %     R_1in0 = eye(3);
     R_1in0 = RZ(process.phi);
     fig.geom.pFrame1_in0 = Transform(o_1in0,R_1in0,fig.geom.pFrame1_in1);
@@ -414,7 +414,7 @@ t = get(fig.u.l2,'xdata');
 x = get(fig.u.l2,'ydata');
 set(fig.u.l2,'xdata',[t process.t],'ydata',[x controller.actuators.l2]);
 
-o_1in0 = [0;0;process.z];
+o_1in0 = [0;0;0];
 % R_1in0 = diag([1 1 1]);
 R_1in0 = RZ(process.phi);
 fig.geom.pFrame1_in0 = Transform(o_1in0,R_1in0,fig.geom.pFrame1_in1);
