@@ -10,7 +10,7 @@ w = 0.0508;% Width of the flap in m, 2 inches
 vi = 279; %Velocity at burnout, in m/s
 CDa = 0.5; %CD of rocket aircframe
 CD_f = 0.6; %CD of flaps
-CL_f = 1.2; %CL of flaps
+CL_f = 0.6; %CL of flaps
 D = 0.1524; %Diameter of rocket in m, 6 inches
 Srefa = pi*D^2/4; %Reference area of the rocket airframe, horizontal crosssection
 rho = 1.225; %Constant density of air
@@ -32,9 +32,9 @@ Q = [k1 0 0; 0 k2 0; 0 0 k3];
 R = k4*diag([1 1]);
 N = [0 0;0 0;0 0];
 [K,S,e] = lqr(linsys1,Q,R,N);
-K = 0.00028*K %Scaling K from the LQR value to get it inside the saturation limits
+K = 0.00013*K %Scaling K from the LQR value to get it inside the saturation limits
 
 %Additional features that may be changed for simulation purposes
 servodelay = 0.2; %Delay to emulate delay in implementation
-lmax = 0.0508; %Maximum amount a flap can stretch to
+lmax = 0.0254; %Maximum amount a flap can stretch to
 
