@@ -1,0 +1,99 @@
+\documentclass[12pt,table]{article}
+\usepackage{sectsty}
+\usepackage[utf8]{inputenc}
+\usepackage[utf8]{inputenc}
+\usepackage{multirow}
+\usepackage{siunitx}
+\sisetup{
+  per-mode=fraction
+}
+\DeclareSIUnit\lbf{\text{lbf}}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{longtable,tabularx}
+\usepackage{times}
+\usepackage[format=hang,font={small,bf}]{caption}
+\usepackage{url}
+\usepackage{float}
+\setlength\topmargin{0pt}
+\addtolength\topmargin{-\headheight}
+\addtolength\topmargin{-\headsep}
+\setlength\oddsidemargin{0pt}
+\setlength\textwidth{\paperwidth}
+\addtolength\textwidth{-2in}
+\setlength\textheight{\paperheight}
+\addtolength\textheight{-2in}
+\usepackage{layout}
+\usepackage[T1]{fontenc}
+\usepackage[framed,numbered]{matlab-prettifier}
+\lstset{
+	style = Matlab-editor,
+	basicstyle=\mlttfamily\small,
+}
+\usepackage{placeins}
+\usepackage{indentfirst}
+\usepackage{setspace}
+\usepackage{array}
+%\usepackage[table,xcdraw]{xcolor}
+\usepackage{booktabs}
+\sectionfont{\fontsize{12}{14}\selectfont}
+\subsectionfont{\fontsize{12}{14}\selectfont}
+\usepackage{gensymb}
+\usepackage{secdot}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% tikz stuff! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{tikz}
+
+\newcommand{\AxisRotatorX}[1][rotate=0]{%
+    \tikz [x=0.15cm,y=0.25cm,line width=.2ex,-stealth,#1] \draw (0,0) arc (-150:150:1 and 1);%
+}
+
+\newcommand{\AxisRotatorY}[1][rotate=0]{%
+    \tikz [x=0.25cm,y=0.15cm,line width=.2ex,-stealth,#1] \draw (0,0) arc (-150:150:1 and 1);%
+}
+
+\newcommand{\AxisRotatorZ}[1][rotate=0]{%
+    \tikz [x=0.20cm,y=0.25cm,line width=.2ex,-stealth,#1] \draw (0,0) arc (-150:150:1 and 1);%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Main Document %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setlength\parindent{0.5in}
+
+\renewcommand{\refname}{\normalsize}
+
+\linespread{1.0}
+% \pagestyle{myheadings}
+
+\begin{document}
+
+
+\begin{titlepage}
+\hspace{0pt}
+\vfill
+\centering\large{\textbf{Illinois Space Society IREC Avionics Team}}
+\par
+\centering\large{\textbf{TARS Control System State-Space Model}}
+\par
+
+\vfill
+
+\centering\textbf{March 6, 2021}
+\thispagestyle{empty}
+\end{titlepage}
+
+
+\setcounter{page}{1}
+
+
+\input{Sections/01_introduction}
+
+\input{Sections/02_preliminaries}
+
+\end{document}
