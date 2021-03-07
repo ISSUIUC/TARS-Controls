@@ -44,7 +44,33 @@ In order to maintain congruency with roll-pitch-yaw conventions commonly employe
   \end{bmatrix}
 \end{equation*}
 
-\qquad
+Euler angle to quaternion conversion:
+
+\begin{equation*}
+  q(\phi, \theta, \psi) =
+  \renewcommand\arraystretch{1.5}
+  \begin{bmatrix}
+  q_0 = \cos(\phi/2)\cos(\theta/2)\cos(\psi/2) + \sin(\phi/2)\sin(\theta/2)\sin(\psi/2) \\
+  q_1 = \sin(\phi/2)\cos(\theta/2)\cos(\psi/2) - \cos(\phi/2)\sin(\theta/2)\sin(\psi/2) \\
+  q_2 = \cos(\phi/2)\sin(\theta/2)\cos(\psi/2) + \sin(\phi/2)\cos(\theta/2)\sin(\psi/2) \\
+  q_3 = \cos(\phi/2)\cos(\theta/2)\sin(\psi/2) - \sin(\phi/2)\sin(\theta/2)\cos(\psi/2) \\
+  \end{bmatrix}
+\end{equation*}
+
+Quaternion to euler angle conversion:
+
+\begin{equation*}
+  \begin{bmatrix}
+  \phi \\ \theta \\ \psi
+  \end{bmatrix}
+  =
+  \renewcommand\arraystretch{1.5}
+  \begin{bmatrix}
+  \arctan(\frac{2(q_0q_1 + q_2q_3)}{1 - 2(q_1^2 + q_2^2)}) \\
+  \arcsin(2(q_0q_2 - q_3q_1)) \\
+  \arctan(\frac{2(q_0q_3 + q_1q_2)}{1 - 2(q_2^2 + q_3^2)}) \\
+  \end{bmatrix}
+\end{equation*}
 
 \begin{equation*}
   \dot{q} = \frac{1}{2} \vec{\omega} \cdot q =
