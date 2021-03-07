@@ -29,6 +29,26 @@ In order to maintain congruency with roll-pitch-yaw conventions commonly employe
 
 \subsection{Tait-Brian Angles (aka Euler Angles)}
 
+\begin{tikzpicture}[x=1cm, y=1cm]
+    % Draw inertial frame
+    \draw [->] (0,0) -- (4.5,0) node [at end, right] {$\boldsymbol{e_x}$};
+    \draw [->] (0,0) -- (0,4.5) node [at end, right] {$\boldsymbol{e_y}$};
+    % Draw rocket and rocket frame axes at 15 degree pitch
+    \begin{scope} [rotate around z=-75]
+      % Draw rocket frame axes x and y
+      \draw [->] (0,0) -- (-4.5,0) node [at end, right] {$\boldsymbol{y}$};
+      \draw [->] (0,0) -- (0,4.5) node [at end, right] {$\boldsymbol{x}$};
+      % Draw Rocket
+      \draw (-0.3,2,0) -- (-0.3,-2,0) -- (0.3,-2,0) -- (0.3,2,0); % rocket body
+      \draw (-0.3,2,0) arc (180:151:2.5); % nosecone left
+      \draw (0.3,2,0) arc (0:29:2.5); % nosecone right
+      \draw (-0.3,-1.2,0) -- (-0.6,-1.4,0) -- (-0.6,-1.8,0) -- (-0.3,-2,0); % Left Fin
+      \draw (0.3,-1.2,0) -- (0.6,-1.4,0) -- (0.6,-1.8,0) -- (0.3,-2,0); % Right Fin
+    \end{scope}
+    % Draw pitch angle arcs and labels
+    \draw (3.7,0) arc (0:15:3.7) node [midway, right] {$\phi=15^{\circ}$};
+    \draw (0,3.7) arc (90:105:3.7) node [midway, above] {$\phi$};
+\end{tikzpicture}
 
 \subsection{Quaternions}
 
