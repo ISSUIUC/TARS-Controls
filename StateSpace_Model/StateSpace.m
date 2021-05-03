@@ -77,15 +77,15 @@ aT_NED = VecRotateQuatInv(aT_BDY, q);
 alpha = atan2(vz, vx);
 beta = atan2(vy, sqrt(vz^2 + vx^2));
 
-% Aerodynmaic forces acting at the location of CP
-F_Aero = [nu_Cx*Cx ; C_Ybeta*beta ; C_Zalpha*alpha] * 0.5*rho*V2*Sref;
+% Aerodynmaic forces acting at the location of CP in BDY frame
+F_Aero_BDY = [nu_Cx*Cx ; C_Ybeta*beta ; C_Zalpha*alpha] * 0.5*rho*V2*Sref;
 
 % Acceleration due to aero forces (performing BDY->NED rotation)
-aA_BDY = (1/m) * F_Aero;
+aA_BDY = (1/m) * F_Aero_BDY;
 aA_NED = VecRotateQuatInv(aA_BDY, q);
 
 % Aerodynamic moment in BDY frame
-M_BDY = cross(dCP * [-1 ; 0 ; 0], F_Aero) + ...
+M_BDY = cross(dCP * [-1 ; 0 ; 0], F_Aero_BDY) + ...
         [ C_l0 + C_lpsi*(psi*lref/(2*V))               ;
           C_malpha*alpha + C_mtheta*(theta*lref/(2*V)) ; 
           C_nbeta*beta + C_nphi*(phi*lref/(2*V))       ] * 0.5*rho*V2*Sref*lref;
@@ -102,7 +102,7 @@ rdot_func = aG_NED + aT_NED + aA_NED;
 % State transition function of orientation quaterion
 q_func = 0.5 * QuatMult(q, [omega ; 0]);
 
-% State transition function of angular velocity vector
+% State transition function of angular velocity vector (BDY frame)
 omega_func = [ (Mx + (Iyy-Izz)*theta*phi)/Ixx ;
                (My + (Izz-Ixx)*phi*theta)/Iyy ;
                (Mz + (Ixx-Iyy)*psi*theta)/Izz ];
@@ -116,10 +116,19 @@ f = [ r_func     ;
       0          ];
 
 %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Linearization
+
+q_eqb = EulToQuat([0 ; pi/2 ; 0]); % Vehicle oriented directly upwards
+
+states = [r ; rdot ; q ; omega ; nu_T ; nu_Cx ; C_l0 ];
+
+A = jacobian(f, states);
+
+%%
 
 function quatOut = EulToQuat(Euler)
-% Convert from a 321 Euler rotation sequence specified in radians to a
-% Quaternion
+% Convert from a 321 Euler rotation sequence specified in radians to a Quaternion
 
 Euler    = Euler * 0.5;
 cosPhi   = cos(Euler(1));
@@ -129,23 +138,24 @@ sinTheta = sin(Euler(2));
 cosPsi   = cos(Euler(3));
 sinPsi   = sin(Euler(3));
 
-quatOut = [ cosPhi*cosTheta*cosPsi + sinPhi*sinTheta*sinPsi ;
-            sinPhi*cosTheta*cosPsi - cosPhi*sinTheta*sinPsi ;
+quatOut = [ sinPhi*cosTheta*cosPsi - cosPhi*sinTheta*sinPsi ;
             cosPhi*sinTheta*cosPsi + sinPhi*cosTheta*sinPsi ;
-            cosPhi*cosTheta*sinPsi - sinPhi*sinTheta*cosPsi ];
+            cosPhi*cosTheta*sinPsi - sinPhi*sinTheta*cosPsi ;
+            cosPhi*cosTheta*cosPsi + sinPhi*sinTheta*sinPsi ];
 
 end
 
-function Euler = QuatToEul(quat)
-% Convert from a quaternion to a 321 Euler rotation sequence in radians
-
-Euler = zeros(3,1);
-
-Euler(1) = atan2(2*(quat(3)*quat(4)+quat(1)*quat(2)),  quat(1)*quat(1) - quat(2)*quat(2) - quat(3)*quat(3) + quat(4)*quat(4));
-Euler(2) = -asin(2*(quat(2)*quat(4)-quat(1)*quat(3)));
-Euler(3) = atan2(2*(quat(2)*quat(3)+quat(1)*quat(4)),  quat(1)*quat(1) + quat(2)*quat(2) - quat(3)*quat(3) - quat(4)*quat(4));
-
-end
+% MUST BE SWITCHED TO [complex, real] QUATERNION NOTATION BEFORE USE
+% function Euler = QuatToEul(quat)
+% % Convert from a quaternion to a 321 Euler rotation sequence in radians
+% 
+% Euler = zeros(3,1);
+% 
+% Euler(1) = atan2(2*(quat(3)*quat(4)+quat(1)*quat(2)),  quat(1)*quat(1) - quat(2)*quat(2) - quat(3)*quat(3) + quat(4)*quat(4));
+% Euler(2) = -asin(2*(quat(2)*quat(4)-quat(1)*quat(3)));
+% Euler(3) = atan2(2*(quat(2)*quat(3)+quat(1)*quat(4)),  quat(1)*quat(1) + quat(2)*quat(2) - quat(3)*quat(3) - quat(4)*quat(4));
+% 
+% end
 
 function quatOut = QuatMult(qA,qB)
 % Perform a quaternion multiplication
