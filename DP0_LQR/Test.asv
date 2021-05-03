@@ -1,0 +1,51 @@
+
+
+init = [0 ; 279 ; 0 ; 10];
+
+DesignProblem00('Controller', 'tStop', 30, 'initial', init)
+
+%% Just for verifying:
+
+W = 0.0508;% Width of the flap in m, 2 inches
+CD = 0.5; %CD of rocket aircframe
+CD_f = 0.6; %CD of flaps
+CL_f = 1.2; %CL of flaps
+D = 0.1524; %Diameter of rocket in m, 6 inches
+Sref = pi*D^2/4; %Reference area of the rocket airframe, horizontal crosssection
+rho = 1.225; %Constant density of air
+m = 45.06; %Mass of rocket after burnout, in kg
+J = 0.1552; %Longitudinal moment of inertia, kg m^2
+g = 9.81; %Acceleration due to gravity
+
+% Construct EOMs
+
+syms z zdot phi omega l1 l2
+
+w = [z ; zdot ; phi ; omega];
+p = [l1 ; l2];
+
+f_func = [zdot ; ...
+            -((rho*zdot^2)/(2*m))*Sref*CD - (rho*zdot^2*CD_f*W*(l1 + l2))/m - g ; ...
+            omega ; ...
+            (rho*zdot^2*CL_f*D*W*(l1 - l2)) / (2*J) ];
+        
+h_func = [z ; zdot; omega];
+
+% TODO - Find equilibrium using fsolve instead
+state_eqb = [3400 ; 279 ; 0 ; 0.1];
+output_eqb = [0.1 ; 0.1];
+
+A = double(subs(jacobian(f_func, w), [w ; p], [state_eqb ; output_eqb]))
+B = double(subs(jacobian(f_func, p), [w ; p], [state_eqb ; output_eqb]))
+C = double(subs(jacobian(h_func, w), [w ; p], [state_eqb ; output_eqb]))
+D = double(subs(jacobian(h_func, p), [w ; p], [state_eqb ; output_eqb]))
+    
+k1 = 10;
+k2 = 1600;
+k3 = 700;
+k4 = 20;
+
+Qc = [k1 0 0 0; 0 k2 0 0; 0 0 0.0001 0; 0 0 0 k3];
+Rc = k4*diag([1 1]);
+N = [0 0;0 0;0 0];
+K = lqr(A,B,Qc,Rc);
