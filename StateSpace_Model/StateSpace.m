@@ -113,17 +113,28 @@ f = [ r_func     ;
       q_func     ;
       omega_func ;
       0          ;
-      0          ];
+      0          ;
+	  0          ];
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Linearization
 
+% Equilibrium states to linearize about
+r_eqb = [0; 0; 0];
+rdot_eqb = [0 ; 0 ; -100];
 q_eqb = EulToQuat([0 ; pi/2 ; 0]); % Vehicle oriented directly upwards
+omega_eqb = [0 ; 0 ; 0];
+nu_T_eqb = 1500.0;
+nu_Cx_eqb = 1.0;
+C_l0_eqb = 1.0;
+
+eqb_states = [r_eqb ; rdot_eqb ; q_eqb ; omega_eqb ; nu_T_eqb ; ...
+              nu_Cx_eqb ; C_l0_eqb];
 
 states = [r ; rdot ; q ; omega ; nu_T ; nu_Cx ; C_l0 ];
 
-A = jacobian(f, states);
+A = subs(jacobian(f, states), states, eqb_states);
 
 %%
 
