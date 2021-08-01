@@ -102,8 +102,8 @@ beta = sym.atan2(vy, sym.sqrt(vz**2 + vx**2))
 
 # Aerodynamic force acting at the location of CP in BDY frame
 force_aero_BDY = sym.Matrix([(nu_Cx*Cx), \
-                         (C_Ybeta*beta), \
-                         (C_Zalpha*alpha)]) * (0.5*rho*V2*Sref)
+                             (C_Ybeta*beta), \
+                             (C_Zalpha*alpha)]) * (0.5*rho*V2*Sref)
 fx, fy, fz = force_aero_BDY[0:3]
 
 # Acceleration due to aero forces (performing BDY->NED rotation)
@@ -113,8 +113,9 @@ accel_aero_NED = VecRotateQuatInv(accel_aero_BDY, q)
 # Aerodynamic moment in BDY frame
 moment_aero_BDY = CP_vect.cross(force_aero_BDY) + \
                   sym.Matrix([ C_l0 + C_lpsi*(psi*lref/(2*V)),               \
-                                C_malpha*alpha + C_mtheta*(theta*lref/(2*V)), \
-                                C_nbeta*beta + C_nphi*(phi*lref/(2*V))        ]) * 0.5*rho*V2*Sref*lref;
+                               C_malpha*alpha + C_mtheta*(theta*lref/(2*V)), \
+                               C_nbeta*beta + C_nphi*(phi*lref/(2*V))        ]) \
+                               * 0.5*rho*V2*Sref*lref;
 mx, my, mz = moment_aero_BDY[0:3]
                                
 ###############################################################################
