@@ -134,24 +134,40 @@ omega_func = sym.Matrix([ (mx + (Iyy-Izz)*theta*phi)/Ixx,
                           (mz + (Ixx-Iyy)*psi*theta)/Izz])
 
 # TOTAL state transition function f:
-'''
 f = sym.Matrix([ r_func     ,
                  rdot_func  ,
                  q_func     ,
                  omega_func ,
-                 0          ,
-                 0          ,
-                 0          ])
-'''
-f = sym.Matrix([ r_func     ,
-                 rdot_func  ,
-                 q_func     ,
-                 omega_func ])
+                 sym.S(0)   ,  # don't know this states transition function yet
+                 sym.S(0)   ,  # don't know this states transition function yet
+                 sym.S(0)   ]) # don't know this states transition function yet
 
 ###############################################################################
 # Linearization
 
+states = [x,y,z,xdot,ydot,zdot,q1,q2,q3,q4,psidot,thetadot,phidot,nu_T,nu_Cx,C_l0]
 
+# Equilibrium states
+x_e, y_e, z_e = 0, 0, 0
+xdot_e, ydot_e, zdot_e = 0, 0, 100
 
+q_eqb = EulToQuat(sym.Matrix([0, sym.pi/2, 0]))
+q1_e = float(q_eqb[0]) 
+q2_e = float(q_eqb[1])
+q3_e = float(q_eqb[2])
+q4_e = float(q_eqb[3])
+
+psidot_e, thetadot_e, phidot_e = 0, 0, 0
+
+nu_T_e = 0.0
+nu_Cx_e = 0.0
+C_l0_e = 0.0
+
+A_lambda = sym.lambdify(states, f.jacobian(states))
+
+A = A_lambda(x_e, y_e, z_e, xdot_e, ydot_e, zdot_e, \
+          q1_e, q2_e, q3_e, q4_e, psidot_e, thetadot_e, phidot_e, nu_T_e, nu_Cx_e, C_l0_e)
+
+print(A)
 
 
