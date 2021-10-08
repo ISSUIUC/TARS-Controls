@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 from scipy import linalg
 from scipy.interpolate import interp1d
 from sympy import Matrix
+import control
+from statistics import mean
+import random
+from scipy import stats
 
 def lqr(A, B, Q, R):
     P = linalg.solve_continuous_are(A, B, Q, R)
@@ -77,6 +81,8 @@ i_eq = [l1_e,l2_e]
 p_eq = [Cd_f,Sref_a,Cd_a,rho,W_f,m,g,Cl_f,Ixx,D]
 
 feq = f(*s_eq,*i_eq,*p_eq)
+# print("XDot At Equilbrium: ")
+# print(feq)
 
 #* Compute A and B
 A_sym = f_sym.jacobian(s)
@@ -106,25 +112,33 @@ for i in range(1,n):
 
 #* LQR Design
 ## Designing a Q matrix 
-Q_diag = np.array([0,0,1]) * 1/100  #h, hdot, omega
+Q_diag = np.array([0,0,100]) #h, hdot, omega
 Q = np.diag(Q_diag)
 
 ## Designing a R matrix
-R_diag =  10000 * np.array([1,1]) #l1, l2
+R_diag =  3 * np.array([1,1]) #l1, l2
 R = np.diag(R_diag)
 
 # K matrix
 K = lqr(A,B,Q,R)
-print(K)
-
-# K = np.array( [[0,0,5],
-#               [0,0,-5]]) * 5/10000
 
 # print(K)
 
-## testing to see if the A - BK has all negative eigenvalues 
+# K = [[0,0,1],
+#      [0,0,1]]
+
+K = np.array([[0,0,0.005],
+              [0,0,-0.005]])
+
+#? Defining a set of negative eigenvalues 
+# p = [0,-1000,0]
+# K = control.place(A,B,p);
+# print(K)
+
+## testing to see if the A - BK has all negative eigenvalues
 F = A - B@K
 eig = np.linalg.eigvals(F)
+print(eig)
 print(eig.real < 0)
 
 #* Sim
@@ -134,8 +148,8 @@ start_vel = ft_to_m(491.29)
 v_t = start_vel
 h_t = start_alt
 a_t = -((rho*(v_t**2)*Sref_a*Cd_a) / (2*m)) - g
-omega_t = -0.5
-alpha_t = -0.1
+omega_t = 0.5
+alpha_t = 0.1
 
 #*** Lists for storing values during simulation
 h_vals = []
@@ -145,6 +159,8 @@ omega_vals = []
 alpha_vals = []
 l1_vals = []
 l2_vals = []
+power1_vals = []
+power2_vals = []
 
 #*** Time setup
 time = np.linspace(0,30,10000,endpoint=False)
@@ -152,26 +168,43 @@ dt = time[1] - time[0]
 
 #*** Define Max and Min values for Flap Actuation
 l_max = ft_to_m(1/12) # 1 inch actuation length
-l_min = 0 # can't have negative actuation, 0 inches is minimum
+l_min = 0 # can't have negative actuation
 
-#* Starting Actuation Length
+#* Define initial flap length at start of coasting
 l1 = 0
 l2 = 0
+
+#* Define a constant torque output from the servo motor 
+T = 2.353596 # newton meter 
+
+#* Define power output from the servo (operating at 0.009 amp and 6 V)
+power1 = 0.009*6 # watt
+power2 = 0.009*6 # watt
+
+#* Generating a random angular velocity as a disturbance (wind)
+omega_rand = random.uniform(-1,1)
 
 for t in time:
 
     #* Recalculate Acceleration at each time-step
     a_t1 = -((rho*(v_t**2)*Sref_a*Cd_a) / (2*m)) - ((rho*(v_t**2)*Cd_f*W_f*(l1 + l2)) / m) - g
 
-    #* Initial Velocity + Change in Velocity due instantaneous acceleration
+    #* Initial Velocity + Change in Velocity due to instantaneous acceleration
     v_t1 = v_t + (a_t * dt) 
 
     #* Initial Height + Change in Height from Velocity, Acceleration
     h_t1 = h_t + (v_t * dt) + (0.5 * (a_t *  (dt** 2))) 
 
+    
     #* Roll Rate Calculation
     alpha_t1 = rho * (v_t**2) * Cl_f * W_f * (D*(l1 - l2) + l1**2 - (l2**2))
+    
     omega_t1 = omega_t + (alpha_t * dt)
+
+    #* Putting this wind disturbance at a randomly generated time t within the specified range "time"
+    for x in np.arange(0,5):
+        if t == random.choice(time):
+            omega_t1 = omega_rand + (alpha_t * dt)
 
     #* Add values to list
     h_vals.append(h_t)
@@ -185,26 +218,64 @@ for t in time:
     #* Control Input Calculation
     x = [[h_t],[v_t],[omega_t]]
     u = -K @ x
-    l1 = u[0][0]
-    l2 = u[1][0]
+    l1_t1 = u[0][0]
+    l2_t1 = u[1][0]
+    
+    
 
     #* Control Input Damping
-    if (l1 > l_max):
-        l1 = l_max
-    elif (l1 < l_min):
-        l1 = l_min
+    if (l1_t1 > l_max):
+        l1_t1 = l_max
+    elif (l1_t1 < l_min):
+        l1_t1 = l_min
 
-    if (l2 > l_max):
-        l2 = l_max
-    elif (l2 < l_min):
-        l2 = l_min
+    if (l2_t1 > l_max):
+        l2_t1 = l_max
+    elif (l2_t1 < l_min):
+        l2_t1 = l_min
+    
+    
+    #* Calculating the flap extension velocity 
+    v_flap1 = abs((l1_t1 - l1)/dt)
+    v_flap2 = abs((l2_t1 - l2)/dt)
 
+   
+    #* Translating to gear velocites m/s (this is very randomo right now)
+    v_g1 = v_flap1*2
+    v_g2 = v_flap2*1.5
+
+    #* We need to check whether this pre-defined torque multiplied by 
+    #* the velocity will exceed tha maximum power limit
+    gear_r = 0.05 # gear redius in meters
+    gear_c = 2*np.pi*gear_r # gear circumference
+
+    #* obtaining revolution per second
+    gear1_rps = v_g1/gear_c; gear2_rps = v_g2/gear_c 
+    
+    #* converting to rpm
+    gear1_rpm = gear1_rps*60; gear2_rpm = gear2_rps*60
+
+    #* Power Calculation 
+    power1_t1 = T*np.pi*gear1_rpm/30
+    power2_t1 = T*np.pi*gear2_rpm/30
+
+    power1_vals.append(power1_t1)
+    power2_vals.append(power2_t1)
+    # print(power2_t1)
+    # if power1_t1 > power1 or power2_t1 > power2:
+    #     print("New Controller")
+    #     break
     #* Update new values
     h_t = h_t1
     v_t = v_t1
     a_t = a_t1
     omega_t = omega_t1
     alpha_t = alpha_t1
+    l1 = l1_t1
+    l2 = l2_t1
+
+
+    
 
     #* End simulation if rocket has hit the ground
     if (h_t <= 0):
@@ -213,7 +284,7 @@ for t in time:
 #* Plots of states and inputs
 fig, axs = plt.subplots(2,2,figsize=(10,5))
 axs[0,0].plot(time[0:len(h_vals)],h_vals,label="Altitude")
-axs[0,0].set_ylabel("Alt + Vert Vel (m, m/s)")
+axs[0,0].set_ylabel("Alt + VV (m, m/s)")
 axs[0,0].plot(time[0:len(h_vals)],v_vals,label="Flap Length",color="orange")
 axs[0,1].yaxis.set_label_position("right")
 axs[0,1].yaxis.tick_right()
@@ -229,3 +300,82 @@ axs[1,1].set_ylabel("Angular Acceleration (rad/s^2)")
 axs[1,0].set(xlabel="Time (seconds)")
 axs[1,1].set(xlabel="Time (seconds)")
 plt.show()
+
+power1_mean = mean(power1_vals)
+power2_mean = mean(power2_vals)
+print(f"Average Power Required for servo 1 = {power1_mean} watts")
+print(f"Average Power Required for servo 2 = {power2_mean} watts")
+if power2_mean > power2 or power1_mean > power1:
+    print("Adjust the controller")
+print(power1_vals)
+# plt.plot(time[0:len(h_vals)],h_vals,label="Altitude")
+# plt.plot(time[0:len(h_vals)],v_vals,label="Vertical Velocity")
+# plt.xlabel("Time (seconds)")
+# plt.ylabel("Altitude (meters)")
+# plt.legend()
+# plt.grid()
+# plt.show()
+
+# plt.plot(time[0:len(h_vals)],omega_vals,label="Roll Rate")
+# plt.xlabel("Time (seconds)")
+# plt.ylabel("Roll Rate (radians/second)")
+# plt.legend()
+# plt.grid()
+# plt.show()
+
+
+
+
+
+
+#State Space Equation for Controller
+#xdot = Ax + Bu, u = -Kx
+#xdot = (A - BK)x
+
+
+### ODE SOLVER
+# from scipy import integrate
+
+# tspan = np.linspace(0,25,num=500)
+# start_alt = ft_to_m(727.65)
+# start_vel = ft_to_m(491.29)
+# xinit = [start_alt,start_vel,0.5] #altitude, velcity at burnout and random omega
+
+# l_max = ft_to_m(1/12)
+
+# def state_space_func(t,x,Amat,Bmat,Kmat,l_max):
+    
+#     u = -Kmat@x
+
+#     print(u)
+
+#     # # #* Input Damping
+#     if (u[0] > l_max):
+#         u[0] = l_max
+#     if (u[1] > l_max):
+#         u[1] = l_max
+
+#     xdot = A@x + B@u
+
+#     return xdot
+
+# sol = integrate.solve_ivp(state_space_func,[tspan[0], tspan[-1]], xinit, t_eval=tspan, rtol = 1e-5,args=(A,B,K,l_max))
+# # sol
+
+# plt.axhline(y=ft_to_m(3000),color='r',linestyle='--')
+# plt.plot(sol.t,sol.y[0],label="altitude") #alt
+# plt.plot(sol.t,sol.y[1],label="vertical velocity") #vertical velocity
+# plt.legend()
+# plt.show()
+# plt.plot(sol.t,sol.y[2],label="roll rate") #roll rate
+# plt.legend()
+# plt.show()
+
+# apogee - 3721.2
+
+# lin about burnout
+# introduce h_apogee as a state, find EOM for it
+# focus on roll control
+
+
+
