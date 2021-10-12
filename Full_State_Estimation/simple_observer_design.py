@@ -1,8 +1,11 @@
 ###############################################################################
-# Illinois Space Society - IREC 2021 Avionics Team
+# Illinois Space Society - SACup Avionics - Controls Team
 #
-# Kalman Filter derivation for full state estimation (now in python!)
-# Created 07/31/2021
+# Simple observer design for full state estimation 
+# Created 10/12/2021
+#
+# This is file derives a simplified state-space model that assumes no thrust or 
+# roll moment along with constant air density throughout the flight. 
 # 
 # Authors:
 # Ayberk Yaraneri
@@ -30,7 +33,7 @@ m = 27.216          # mass
 Ixx, Iyy, Izz = 1.0, 1.0, 0.01    # moments of inertia (random numbers rn) 
 
 # Aerodynamic moment coefficients. Probably can set to 0 to simplify
-C_lpsi, C_malpha, C_mtheta, C_nbeta, C_nphi = 0, 0, 0, 0, 0
+C_l0, C_lpsi, C_malpha, C_mtheta, C_nbeta, C_nphi = 0, 0, 0, 0, 0, 0
 
 ###############################################################################
 # Symoblic Variables 
@@ -48,14 +51,10 @@ phi, theta, psi, phidot, thetadot, psidot, phiddot, thetaddot, psiddot = \
 q1, q2, q3, q4, q1dot, q2dot, q3dot, q4dot = \
     sym.symbols('q1,q2,q3,q4,q1dot,q2dot,q3dot,q4dot', real=True)
 
-# Nominal thrust and thrust scale coefficient
-T, nu_T = sym.symbols('T,nu_T', real=True) 
-
 # Axial aerodynamic force coefficents (Y and Z depend on beta and alpha)
-nu_Cx, Cx, C_Ybeta, C_Zalpha = \
-    sym.symbols('nu_Cx,Cx,C_Ybeta,C_Zalpha', real=True)
+Cx, C_Ybeta, C_Zalpha = \
+    sym.symbols('Cx,C_Ybeta,C_Zalpha', real=True)
 
-C_l0 = sym.symbols('C_l0', real=True) # hmmmm
 
 ###############################################################################
 # Constructing Useful Vectors
@@ -68,7 +67,7 @@ q = sym.Matrix([q1, q2, q3, q4])                # NED-to-BODY conversion quatern
 qdot = sym.Matrix([q1dot, q2dot, q3dot, q4dot]) # Derivative of ^^
 
 omega = sym.Matrix([psidot, thetadot, phidot])          # Instantaneous angular velocity vector
-oemgadot = sym.Matrix([psiddot, thetaddot, phiddot])    # Instantaneous angular acceleration vector
+omegadot = sym.Matrix([psiddot, thetaddot, phiddot])    # Instantaneous angular acceleration vector
 
 CP_vect = sym.Matrix([-dCP, 0, 0])     # BDY frame vector pointing from CG to CP
 
@@ -91,17 +90,12 @@ V2 = V_BDY.dot(V_BDY)
 accel_grav_NED = sym.Matrix([0, 0, 9.81])
 accel_grav_BDY = VecRotateQuat(accel_grav_NED, q)
 
-# Acceleration due to thrust (performing BDY->NED rotation)
-accel_thrust = (nu_T * T / m)
-accel_thrust_BDY = sym.Matrix([accel_thrust, 0, 0])
-accel_thrust_NED = VecRotateQuatInv(accel_thrust_BDY, q)
-
 # Angle of attack alpha and side-slip angle beta
 alpha = sym.atan2(vz, vx);
 beta = sym.atan2(vy, sym.sqrt(vz**2 + vx**2))
 
 # Aerodynamic force acting at the location of CP in BDY frame
-force_aero_BDY = sym.Matrix([(nu_Cx*Cx), \
+force_aero_BDY = sym.Matrix([(Cx), \
                              (C_Ybeta*beta), \
                              (C_Zalpha*alpha)]) * (0.5*rho*V2*Sref)
 fx, fy, fz = force_aero_BDY[0:3]
@@ -123,7 +117,12 @@ mx, my, mz = moment_aero_BDY[0:3]
 
 # State transition function of NED position and NED velocity
 r_func = rdot
-rdot_func = accel_grav_NED + accel_thrust_NED + accel_aero_NED
+rdot_func = accel_grav_NED + accel_aero_NED
+
+# State transition function of NED acceleration
+rddot_func = sym.Matrix([ sym.S(0) ,
+                          sym.S(0) ,
+                          sym.S(0) ])
 
 # State transition function of orientation quaterion
 q_func = 0.5 * QuatMult(q, sym.Matrix([[omega], [0]]))
@@ -136,20 +135,31 @@ omega_func = sym.Matrix([ (mx + (Iyy-Izz)*theta*phi)/Ixx,
 # TOTAL state transition function f:
 f = sym.Matrix([ r_func     ,
                  rdot_func  ,
+                 rddot_func ,
                  q_func     ,
-                 omega_func ,
-                 sym.S(0)   ,  # don't know this states transition function yet
-                 sym.S(0)   ,  # don't know this states transition function yet
-                 sym.S(0)   ]) # don't know this states transition function yet
+                 omega_func ])
+
+
+###############################################################################
+# Constructing Measurement Functions (i.e. the state measurement function h)
+
+h = sym.Matrix([ z       ,
+                 xddot   ,
+                 yddot   ,
+                 zddot   ,
+                 psidot  ,
+                 thetadot,
+                 phidot  ])
 
 ###############################################################################
 # Linearization
 
-states = [x,y,z,xdot,ydot,zdot,q1,q2,q3,q4,psidot,thetadot,phidot,nu_T,nu_Cx,C_l0]
+states = [x,y,z,xdot,ydot,zdot,xddot,yddot,zddot,q1,q2,q3,q4,psidot,thetadot,phidot]
 
 # Equilibrium states
 x_e, y_e, z_e = 0, 0, 0
 xdot_e, ydot_e, zdot_e = 0, 0, 100
+xddot_e, yddot_e, zddot_e = 0, 0, 0
 
 q_eqb = EulToQuat(sym.Matrix([0, sym.pi/2, 0]))
 q1_e = float(q_eqb[0]) 
@@ -159,15 +169,24 @@ q4_e = float(q_eqb[3])
 
 psidot_e, thetadot_e, phidot_e = 0, 0, 0
 
-nu_T_e = 0.0
-nu_Cx_e = 0.0
-C_l0_e = 0.0
-
 A_lambda = sym.lambdify(states, f.jacobian(states))
 
-A = A_lambda(x_e, y_e, z_e, xdot_e, ydot_e, zdot_e, \
-          q1_e, q2_e, q3_e, q4_e, psidot_e, thetadot_e, phidot_e, nu_T_e, nu_Cx_e, C_l0_e)
+C_lambda = sym.lambdify(states, h.jacobian(states))
 
+A = A_lambda(x_e, y_e, z_e, xdot_e, ydot_e, zdot_e, \
+             xddot_e, yddot_e, zddot_e,q1_e, q2_e, q3_e, q4_e, \
+             psidot_e, thetadot_e, phidot_e)
+
+C = C_lambda(x_e, y_e, z_e, xdot_e, ydot_e, zdot_e, \
+             xddot_e, yddot_e, zddot_e,q1_e, q2_e, q3_e, q4_e, \
+             psidot_e, thetadot_e, phidot_e)
+
+print("### A MATRIX: \n")
 print(A)
+
+print("\n\n")
+
+print("### C MATRIX: \n")
+print(C)
 
 
