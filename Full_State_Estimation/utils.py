@@ -10,7 +10,18 @@
 ###############################################################################
 
 import sympy as sym
+from scipy import linalg
 import math
+
+# convert distance from feet to meters
+def ft_to_m(measurement):
+    return (measurement / 3.2808) 
+
+# Optimize a linear quadratic regulator by solving the ricatti equation
+def lqr(A, B, Q, R):
+    P = linalg.solve_continuous_are(A, B, Q, R)
+    K = linalg.inv(R) @  B.T @ P
+    return K
 
 # Perform quaternion mutliplication
 def QuatMult(qA, qB):
