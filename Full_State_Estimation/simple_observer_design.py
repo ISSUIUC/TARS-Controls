@@ -16,11 +16,13 @@ import numpy as np
 import sympy as sym
 import matplotlib.pyplot as plt
 from scipy import linalg
+import control
 
 from utils import *
 
 # Suppress the use of scientific notation when printing small numbers
-np.set_printoptions(suppress=True)
+np.set_printoptions(suppress=True,precision=1,linewidth=150)
+np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
 ###############################################################################
 # Known Physical Constants
@@ -32,8 +34,10 @@ lref = 4.572        # reference length
 m = 27.216          # mass 
 Ixx, Iyy, Izz = 1.0, 1.0, 0.01    # moments of inertia (random numbers rn) 
 
-# Aerodynamic moment coefficients. Probably can set to 0 to simplify
-C_l0, C_lpsi, C_malpha, C_mtheta, C_nbeta, C_nphi = 0, 0, 0, 0, 0, 0
+# Aerodynamic moment coefficients.
+C_l0, C_lpsi, C_malpha, C_mtheta, C_nbeta, C_nphi = 0.1, 0.1, 0.1, 0.1, 0.1, 0.1
+
+Cx, C_Ybeta, C_Zalpha = 0.1, 0.01, 0.01
 
 ###############################################################################
 # Symoblic Variables 
@@ -43,18 +47,13 @@ x, y, z, xdot, ydot, zdot, xddot, yddot, zddot = \
     sym.symbols('x,y,z,xdot,ydot,zdot,xddot,yddot,zddot', real=True)
 
 # Euler angles and derivatives in BODY frame [yaw, pitch, roll]
-phi, theta, psi, phidot, thetadot, psidot, phiddot, thetaddot, psiddot = \
-    sym.symbols('phi,theta,psi,phidot,thetadot,psidot, \
+psi, theta, phi, phidot, thetadot, psidot, phiddot, thetaddot, psiddot = \
+    sym.symbols('psi,theta,phi,phidot,thetadot,psidot, \
                  phiddot,thetaddot,psiddot', real=True)
 
 # NED-to-BODY conversion quaternion components and derivatives                               
 q1, q2, q3, q4, q1dot, q2dot, q3dot, q4dot = \
     sym.symbols('q1,q2,q3,q4,q1dot,q2dot,q3dot,q4dot', real=True)
-
-# Axial aerodynamic force coefficents (Y and Z depend on beta and alpha)
-Cx, C_Ybeta, C_Zalpha = \
-    sym.symbols('Cx,C_Ybeta,C_Zalpha', real=True)
-
 
 ###############################################################################
 # Constructing Useful Vectors
@@ -66,8 +65,14 @@ rddot = sym.Matrix([xddot, yddot, zddot])   # NED frame position 2nd derivative 
 q = sym.Matrix([q1, q2, q3, q4])                # NED-to-BODY conversion quaternion 
 qdot = sym.Matrix([q1dot, q2dot, q3dot, q4dot]) # Derivative of ^^
 
+#euler = QuatToEul(q)
+#psi, theta, phi = euler[0], euler[1], euler[2]
+
+#eulerdot = QuatToEul(qdot)
+#psidot, thetadot, phidot = eulerdot[0], eulerdot[1], eulerdot[2]
+
 omega = sym.Matrix([psidot, thetadot, phidot])          # Instantaneous angular velocity vector
-omegadot = sym.Matrix([psiddot, thetaddot, phiddot])    # Instantaneous angular acceleration vector
+#omegadot = sym.Matrix([psiddot, thetaddot, phiddot])    # Instantaneous angular acceleration vector
 
 CP_vect = sym.Matrix([-dCP, 0, 0])     # BDY frame vector pointing from CG to CP
 
@@ -154,32 +159,37 @@ h = sym.Matrix([ z       ,
 ###############################################################################
 # Linearization
 
-states = [x,y,z,xdot,ydot,zdot,xddot,yddot,zddot,q1,q2,q3,q4,psidot,thetadot,phidot]
+states = \
+    [x,y,z,xdot,ydot,zdot,xddot,yddot,zddot,q1,q2,q3,q4,psidot,thetadot,phidot]
+
+symbolic_variables = \
+    [x,y,z,xdot,ydot,zdot,xddot,yddot,zddot,q1,q2,q3,q4,psi,theta,phi,psidot,thetadot,phidot]
 
 # Equilibrium states
 x_e, y_e, z_e = 0, 0, 0
 xdot_e, ydot_e, zdot_e = 0, 0, 100
 xddot_e, yddot_e, zddot_e = 0, 0, 0
 
-q_eqb = EulToQuat(sym.Matrix([0, sym.pi/2, 0]))
+psi_e, theta_e, phi_e = 0, (sym.pi/2)-0.01, 0
+psidot_e, thetadot_e, phidot_e = 0, 0, 0
+
+q_eqb = EulToQuat(sym.Matrix([psi_e, theta_e, phi_e]))
 q1_e = float(q_eqb[0]) 
 q2_e = float(q_eqb[1])
 q3_e = float(q_eqb[2])
 q4_e = float(q_eqb[3])
 
-psidot_e, thetadot_e, phidot_e = 0, 0, 0
+A_lambda = sym.lambdify(symbolic_variables, f.jacobian(states))
 
-A_lambda = sym.lambdify(states, f.jacobian(states))
-
-C_lambda = sym.lambdify(states, h.jacobian(states))
+C_lambda = sym.lambdify(symbolic_variables, h.jacobian(states))
 
 A = A_lambda(x_e, y_e, z_e, xdot_e, ydot_e, zdot_e, \
              xddot_e, yddot_e, zddot_e,q1_e, q2_e, q3_e, q4_e, \
-             psidot_e, thetadot_e, phidot_e)
+             psi_e, theta_e, phi_e, psidot_e, thetadot_e, phidot_e)
 
 C = C_lambda(x_e, y_e, z_e, xdot_e, ydot_e, zdot_e, \
              xddot_e, yddot_e, zddot_e,q1_e, q2_e, q3_e, q4_e, \
-             psidot_e, thetadot_e, phidot_e)
+             psi_e, theta_e, phi_e, psidot_e, thetadot_e, phidot_e)
 
 print("### A MATRIX: \n")
 print(A)
@@ -188,5 +198,24 @@ print("\n\n")
 
 print("### C MATRIX: \n")
 print(C)
+
+###############################################################################
+# Evaluating Observability 
+
+O = control.obsv(A,C)
+
+print("\n\n")
+print("### OBSERVABILITY MATRIX: \n")
+print(O)
+print("\n")
+
+obsv_rank = np.linalg.matrix_rank(O)
+
+if obsv_rank == A.shape[0]:
+    print("### OBSV MATRIX IS RANK DEFICIENT!")
+    print("det(O) = " + str(obsv_rank))
+else:
+    print("### OBSV MATRIX IS FULL RANK!")
+    print("det(O) = " + str(obsv_rank))
 
 

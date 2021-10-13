@@ -77,6 +77,19 @@ def EulToQuat(Euler):
 
     return quatOut
 
-# TODO
+# TODO: Fix quaternion convention used in this function
+# DO NOT USE - Uses wrong quaternion convention of w,x,y,z. Should be x,y,z,w
 # Convert from a quaternion to a 321 Euler rotation sequence in radians
-# def QuatToEul(q)
+#def QuatToEul(q):
+#
+#    q0,q1,q2,q3 = q[0],q[1],q[2],q[3]
+#
+#    phi = sym.atan2(2*(q0*q1 + q2*q3), 1 - 2*(q1**2 + q2**2))
+#
+#    theta = sym.asin(2*(q0*q2 - q3*q1))
+#
+#    psi = sym.atan2(2*(q0*q3 + q1*q2), 1 - 2*(q2**2 + q3**2))
+#
+#    return sym.Matrix([[psi]   ,
+#                       [theta] ,
+#                       [phi]   ])
