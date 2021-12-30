@@ -3,30 +3,8 @@ import matplotlib.pyplot as plt
 from scipy import linalg
 from sympy import Matrix
 
-#? Function Library 
-
-def ft_to_m(measurement): 
-    return (measurement / 3.2808) 
-
-def density_func(z):
-    #? Defining a few constants 
-    #* temperature under standard condition (15 degrees C at sealevel) kelvin
-    T_0 = 288.16 
-    #* pressure under standard condition in (Pa)
-    P_0 = 101325
-    #* Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
-    b = 0.0065
-    #* gravitational constant 
-    g = 9.81
-    #* air density under standard condition (kg/m3)
-    rho_0 = 1.225 
-    #* ideal gas constant (J/kg K)
-    R = 287.05
-
-    #? returning the density at an altitude Z
-    rho = rho_0*(1 - ((b*z)/T_0))**(g/(R*b))*(T_0/(T_0 - b*z))
-    
-    return rho
+#? import Helper Function Library 
+from helper_library import *
 
 # #* EOMS
 # hdot = u
@@ -80,8 +58,8 @@ rho = 1.225 # kg/m^3 #* Changes depending on altitude
 
 #* Sim
 #*** Initial State at Burnout
-start_alt = ft_to_m(727.65)
-start_vel = ft_to_m(491.29)
+start_alt = conversion.ft_to_m(727.65)
+start_vel = conversion.ft_to_m(491.29)
 v_t = start_vel
 h_t = start_alt
 a_t = -((rho*(v_t**2)*Sref_a*Cd_a) / (2*m)) - g
@@ -116,7 +94,7 @@ time = np.linspace(0,30,10000,endpoint=False)
 dt = time[1] - time[0]
 
 #*** Define Max and Min values for Flap Actuation
-l_max = ft_to_m(1/12) # 1 inch actuation length
+l_max = conversion.ft_to_m(1/12) # 1 inch actuation length
 l_min = 0 # can't have negative actuation
 
 #* Define initial flap length at start of coasting
