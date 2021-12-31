@@ -4,6 +4,10 @@ from scipy import linalg
 from sympy import Matrix
 from matplotlib import pyplot as plt
 from statistics import mean
+from mpl_toolkits import mplot3d
+import matplotlib.pyplot as pyplt
+import matplotlib.patches as mpatches
+import numpy as np 
 
 class density:
     def density_func(z):
@@ -57,3 +61,72 @@ class speed_sound:
         return a_H
 
 
+class plot:
+    # plots a trajectory based on an array of 3d points
+    def plot_3d(points):
+        fig = pyplt.figure()
+        ax = pyplt.axes(projection='3d')
+        z = points[:, 0]
+        x = points[:, 1]
+        y = points[:, 2]
+        ax.scatter(x,y,z, c=[.75,0,0], alpha=1)
+        return
+
+    # plots a trajectory based on an array of 3d points 
+    # color maps the velocity based on a vector of velocity magnitudes
+    def plot_3d_vel(points, velocities):
+        fig = pyplt.figure()
+        ax = pyplt.axes(projection='3d')
+        z = points[:, 0]
+        x = points[:, 1]
+        y = points[:, 2]
+        maxv = np.max(velocities)
+        color = np.zeros((velocities.shape[0], 3))
+        med = np.median(velocities)
+
+        # color points based on velocity
+        for i in range(velocities.shape[0]):
+            color[i, 0] = velocities[i]/maxv
+            color[i, 1] = velocities[i]/maxv/4
+            color[i, 2] = velocities[i]/maxv/4
+        ax.scatter(x,y,z, c=color, alpha=1)
+
+        # create color key
+        max = mpatches.Patch(color=[1,0,0], label=maxv)
+        m1 = mpatches.Patch(color=[.75,0,0])
+        m2 = mpatches.Patch(color=[.5,0,0], label=med)
+        m3 = mpatches.Patch(color=[.25,0,0])
+        min = mpatches.Patch(color=[0,0,0], label= np.min(velocities))
+        ax.legend(handles=[max,m1,m2,m3,min])
+        return
+
+    # plots trajectory with velocity estimated based on a timestep
+    def plot_3d_est(points, timestep):
+        velocities = np.zeros(points.shape[0])
+        velocities[0] = abs(np.linalg.norm(points[1] - points[0]))/timestep
+        for i in range(1, velocities.shape[0]):
+            velocities[i] = abs(np.linalg.norm(points[i] - points[i-1]))/timestep
+        fig = pyplt.figure()
+        ax = pyplt.axes(projection='3d')
+        z = points[:, 0]
+        x = points[:, 1]
+        y = points[:, 2]
+        maxv = np.max(velocities)
+        color = np.zeros((velocities.shape[0], 3))
+        med = np.median(velocities)
+
+        # color points based on velocity
+        for i in range(velocities.shape[0]):
+            color[i, 0] = velocities[i]/maxv
+            color[i, 1] = velocities[i]/maxv/4
+            color[i, 2] = velocities[i]/maxv/4
+        ax.scatter(x,y,z, c=color, alpha=1)
+
+        # create color key
+        max = mpatches.Patch(color=[1,0,0], label=maxv)
+        m1 = mpatches.Patch(color=[.75,0,0])
+        m2 = mpatches.Patch(color=[.5,0,0], label=med)
+        m3 = mpatches.Patch(color=[.25,0,0])
+        min = mpatches.Patch(color=[0,0,0], label= np.min(velocities))
+        ax.legend(handles=[max,m1,m2,m3,min])
+        return
