@@ -129,3 +129,35 @@ class plot:
         min = mpatches.Patch(color=[0,0,0], label= np.min(velocities))
         ax.legend(handles=[max,m1,m2,m3,min])
         return
+
+class inertia:
+    def I_new(m,r_m):
+        #m is added mass (in grams) to nosecone 
+        # r_m is the distance (in cm) from the tip of the nosecone to the CG of added mass (can be estimated) 
+    
+        m = input("dry mass addition(kg):");m = float(m)
+        r_m = input("dry mass location(m):");r_m = float(r_m)
+
+    
+        #constants obtained from open rocket data
+        r_CG_0 = 167.67 #cm #at burnout 
+        m0 = 21221 #g #at burnout
+        Ixx_0 = 0.030245 #kg*m^2
+        Iyy_0 = 15.841 #kg*m^2
+        Izz_0 = 15.841 #kg*m^2
+        
+        #unit conversions
+        r_CG_0 = r_CG_0/100 #converted to m
+        m0 = m0/1000 #converted to kg
+        
+        #fining new center of mass location
+        new_m = m0 + m
+        new_r_CG = (m0*r_CG_0 + m*r_m) / new_m
+        d1 = new_r_CG - r_m #distance between new CG and added mass CG
+        d2 = r_CG_0 - new_r_CG
+        
+        #calculating new moments of inertia around new CG 
+        Ixx_new = Ixx_0
+        Iyy_new = Iyy_0 + m*d1**2 + m0*d2**2
+        Izz_new = Izz_0 + m*d1**2 + m0*d2**2
+        return(Ixx_new,Iyy_new,Izz_new)
