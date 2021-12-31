@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from scipy import linalg
 from sympy import Matrix
 
-def ft_to_m(measurement): 
-    return (measurement / 3.2808) 
+#? import Helper Function Library 
+from helper_library import *
 
 # #* EOMS
 # hdot = u
@@ -58,8 +58,8 @@ rho = 1.225 # kg/m^3 #* Changes depending on altitude
 
 #* Sim
 #*** Initial State at Burnout
-start_alt = ft_to_m(727.65)
-start_vel = ft_to_m(491.29)
+start_alt = conversion.ft_to_m(727.65)
+start_vel = conversion.ft_to_m(491.29)
 v_t = start_vel
 h_t = start_alt
 a_t = -((rho*(v_t**2)*Sref_a*Cd_a) / (2*m)) - g
@@ -94,7 +94,7 @@ time = np.linspace(0,30,10000,endpoint=False)
 dt = time[1] - time[0]
 
 #*** Define Max and Min values for Flap Actuation
-l_max = ft_to_m(1/12) # 1 inch actuation length
+l_max = conversion.ft_to_m(1/12) # 1 inch actuation length
 l_min = 0 # can't have negative actuation
 
 #* Define initial flap length at start of coasting
