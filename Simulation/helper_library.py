@@ -55,3 +55,5 @@ class speed_sound:
         a_H = a_h + da_dh*(altitude - h)
 
         return a_H
+
+
