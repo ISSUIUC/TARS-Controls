@@ -44,7 +44,7 @@ class conversion:
         return (measurement*180/np.pi)
 
 class speed_sound:
-    def speed_sound(altitude):
+    def speed_sound(altitude,a_h,h):
         #* the first 11000 m of flight, the temperature varies linearly with altitude (k/m)
         dt_dh = 6.5e-3 
         #* specific heat ratio of air 
@@ -151,14 +151,47 @@ class inertia:
         r_CG_0 = r_CG_0/100 #converted to m
         m0 = m0/1000 #converted to kg
         
-        #fining new center of mass location
+        #finding new center of mass location
         new_m = m0 + m
         new_r_CG = (m0*r_CG_0 + m*r_m) / new_m
-        d1 = new_r_CG - r_m #distance between new CG and added mass CG
-        d2 = r_CG_0 - new_r_CG
+        d1 = new_r_CG - r_m #distance between new CG and the location where the mass is added
+        d2 = r_CG_0 - new_r_CG #distance between new and old CGs
         
         #calculating new moments of inertia around new CG 
         Ixx_new = Ixx_0
         Iyy_new = Iyy_0 + m*d1**2 + m0*d2**2
+<<<<<<< HEAD
         Izz_new = Izz_0 + m*d1**2 + m0*d2**2
         return(Ixx_new,Iyy_new,Izz_new)
+=======
+        Izz_new = Iyy_new
+        return(Ixx_new,Iyy_new,Izz_new)
+
+class rotation: 
+    
+    def yaw(phe):
+        #* rotation about the z-axis, takes in angle phe in the function (rad)
+        R_y = np.array([[np.cos(phe), -np.sin(phe), 0],[np.sin(phe), np.cos(phe), 0],[0, 0, 1]])
+        return R_y
+
+    def pitch(theta):
+        #* rotation about the y-axis, takes in angle theta in the function (rad)
+        R_p = np.array([[np.cos(theta), 0, np.sin(theta)],[0, 1, 0],[-np.sin(theta), 0, np.cos(theta)]])
+        return R_p
+    
+    def roll(phi):
+        #* rotation about the x-axis, take sin angle phi in the function (rad)
+        R_r = np.array([[1, 0, 0],[0, np.cos(phi), -np.sin(phi)], [0, np.sin(phi), np.cos(phi)]])
+        return R_r
+
+    def body_aero(Vx_b, Vy_b, Vz_b):
+        #* rotation matrix that transforms the body frame to the aerodyanmic frame 
+        #* takes in beta (side-slip angle), and alpha (angles of attack)
+        #* needs the velocities in the body frame to calculate beta and alpha
+        alpha = np.arctan(Vz_b/Vx_b)
+        beta = np.arctan(Vy_b/(np.sqrt(Vx_b**2 + Vz_b**2)))
+        R_ba = np.array([[np.cos(beta)*np.cos(alpha), np.sin(beta), np.cos(beta)*np.sin(alpha)], [-np.sin(beta)*np.cos(alpha), np.cos(beta), 
+        -np.sin(beta)*np.sin(alpha)],[-np.sin(alpha), 0, np.cos(alpha)]])
+        return R_ba
+    
+>>>>>>> d86c849c94168cd7249cfba32d6f47bb204fa558
