@@ -82,6 +82,7 @@ class plot:
         maxv = np.max(velocities)
         color = np.zeros((velocities.shape[0], 3))
         med = np.median(velocities)
+        minv = np.min(velocities)
 
         # color points based on velocity
         for i in range(velocities.shape[0]):
@@ -92,10 +93,10 @@ class plot:
 
         # create color key
         max = mpatches.Patch(color=[1,0,0], label=maxv)
-        m1 = mpatches.Patch(color=[.75,0,0])
-        m2 = mpatches.Patch(color=[.5,0,0], label=med)
-        m3 = mpatches.Patch(color=[.25,0,0])
-        min = mpatches.Patch(color=[0,0,0], label= np.min(velocities))
+        m1 = mpatches.Patch(color=[1 - (.25*(minv/maxv)),0,0])
+        m2 = mpatches.Patch(color=[1 - (.5*(minv/maxv)),0,0], label=med)
+        m3 = mpatches.Patch(color=[1 - (.75*(minv/maxv)),0,0])
+        min = mpatches.Patch(color=[minv/maxv,0,0], label= np.min(velocities))
         ax.legend(handles=[max,m1,m2,m3,min])
         return
 
@@ -113,6 +114,7 @@ class plot:
         maxv = np.max(velocities)
         color = np.zeros((velocities.shape[0], 3))
         med = np.median(velocities)
+        minv = np.min(velocities)
 
         # color points based on velocity
         for i in range(velocities.shape[0]):
@@ -123,10 +125,10 @@ class plot:
 
         # create color key
         max = mpatches.Patch(color=[1,0,0], label=maxv)
-        m1 = mpatches.Patch(color=[.75,0,0])
-        m2 = mpatches.Patch(color=[.5,0,0], label=med)
-        m3 = mpatches.Patch(color=[.25,0,0])
-        min = mpatches.Patch(color=[0,0,0], label= np.min(velocities))
+        m1 = mpatches.Patch(color=[1 - (.25*(minv/maxv)),0,0])
+        m2 = mpatches.Patch(color=[1 - (.5*(minv/maxv)),0,0], label=med)
+        m3 = mpatches.Patch(color=[1 - (.75*(minv/maxv)),0,0])
+        min = mpatches.Patch(color=[minv/maxv,0,0], label= np.min(velocities))
         ax.legend(handles=[max,m1,m2,m3,min])
         return
 
