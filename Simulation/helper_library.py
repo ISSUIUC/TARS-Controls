@@ -135,8 +135,8 @@ class inertia:
         #m is added mass (in grams) to nosecone 
         # r_m is the distance (in cm) from the tip of the nosecone to the CG of added mass (can be estimated) 
     
-        m = input("dry mass addition(kg):");m = float(m)
-        r_m = input("dry mass location(m):");r_m = float(r_m)
+        # m = input("dry mass addition(kg):");m = float(m)
+        # r_m = input("dry mass location(m):");r_m = float(r_m)
 
     
         #constants obtained from open rocket data
@@ -160,7 +160,7 @@ class inertia:
         Ixx_new = Ixx_0
         Iyy_new = Iyy_0 + m*d1**2 + m0*d2**2
         Izz_new = Iyy_new
-        return(Ixx_new,Iyy_new,Izz_new)
+        return(Ixx_new,Iyy_new,Izz_new,new_r_CG)
 
 class rotation: 
     
@@ -183,8 +183,8 @@ class rotation:
         #* rotation matrix that transforms the body frame to the aerodyanmic frame 
         #* takes in beta (side-slip angle), and alpha (angles of attack)
         #* needs the velocities in the body frame to calculate beta and alpha
-        alpha = np.arctan(Vz_b/Vx_b)
-        beta = np.arctan(Vy_b/(np.sqrt(Vx_b**2 + Vz_b**2)))
+        alpha = np.arctan2(Vz_b,Vx_b)
+        beta = np.arctan2(Vy_b,(np.sqrt(Vx_b**2 + Vz_b**2)))
         R_ba = np.array([[np.cos(beta)*np.cos(alpha), np.sin(beta), np.cos(beta)*np.sin(alpha)], [-np.sin(beta)*np.cos(alpha), np.cos(beta), 
         -np.sin(beta)*np.sin(alpha)],[-np.sin(alpha), 0, np.cos(alpha)]])
         return R_ba
