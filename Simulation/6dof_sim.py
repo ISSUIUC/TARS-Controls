@@ -30,10 +30,11 @@ Cd_f = 2*np.pi*np.sin(45) #* From last launch
 # Width of the flaps 
 W_f = 0.0254 # meters #* From last launch
 # Diameter of the rocket 
-D = 0.1524 # meters #* From last launch
+D = 0.102 # meters #* From last launch
 # reference area of the rocket 
 Sref_a = np.pi*(D/2)**2 
-
+# Length of the rocket (nosecone + body tube) (m)
+l_rocket = 3.02
 
 # Density of air 
 rho = 1.225 # kg/m^3 #* Changes depending on altitude
@@ -67,32 +68,40 @@ rho = 1.225 # kg/m^3 #* Changes depending on altitude
 # alpha_t = 0.1
 
 #* NumPy arrays to store current states
+#? Fixed
 current_position = np.array([[],
                            [],
                            []]) # X, Y, Z
-
+#? Fixed
 current_orientation = np.array([[],
                        [],
                        []]) # Yaw, Pitch, Roll
-
+#? Fixed
 current_velocity = np.array([[],
                        [],
                        []]) # Vx, Vy, Vz
-
+#? Fixed
 current_angular_rates = np.array([[],
                        [],
                        []]) # Yaw rate, Pitch rate, Roll rate
+#? Fixed
+current_acceleration =  np.array([[],
+                       [],
+                       []]) # ax, ay, az
+#? Fixed
+current_alpha =  np.array([[],
+                       [],
+                       []]) # change of angular rate w.r.t time
 
 #*** Lists for storing values during simulation
 h_vals = []
 v_vals = []
 a_vals = []
-omega_vals = []
+orientation_vals = []
+ang_vel_vals = []
 alpha_vals = []
-l1_vals = []
-l2_vals = []
-power1_vals = []
-power2_vals = []
+
+
 
 #*** Time setup
 time = np.linspace(0,30,10000,endpoint=False)
@@ -107,7 +116,7 @@ l1 = 0
 l2 = 0
 
 #* Calculate moments of Inertia, center of mass
-Ixx,Iyy,Izz,c_m = inertia.I_new(0,0)
+I,c_m = inertia.I_new(0,0)
 
 for t in time:
     #? 1) convert fixed frame velocity to body frame and then to aerodynamic frame using rotational matrix
@@ -116,14 +125,14 @@ for t in time:
     V_b = R_fb @ current_velocity
     
     #* Rotation from body to aerodynamic frame
-    R_ba = rotation.body_aero(V_b[0][0],V_b[1][0],V_b[2][0])
+    R_ba = rotation.body_aero(V_b)
     V_a = R_ba @ V_b
     
     #? 2) calculate the aerodynamic forces in the aerodynamic frame using the velocities calculated in 1) 
     #?      Take into account the rotation of the rocket (MAKE A FUNCTION FOR IT!!!): Reference area changes when the rocket rotates
     #?      !!!roll, pitch, yaw are defined in the fixed frame!!!
 
-    #?   a) we have T = I * alpha where alpha is the angular rates (change of roll, pitch, yaw w.r.t time)
+    #?   a) we have T = I * alpha where alpha is the angular acceleration (change of rate of roll, pitch, yaw w.r.t time)
     #?   Torque T is calculated from the aerodynamic forces, moment arm is from the center of mass to center of pressure (body frame)
     #?   To do this, convert the moment arm from the body frame to the aerodynamic frame first
     #?   Torque results in a 3x1 matrix in the aerodynamic frame 
@@ -134,71 +143,73 @@ for t in time:
                            [0],
                            [0]]) # Body Frame
     moment_arm_aero = R_ba @ moment_arm
+        
+    #TODO: Double check this function
+
+    Sref_a = sref.sref_body(V_b, D, l_rocket)
     
-    #TODO: Function for Reference Area
-    
-    Sref_a = 1.5 # Not true
-    
-    #TODO: Function for calculating Drag Coefficient based on Reynolds Number
+    #TODO: Function for calculating Drag Coefficient based on Reynolds Number - IN PROGRESS
     
     #* Calculate Forces in Aerodynamic Frame
     F_aero = -((rho*np.square(V_a)*Sref_a*Cd_a)/2) - (rho*np.square(V_a)*Cd_f*W_f*(l1 + l2))
+    #* Calculate Acceleration in Aerodynamic Frame (1X1)
+    a_aero = F_aero/m
     #* Torque from Aerodynamic Forces in the Aerodynamic Frame
     torque_aero = np.cross(moment_arm_aero, F_aero)
     
     #* DONT FORGET GRAVITY
 
     #?    b) Convert this torque to the body frame, now it is a 3x1 matrix where moment of inertia I is a 3x3 matrix (body frame)
-    torque_body = R_ba.T @ torque_aero
-    #?    c) invert I and multiply by the new T in the fixed frame to find a 3x1 matrix for the angular rate alpha, this gives alpha in (body frame)
+
+    torque_body = np.linalg.inv(R_ba) @ torque_aero
+
+    #?    c) invert I and multiply by the new T in the fixed frame to find a 3x1 matrix for the angular acceleration alpha, this gives alpha in (body frame)
     
+    alpha_body = np.linalg.inv(I) @ torque_body
     
-    #?          d) convert alpha (body frame) to fixed frame
+    #?    d) convert alpha (body frame) to fixed frame
 
-    #? 3) calculate the acceleration in the aerodynamic frame, this should be just one value 1x1 matrix 
+    #TODO: Double check this inverse conversion 
+    alpha_fixed = np.linalg.inv(R_fb) @ alpha_body
 
-    #? 4) convert 3) to fixed frame to obtain ax, ay, az and propagate x, y, z (m) values or vx, vy, vz values in fixed frame 
+    #? 3) convert a_aero to fixed frame to obtain ax, ay, az and propagate x, y, z (m) values or vx, vy, vz values in fixed frame 
 
-    #? 5) propagate roll, pitch, yaw angles using 2)b) 
-
-    #* Convert values to the aerodynamic frame and apply forces
+    a_body = np.linalg.inv(R_ba) @ a_aero
+    a_fixed = np.linalg.inv(R_fb) @ a_body - np.array([[0],[0],[g]])
     
-    #* Recalculate values
-    
-    
+    #? 4) propagate roll, pitch, yaw angles using alpha_fixed
 
-    #* Recalculate Acceleration at each time-step
-    a_t1 = -((rho*(v_t**2)*Sref_a*Cd_a) / (2*m)) - ((rho*(v_t**2)*Cd_f*W_f*(l1 + l2)) / m) - g
+    new_angular_rates = current_angular_rates + alpha_fixed*dt
+    new_orientation = current_orientation + current_angular_rates*dt + (0.5 * (alpha_fixed * (dt**2)))
 
-    #* Initial Velocity + Change in Velocity due to instantaneous acceleration
-    v_t1 = v_t + (a_t * dt) 
+    #? 5) propagate vx, vy, vz
 
-    #* Initial Height + Change in Height from Velocity, Acceleration
-    h_t1 = h_t + (v_t * dt) + (0.5 * (a_t *  (dt** 2))) 
-    
-    #* Roll Rate Calculation
-    alpha_t1 = rho * (v_t**2) * Cl_f * W_f * (D*(l1 - l2) + l1**2 - (l2**2))
-    
-    omega_t1 = omega_t + (alpha_t * dt)
+    new_velocity = current_acceleration + current_velocity*dt
 
-    #* Add values to list
-    h_vals.append(h_t)
-    v_vals.append(v_t)
-    a_vals.append(a_t)
-    omega_vals.append(omega_t)
-    alpha_vals.append(alpha_t)
-    l1_vals.append(l1)
-    l2_vals.append(l2)
+    #? 5) propagate x, y, z
+
+    new_position = current_position + (current_velocity * dt) + (0.5 * (current_acceleration * (dt**2)))
+
+    #? 6) Add values to list 
+
+    h_vals.append(new_position)
+    v_vals.append(new_velocity)
+    a_vals.append(a_fixed)
+    ang_vel_vals.append(new_angular_rates)
+    orientation_vals.append(new_orientation)
+    alpha_vals.append(alpha_fixed)
+
    
     #* Update new values
-    h_t = h_t1
-    v_t = v_t1
-    a_t = a_t1
-    omega_t = omega_t1
-    alpha_t = alpha_t1
+    current_velocity = new_velocity
+    current_position = new_position
+    current_acceleration = a_fixed
+    current_angular_rates = new_angular_rates
+    current_alpha = alpha_fixed
+    current_orientation = new_orientation
 
-    #* End simulation if rocket has hit the ground
-    if (h_t <= 0):
+    #* End simulation if rocket reached apogee
+    if (np.sign(new_velocity[0][2]) == -1):
         break
 
 # #* Plots of states and inputs

@@ -147,7 +147,7 @@ class plot:
 
 class inertia:
     def I_new(m,r_m):
-        #m is added mass (in grams) to nosecone 
+        # m is added mass (in grams) to nosecone 
         # r_m is the distance (in cm) from the tip of the nosecone to the CG of added mass (can be estimated) 
     
         # m = input("dry mass addition(kg):");m = float(m)
@@ -228,3 +228,32 @@ class sref:
         sref_b_eff = l_effective*D
 
         return sref_b_eff
+
+class coef: 
+    def viscosity(z):
+
+        miu = []
+        u0 = 1.716e-5 
+        Su = 111
+        T0 = 273
+        for num in T:
+            # converting from Rankine to Kelvin
+            num = num*0.555
+            u = ((num/T0)**(1.5))*((T0 + Su)/(num + Su))*u0
+            miu.append(u)
+        return miu
+
+
+
+    def friction(z, ):
+        #? Function takes in altitude "z", 
+        #? This function calculates the drag on the rocket due to viscous forces 
+        #* This depends on the current Reynolds number and the critical Reynolds number 
+        #* From the open rocket source http://openrocket.sourceforge.net/techdoc.pdf, and source no.4 listed in the
+        #* reference, we find that the critical Reynolds number is arouond 5e5. 
+        #? Import things to incorporate 
+        #? 1) Sutherland's law 
+        #? 2) Reynolds Number Equation 
+        #? 3) Density-altitude function 
+        rho = density.density_func(z)
+
