@@ -161,10 +161,9 @@ class inertia:
         #calculating new moments of inertia around new CG 
         Ixx_new = Ixx_0
         Iyy_new = Iyy_0 + m*d1**2 + m0*d2**2
-        Izz_new = Izz_0 + m*d1**2 + m0*d2**2
-        return(Ixx_new,Iyy_new,Izz_new)
         Izz_new = Iyy_new
-        return(Ixx_new,Iyy_new,Izz_new,new_r_CG)
+        I = np.diag(np.array([Ixx_new,Iyy_new,Izz_new]))
+        return(I,new_r_CG)
 
 class rotation: 
     
