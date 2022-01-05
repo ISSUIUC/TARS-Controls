@@ -65,9 +65,14 @@ class plot:
     def plot_3d(points):
         fig = pyplt.figure()
         ax = pyplt.axes(projection='3d')
-        z = points[:, 0]
-        x = points[:, 1]
-        y = points[:, 2]
+        z = []
+        x = []
+        y = []
+        for i in points:
+            z.append(i[0])
+            x.append(i[1])
+            y.append(i[2])
+        
         ax.scatter(x,y,z, c=[.75,0,0], alpha=1)
         return
 
@@ -76,9 +81,13 @@ class plot:
     def plot_3d_vel(points, velocities):
         fig = pyplt.figure()
         ax = pyplt.axes(projection='3d')
-        z = points[:, 0]
-        x = points[:, 1]
-        y = points[:, 2]
+        z = []
+        x = []
+        y = []
+        for i in points:
+            z.append(i[0])
+            x.append(i[1])
+            y.append(i[2])
         maxv = np.max(velocities)
         color = np.zeros((velocities.shape[0], 3))
         med = np.median(velocities)
@@ -108,9 +117,13 @@ class plot:
             velocities[i] = abs(np.linalg.norm(points[i] - points[i-1]))/timestep
         fig = pyplt.figure()
         ax = pyplt.axes(projection='3d')
-        z = points[:, 0]
-        x = points[:, 1]
-        y = points[:, 2]
+        z = []
+        x = []
+        y = []
+        for i in points:
+            z.append(i[0])
+            x.append(i[1])
+            y.append(i[2])
         maxv = np.max(velocities)
         color = np.zeros((velocities.shape[0], 3))
         med = np.median(velocities)
