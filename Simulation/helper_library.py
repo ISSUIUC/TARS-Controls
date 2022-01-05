@@ -82,6 +82,7 @@ class plot:
         maxv = np.max(velocities)
         color = np.zeros((velocities.shape[0], 3))
         med = np.median(velocities)
+        minv = np.min(velocities)
 
         # color points based on velocity
         for i in range(velocities.shape[0]):
@@ -92,10 +93,10 @@ class plot:
 
         # create color key
         max = mpatches.Patch(color=[1,0,0], label=maxv)
-        m1 = mpatches.Patch(color=[.75,0,0])
-        m2 = mpatches.Patch(color=[.5,0,0], label=med)
-        m3 = mpatches.Patch(color=[.25,0,0])
-        min = mpatches.Patch(color=[0,0,0], label= np.min(velocities))
+        m1 = mpatches.Patch(color=[1 - (.25*(minv/maxv)),0,0])
+        m2 = mpatches.Patch(color=[1 - (.5*(minv/maxv)),0,0], label=med)
+        m3 = mpatches.Patch(color=[1 - (.75*(minv/maxv)),0,0])
+        min = mpatches.Patch(color=[minv/maxv,0,0], label= np.min(velocities))
         ax.legend(handles=[max,m1,m2,m3,min])
         return
 
@@ -113,6 +114,7 @@ class plot:
         maxv = np.max(velocities)
         color = np.zeros((velocities.shape[0], 3))
         med = np.median(velocities)
+        minv = np.min(velocities)
 
         # color points based on velocity
         for i in range(velocities.shape[0]):
@@ -123,10 +125,10 @@ class plot:
 
         # create color key
         max = mpatches.Patch(color=[1,0,0], label=maxv)
-        m1 = mpatches.Patch(color=[.75,0,0])
-        m2 = mpatches.Patch(color=[.5,0,0], label=med)
-        m3 = mpatches.Patch(color=[.25,0,0])
-        min = mpatches.Patch(color=[0,0,0], label= np.min(velocities))
+        m1 = mpatches.Patch(color=[1 - (.25*(minv/maxv)),0,0])
+        m2 = mpatches.Patch(color=[1 - (.5*(minv/maxv)),0,0], label=med)
+        m3 = mpatches.Patch(color=[1 - (.75*(minv/maxv)),0,0])
+        min = mpatches.Patch(color=[minv/maxv,0,0], label= np.min(velocities))
         ax.legend(handles=[max,m1,m2,m3,min])
         return
 
@@ -135,8 +137,8 @@ class inertia:
         #m is added mass (in grams) to nosecone 
         # r_m is the distance (in cm) from the tip of the nosecone to the CG of added mass (can be estimated) 
     
-        m = input("dry mass addition(kg):");m = float(m)
-        r_m = input("dry mass location(m):");r_m = float(r_m)
+        # m = input("dry mass addition(kg):");m = float(m)
+        # r_m = input("dry mass location(m):");r_m = float(r_m)
 
     
         #constants obtained from open rocket data
@@ -162,7 +164,7 @@ class inertia:
         Izz_new = Izz_0 + m*d1**2 + m0*d2**2
         return(Ixx_new,Iyy_new,Izz_new)
         Izz_new = Iyy_new
-        return(Ixx_new,Iyy_new,Izz_new)
+        return(Ixx_new,Iyy_new,Izz_new,new_r_CG)
 
 class rotation: 
     
@@ -190,8 +192,8 @@ class rotation:
         vy_b = velocity_body[0][1]
         vz_b = velocity_body[0][2]
 
-        alpha = np.arctan(vz_b/vx_b)
-        beta = np.arctan(vy_b/(np.sqrt(vx_b**2 + vz_b**2)))
+        alpha = np.arctan2(vz_b,vx_b)
+        beta = np.arctan2(vy_b, np.sqrt(vx_b**2 + vz_b**2))
         R_ba = np.array([[np.cos(beta)*np.cos(alpha), np.sin(beta), np.cos(beta)*np.sin(alpha)], [-np.sin(beta)*np.cos(alpha), np.cos(beta), 
         -np.sin(beta)*np.sin(alpha)],[-np.sin(alpha), 0, np.cos(alpha)]])
         return R_ba
@@ -206,7 +208,7 @@ class sref:
         vy_b = velocity_body[0][1]
         vz_b = velocity_body[0][2]
 
-        beta = np.arctan(vy_b/(np.sqrt(vx_b**2 + vz_b**2)))
+        beta = np.arctan2(vy_b, np.sqrt(vx_b**2 + vz_b**2))
 
         #* the length of the body sees by incoming air 
         l_effective = l*np.cos(beta)
