@@ -106,21 +106,52 @@ l_min = 0 # can't have negative actuation
 l1 = 0
 l2 = 0
 
+#* Calculate moments of Inertia, center of mass
+Ixx,Iyy,Izz,c_m = inertia.I_new(0,0)
+
 for t in time:
     #? 1) convert fixed frame velocity to body frame and then to aerodynamic frame using rotational matrix
-
+    #* Rotation from fixed to body frame, Velocity calculation in the body frame
+    R_fb = rotation.yaw(current_orientation[0][0]) @ rotation.pitch(current_orientation[1][0]) @ rotation.roll(current_orientation[2][0])  
+    V_b = R_fb @ current_velocity
+    
+    #* Rotation from body to aerodynamic frame
+    R_ba = rotation.body_aero(V_b[0][0],V_b[1][0],V_b[2][0])
+    V_a = R_ba @ V_b
+    
     #? 2) calculate the aerodynamic forces in the aerodynamic frame using the velocities calculated in 1) 
     #?      Take into account the rotation of the rocket (MAKE A FUNCTION FOR IT!!!): Reference area changes when the rocket rotates
     #?      !!!roll, pitch, yaw are defined in the fixed frame!!!
 
-    #?          a) we have T = I * alpha where alpha is the angular rates (change of roll, pitch, yaw w.r.t time)
-    #?             Torque T is calculated from the aerodynamic forces, moment arm is from the center of mass to center of pressure (body frame)
-    #?             To do this, convert the moment arm from the body frame to the aerodynamic frame first
-    #?             Torque results in a 3x1 matrix in the aerodynamic frame 
+    #?   a) we have T = I * alpha where alpha is the angular rates (change of roll, pitch, yaw w.r.t time)
+    #?   Torque T is calculated from the aerodynamic forces, moment arm is from the center of mass to center of pressure (body frame)
+    #?   To do this, convert the moment arm from the body frame to the aerodynamic frame first
+    #?   Torque results in a 3x1 matrix in the aerodynamic frame 
+    
+    #* Moment Arm from center of mass to center of pressure
+    c_p =  2.19 #m
+    moment_arm = np.array([[c_m - c_p], 
+                           [0],
+                           [0]]) # Body Frame
+    moment_arm_aero = R_ba @ moment_arm
+    
+    #TODO: Function for Reference Area
+    
+    Sref_a = 1.5 # Not true
+    
+    #TODO: Function for calculating Drag Coefficient based on Reynolds Number
+    
+    #* Calculate Forces in Aerodynamic Frame
+    F_aero = -((rho*np.square(V_a)*Sref_a*Cd_a)/2) - (rho*np.square(V_a)*Cd_f*W_f*(l1 + l2))
+    #* Torque from Aerodynamic Forces in the Aerodynamic Frame
+    torque_aero = np.cross(moment_arm_aero, F_aero)
+    
+    #* DONT FORGET GRAVITY
 
-    #?          b) Convert this torque to the body frame, now it is a 3x1 matrix where moment of inertia I is a 3x3 matrix (body frame)
-
-    #?          c) invert I and multiply by the new T in the fixed frame to find a 3x1 matrix for the angular rate alpha, this gives alpha in (body frame)
+    #?    b) Convert this torque to the body frame, now it is a 3x1 matrix where moment of inertia I is a 3x3 matrix (body frame)
+    torque_body = R_ba.T @ torque_aero
+    #?    c) invert I and multiply by the new T in the fixed frame to find a 3x1 matrix for the angular rate alpha, this gives alpha in (body frame)
+    
     
     #?          d) convert alpha (body frame) to fixed frame
 
@@ -130,9 +161,6 @@ for t in time:
 
     #? 5) propagate roll, pitch, yaw angles using 2)b) 
 
-    #* Convert values to the body frame
-    #* Rotation matrix to go from fixed to body frame
-    R_fb = rotation.yaw(current_orientation[0][0]) @ rotation.pitch(current_orientation[1][0]) @ rotation.roll(current_orientation[2][0])  
     #* Convert values to the aerodynamic frame and apply forces
     
     #* Recalculate values
