@@ -60,7 +60,6 @@ class speed_sound:
 
         return a_H
 
-
 class plot:
     # plots a trajectory based on an array of 3d points
     def plot_3d(points):
@@ -160,10 +159,8 @@ class inertia:
         #calculating new moments of inertia around new CG 
         Ixx_new = Ixx_0
         Iyy_new = Iyy_0 + m*d1**2 + m0*d2**2
-<<<<<<< HEAD
         Izz_new = Izz_0 + m*d1**2 + m0*d2**2
         return(Ixx_new,Iyy_new,Izz_new)
-=======
         Izz_new = Iyy_new
         return(Ixx_new,Iyy_new,Izz_new)
 
@@ -184,14 +181,36 @@ class rotation:
         R_r = np.array([[1, 0, 0],[0, np.cos(phi), -np.sin(phi)], [0, np.sin(phi), np.cos(phi)]])
         return R_r
 
-    def body_aero(Vx_b, Vy_b, Vz_b):
+    def body_aero(velocity_body):
+        #? Takes in np.array velocity_body 
         #* rotation matrix that transforms the body frame to the aerodyanmic frame 
         #* takes in beta (side-slip angle), and alpha (angles of attack)
         #* needs the velocities in the body frame to calculate beta and alpha
-        alpha = np.arctan(Vz_b/Vx_b)
-        beta = np.arctan(Vy_b/(np.sqrt(Vx_b**2 + Vz_b**2)))
+        vx_b = velocity_body[0][0]
+        vy_b = velocity_body[0][1]
+        vz_b = velocity_body[0][2]
+
+        alpha = np.arctan(vz_b/vx_b)
+        beta = np.arctan(vy_b/(np.sqrt(vx_b**2 + vz_b**2)))
         R_ba = np.array([[np.cos(beta)*np.cos(alpha), np.sin(beta), np.cos(beta)*np.sin(alpha)], [-np.sin(beta)*np.cos(alpha), np.cos(beta), 
         -np.sin(beta)*np.sin(alpha)],[-np.sin(alpha), 0, np.cos(alpha)]])
         return R_ba
     
->>>>>>> d86c849c94168cd7249cfba32d6f47bb204fa558
+class sref:
+    def sref_body(velocity_body,l,D):
+        #? Takes in np.array velocity_body, the total length of rocket L, and the diameter of D as inputs 
+        #* This function calculates the aerodynamic area of the rocket body
+        #* Assuming the rocket body is a cylinder 
+        #* This depends mainly on the sideslip angle beta 
+        vx_b = velocity_body[0][0]
+        vy_b = velocity_body[0][1]
+        vz_b = velocity_body[0][2]
+
+        beta = np.arctan(vy_b/(np.sqrt(vx_b**2 + vz_b**2)))
+
+        #* the length of the body sees by incoming air 
+        l_effective = l*np.cos(beta)
+        #* effective aerodynamic area 
+        sref_b_eff = l_effective*D
+
+        return sref_b_eff

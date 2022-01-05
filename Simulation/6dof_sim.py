@@ -113,7 +113,7 @@ for t in time:
     #?      Take into account the rotation of the rocket (MAKE A FUNCTION FOR IT!!!): Reference area changes when the rocket rotates
     #?      !!!roll, pitch, yaw are defined in the fixed frame!!!
 
-    #?          a) we have T = I * alpha where alpha is the angular rates (change of roll, pitch, yaw w.r.t time)
+    #?          a) we have T = I * alpha where alpha is the angular accelerations (change of roll, pitch, yaw w.r.t time)
     #?             Torque T is calculated from the aerodynamic forces, moment arm is from the center of mass to center of pressure (body frame)
     #?             To do this, convert the moment arm from the body frame to the aerodynamic frame first
     #?             Torque results in a 3x1 matrix in the aerodynamic frame 
