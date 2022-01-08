@@ -36,6 +36,7 @@ Sref_a = np.pi*(D/2)**2
 # Length of the rocket (nosecone + body tube) (m)
 l_rocket = 3.02
 
+#TODO: Need to incorporate the density function into the loop while propagating the altitute 
 # Density of air 
 rho = 1.225 # kg/m^3 #* Changes depending on altitude
 

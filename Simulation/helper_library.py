@@ -9,7 +9,7 @@ import matplotlib.pyplot as pyplt
 import matplotlib.patches as mpatches
 import numpy as np 
 
-class density:
+class atmos:
     def density_func(z):
         #? Defining a few constants 
         #* temperature under standard condition (15 degrees C at sealevel) kelvin
@@ -29,6 +29,22 @@ class density:
         rho = rho_0*(1 - ((b*z)/T_0))**(g/(R*b))*(T_0/(T_0 - b*z))
         
         return rho
+
+    def viscosity(z):
+        #? Takes in altitute (m) as input 
+        u0 = 1.716e-5 
+        Su = 111
+        #* Reference temperature for Sutherland's Law
+        T0 = 273.15
+        #* temperature under standard condition (15 degrees C at sealevel) kelvin
+        T_0 = 288.16
+        #* Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
+        b = 0.0065
+        #* Current temperature based on altitute 
+        T  = T_0 - b*z
+        #* Calculates the dynamic viscosity
+        miu = ((T/T0)**(1.5))*((T0 + Su)/(T + Su))*u0
+        return miu
 
 class constants:
     #values from openrocket mk3 file at mach 1
@@ -276,33 +292,38 @@ class sref:
         #* effective aerodynamic area 
         sref_b_eff = l_effective*D
 
-        return sref_b_eff
+        return l_effective, sref_b_eff
 
 class coef: 
-    def viscosity(z):
 
-        miu = []
-        u0 = 1.716e-5 
-        Su = 111
-        T0 = 273
-        for num in T:
-            # converting from Rankine to Kelvin
-            num = num*0.555
-            u = ((num/T0)**(1.5))*((T0 + Su)/(num + Su))*u0
-            miu.append(u)
-        return miu
-
-
-
-    def friction(z, ):
+    def friction(z,l,D,velocity_body):
         #? Function takes in altitude "z", 
         #? This function calculates the drag on the rocket due to viscous forces 
         #* This depends on the current Reynolds number and the critical Reynolds number 
         #* From the open rocket source http://openrocket.sourceforge.net/techdoc.pdf, and source no.4 listed in the
         #* reference, we find that the critical Reynolds number is arouond 5e5. 
         #? Import things to incorporate 
-        #? 1) Sutherland's law 
+        #? 1) Viscosity Function 
         #? 2) Reynolds Number Equation 
         #? 3) Density-altitude function 
-        rho = density.density_func(z)
+
+        rho = atmos.density_func(z)
+        miu = atmos.viscosity(z)
+        L = sref.sref_body(velocity_body,l,D)[0]
+        v_mag = np.linalg.norm(velocity_body)
+        #* Calculating the Reynold's number 
+        Re = rho*v_mag*L/miu
+        #* Critical Reynolds Number 
+        Re_c = 5e5
+        #* Constant B in the equation in the paper: https://scholarcommons.scu.edu/cgi/viewcontent.cgi?article=1080&context=mech_senior
+        B  = Re_c*((0.074/(Re**0.2)) - 1.328/(np.sqrt(Re)))
+        #* Calculating Friction Coefficient 
+        if Re <= Re_c:
+            C_f = 1.328/(np.sqrt(Re))
+        else: 
+            C_f = 0.074/(Re**0.2) - B/Re
+        
+        return C_f
+
+
 
