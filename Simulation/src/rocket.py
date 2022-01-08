@@ -33,6 +33,7 @@ def I_new(m,r_m):
 
 def sref(velocity_body,l,D):
     
+    #TODO: Clean up comments  (atmosphere.py for reference)(atmosphere.py for reference)
     #? Takes in np.array velocity_body, the total length of rocket L, and the diameter of D as inputs 
     #* This function calculates the aerodynamic area of the rocket body
     #* Assuming the rocket body is a cylinder 
@@ -52,7 +53,7 @@ def sref(velocity_body,l,D):
 
 def friction(z,l,D,velocity_body):
     
-    # TODO: Clean up comments
+    # TODO: Clean up comments (atmosphere.py for reference)
     #? Function takes in altitude "z", 
     #? This function calculates the drag on the rocket due to viscous forces 
     #* This depends on the current Reynolds number and the critical Reynolds number 

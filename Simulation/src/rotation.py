@@ -14,7 +14,7 @@ def roll(phi):
     return np.array([[1, 0, 0],[0, np.cos(phi), -np.sin(phi)], [0, np.sin(phi), np.cos(phi)]])
 
 def body_aero(velocity_body):
-    #TODO: Disperse comments to properly explain the lines of code
+    #TODO: Disperse comments to properly explain the lines of code (atmosphere.py for reference)
     # Takes in np.array velocity_body 
     # rotation matrix that transforms the body frame to the aerodyanmic frame 
     # takes in beta (side-slip angle), and alpha (angles of attack)
