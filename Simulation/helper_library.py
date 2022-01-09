@@ -45,6 +45,22 @@ class atmos:
         #* Calculates the dynamic viscosity
         miu = ((T/T0)**(1.5))*((T0 + Su)/(T + Su))*u0
         return miu
+    
+    def speed_sound(altitude,a_h,h):
+        #* the first 11000 m of flight, the temperature varies linearly with altitude (k/m)
+        dt_dh = 6.5e-3 
+        #* specific heat ratio of air 
+        r = 1.4 
+        #* ideal gas constant of air R 
+        R = 287.05
+        #* temperature under standard condition (15 degrees C at sealevel) kelvin
+        T_0 = 288.16 
+        #* first derivative 
+        da_dh = 0.5*dt_dh*np.sqrt(r*R/(T_0 + dt_dh*altitude))
+        #* linearization 
+        a_H = a_h + da_dh*(altitude - h)
+
+        return a_H
 
 class constants:
     #values from openrocket mk3 file at mach 1
@@ -113,24 +129,8 @@ class conversion:
     def rad_to_deg(measurement):
         return (measurement*180/np.pi)
 
-class speed_sound:
-    def speed_sound(altitude,a_h,h):
-        #* the first 11000 m of flight, the temperature varies linearly with altitude (k/m)
-        dt_dh = 6.5e-3 
-        #* specific heat ratio of air 
-        r = 1.4 
-        #* ideal gas constant of air R 
-        R = 287.05
-        #* temperature under standard condition (15 degrees C at sealevel) kelvin
-        T_0 = 288.16 
-        #* first derivative 
-        da_dh = 0.5*dt_dh*np.sqrt(r*R/(T_0 + dt_dh*altitude))
-        #* linearization 
-        a_H = a_h + da_dh*(altitude - h)
-
-        return a_H
-
 class plot:
+    
     # plots a trajectory based on an array of 3d points
     def plot_3d(points):
         fig = pyplt.figure()
