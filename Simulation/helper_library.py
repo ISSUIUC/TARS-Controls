@@ -296,7 +296,7 @@ class sref:
 
 class coef: 
 
-    def friction(z,l,D,velocity_body):
+    def friction_drag(z,l,D,velocity_body):
         #? Function takes in altitude "z", 
         #? This function calculates the drag on the rocket due to viscous forces 
         #* This depends on the current Reynolds number and the critical Reynolds number 
@@ -324,6 +324,15 @@ class coef:
             C_f = 0.074/(Re**0.2) - B/Re
         
         return C_f
+
+    def body_drag(L,L_b,L_n,d_b,d_d):
+        #? L: total length of rocket
+        #? L_b: length of body tube
+        #? L_n: length of nose cone 
+        #? d_b: diameter of body tube 
+        #? d_d: diameter of base of rocket 
+        
+
 
 
 
