@@ -325,13 +325,48 @@ class coef:
         
         return C_f
 
-    def body_drag(L,L_b,L_n,d_b,d_d):
+    def body_drag(L,L_b,L_n,d_b,C_f):
         #? L: total length of rocket
         #? L_b: length of body tube
         #? L_n: length of nose cone 
         #? d_b: diameter of body tube 
         #? d_d: diameter of base of rocket 
         
+        Cd_body = (1 + (60/(L/d_b)**3) + 0.0025*(L_b/d_b))*(2.7*(L_n/d_b) + 4*(L_b/d_b))*C_f
+        return Cd_body
+    
+    def base_drag(d_b, d_d, Cd_body):
+        #? d_b: diameter of body tube 
+        #? d_d: diameter of base of rocket 
+
+        Cd_base = 0.029*(d_b/d_d)**3/(np.sqrt(Cd_body))
+        return Cd_base
+    
+    def fin_drag(T_f, L_m, n, A_fp, C_f, d_f):
+        #? T_f: fin thickness
+        #? L_m: true length of the fin from inner to outer edge 
+        #? n: number of fins 
+        #? A_fp: fin platform area 
+        #? d_f: might be the width/height of the fins 
+        #TODO: Double check this d_f value or find a new simpler equation 
+        
+        Cd_fin = 2*C_f*(1 + (T_f/L_m))*(4*n*A_fp)/(np.pi*d_f**2)
+
+        return Cd_fin
+
+    def interference_drag(T_f, L_m, n, A_fp, C_f, d_f, A_fe):
+        #? T_f: fin thickness
+        #? L_m: true length of the fin from inner to outer edge 
+        #? n: number of fins 
+        #? A_fp: fin platform area 
+        #? d_f: might be the width/height of the fins 
+        #? A_fe: exposed part of teh trapezoidal fin area 
+
+        Cd_interfere = 2*C_f*(1 + (T_f/L_m))*(4*n*(A_fp - A_fe))/(np.pi*d_f**2)
+        
+        return Cd_interfere
+        
+
 
 
 
