@@ -22,7 +22,7 @@ Cl_airframe = 0.063 #* From last launch
 # lift coefficient of the flaps 
 Cl_flap = 2*np.pi*np.sin(45) #*From last launch
 # drag coefficient of the rocket 
-Cd_airframe = 0.70649 
+Cd_airframe = 0.53551
 # drag coefficient of the flaps
 Cd_flap = 2*np.pi*np.sin(45) #* From last launch
 # Width of the flaps 
@@ -71,21 +71,21 @@ rho = 1.225 # kg/m^3 #* Changes depending on altitude
 #* ------------------------------ Simulation Code ----------------------------- #
 
 # NumPy arrays to store current states
-pos_f = np.array([[],
-                  [],
-                  []]) # X, Y, Z
+pos_f = np.array([[constants.x],
+                  [0],
+                  [0]]) # X, Y, Z
 
-or_f = np.array([[],
-                 [],
-                 []]) # Yaw, Pitch, Roll
+or_f = np.array([[0],
+                 [0],
+                 [0]]) # Yaw, Pitch, Roll
 
-vel_f = np.array([[],
-                  [],
-                  []]) # Vx, Vy, Vz
+vel_f = np.array([[constants.vx],
+                  [constants.lateral_velocity],
+                  [0]]) # Vx, Vy, Vz
 
-angvel_f = np.array([[],
-                     [],
-                     []]) # Yaw rate, Pitch rate, Roll rate
+angvel_f = np.array([[np.deg2rad(constants.yaw_rate)],
+                     [np.deg2rad(constants.pitch_rate)],
+                     [np.deg2rad(constants.roll_rate)]]) # Yaw rate, Pitch rate, Roll rate
 
 # Initialize lists to store values at all time steps
 pos_vals = []
@@ -97,6 +97,7 @@ angaccel_vals = []
 
 # Time setup
 time = np.linspace(0,30,10000,endpoint=False)
+# time = np.linspace(0,2,5,endpoint=False)
 dt = time[1] - time[0]
 
 # Define max and min values for flap actuation
@@ -129,20 +130,22 @@ for t in time:
                              [0],
                              [0]]) 
     moment_arm_a = R_ba @ moment_arm_b
-        
+
     #TODO: Double check this function
     # Calculate the reference area of the rocket
-    Sref_a = sref.sref_body(V_b, D, l_rocket)
+    Sref_a = sref.sref_body(V_b, l_rocket, D)[1]
     
     #TODO: Function for calculating Drag Coefficient based on Reynolds Number - IN PROGRESS
     # Calculate Aerodynamic Forces and Acceleration in Aerodynamic Frame
     F_a = -((rho*np.square(V_a)*Sref_a*Cd_airframe)/2) - (rho*np.square(V_a)*Cd_flap*W_flap*(l1 + l2)) 
+    
     accel_a = F_a/m
     
     # Calculate Torque from Aerodynamic Forces in the Aerodynamic Frame and convert to body frame
-    torque_a = np.cross(moment_arm_a, F_a)
+    torque_a = np.cross(moment_arm_a, F_a, axis=0)
     torque_b = np.linalg.inv(R_ba) @ torque_a    
     
+
     #* Translational + Angular Acceleration Calculations
     # Calculate angular acceleration of the rocket in the body and fixed frames
     #TODO: Double check this inverse conversion 
@@ -151,11 +154,13 @@ for t in time:
  
     # Calculate acceleration in the body frame, convert to fixed frame and calculate total acceleration
     accel_b = np.linalg.inv(R_ba) @ accel_a
-    accel_f = np.linalg.inv(R_fb) @ accel_b - np.array([[0],[0],[g]])
+    accel_f = np.linalg.inv(R_fb) @ accel_b - np.array([[g],[0],[0]])
+    
     
     #* End simulation if rocket reached apogee
-    if (np.sign(vel_f[0][2]) == -1):
+    if (np.sign(vel_f[0][0]) == -1):
         break
+    
     
     #* Updating Values
     # # Append Values to the Arrays
@@ -172,6 +177,5 @@ for t in time:
 
     # Calculate new velocities and positions using current values
     pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
-    vel_f = accel_f + vel_f*dt
+    vel_f = vel_f + accel_f*dt
 
-    

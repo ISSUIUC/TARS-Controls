@@ -29,6 +29,15 @@ class atmos:
         rho = rho_0*(1 - ((b*z)/T_0))**(g/(R*b))*(T_0/(T_0 - b*z))
         
         return rho
+    def temp(z):
+        #? Calculates temperature based on altitude 
+        T_0 = 288.16
+        #* Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
+        b = 0.0065
+        #* Current temperature based on altitute 
+        T  = T_0 - b*z
+
+        return T
 
     def viscosity(z):
         #? Takes in altitute (m) as input 
@@ -143,7 +152,10 @@ class plot:
             x.append(i[1])
             y.append(i[2])
         
-        ax.scatter(x,y,z, c=[.75,0,0], alpha=1)
+
+        ax.scatter(x,y,z, c="tab:blue", alpha=1)
+        ax.set_xlim3d(-max(z), max(z)); ax.set_ylim3d(-max(z), max(z));
+
         return
 
     # plots a trajectory based on an array of 3d points 
@@ -266,8 +278,8 @@ class rotation:
         #* takes in beta (side-slip angle), and alpha (angles of attack)
         #* needs the velocities in the body frame to calculate beta and alpha
         vx_b = velocity_body[0][0]
-        vy_b = velocity_body[0][1]
-        vz_b = velocity_body[0][2]
+        vy_b = velocity_body[1][0]
+        vz_b = velocity_body[2][0]
 
         alpha = np.arctan2(vz_b,vx_b)
         beta = np.arctan2(vy_b, np.sqrt(vx_b**2 + vz_b**2))
@@ -282,8 +294,8 @@ class sref:
         #* Assuming the rocket body is a cylinder 
         #* This depends mainly on the sideslip angle beta 
         vx_b = velocity_body[0][0]
-        vy_b = velocity_body[0][1]
-        vz_b = velocity_body[0][2]
+        vy_b = velocity_body[1][0]
+        vz_b = velocity_body[2][0]
 
         beta = np.arctan2(vy_b, np.sqrt(vx_b**2 + vz_b**2))
 
@@ -297,7 +309,7 @@ class sref:
 class coef: 
 
     def friction_drag(z,l,D,velocity_body):
-        #? Function takes in altitude "z", 
+        #? Function takes in altitude "z", total length of the rocket "l", body tube diameter "D", and the body frame velocities 
         #? This function calculates the drag on the rocket due to viscous forces 
         #* This depends on the current Reynolds number and the critical Reynolds number 
         #* From the open rocket source http://openrocket.sourceforge.net/techdoc.pdf, and source no.4 listed in the
@@ -321,18 +333,18 @@ class coef:
         if Re <= Re_c:
             C_f = 1.328/(np.sqrt(Re))
         else: 
-            C_f = 0.074/(Re**0.2) - B/Re
+            C_f = (0.074/(Re**0.2)) - (B/Re)
         
-        return C_f
+        return C_f, Re
 
-    def body_drag(L,L_b,L_n,d_b,C_f):
-        #? L: total length of rocket
+    def body_drag(l,L_b,L_n,d_b,C_f):
+        #? l: total length of rocket
         #? L_b: length of body tube
         #? L_n: length of nose cone 
         #? d_b: diameter of body tube 
         #? d_d: diameter of base of rocket 
         
-        Cd_body = (1 + (60/(L/d_b)**3) + 0.0025*(L_b/d_b))*(2.7*(L_n/d_b) + 4*(L_b/d_b))*C_f
+        Cd_body = (1 + (60/((l/d_b)**3)) + 0.0025*(L_b/d_b))*(2.7*(L_n/d_b) + 4*(L_b/d_b))*C_f
         return Cd_body
     
     def base_drag(d_b, d_d, Cd_body):
