@@ -28,15 +28,38 @@ Cd_flap = 2*np.pi*np.sin(45) #* From last launch
 # Width of the flaps 
 W_flap = 0.0254 # meters #* From last launch
 # Diameter of the rocket 
-D = 0.102 # meters #* From last launch
+D = 0.1056132 # meters #* From last launch
 # reference area of the rocket 
 Sref_a = np.pi*(D/2)**2 
 # Length of the rocket (nosecone + body tube) (m)
 l_rocket = 3.02
-
+# nosecone angle (rad)
+angle = 0.069189
+###! Ignore this if this doesn't work 
+#* Total length of Rocket 
+l = 3.0226
+#* Rocket outer diameter 
+D = 0.1056132
+d_b = D
+d_d = D
+#* Body Tube Length 
+L_b = 2.2352
+#* Nose Cone Length 
+L_n = 0.762
+#* Fin thickness
+T_f = 0.0029972
+#* true length of the fin from inner to outer edge/ root chord 
+L_m = 0.2032
+#* Number of fins 
+n = 3
+#* fin platform area 
+A_fp = 0.011532235
+#* fin height 
+d_f = 0.08255
+###! Ignore if this doesn't work
 #TODO: Need to incorporate the density function into the loop while propagating the altitute 
 # Density of air 
-rho = 1.225 # kg/m^3 #* Changes depending on altitude
+# rho = 1.225 # kg/m^3 #* Changes depending on altitude
 
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
@@ -111,7 +134,7 @@ l2 = 0
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
 I,c_m = inertia.I_new(0,0)
-
+Cd_list = []
 for t in time:
     
     #* Velocity Conversions
@@ -137,7 +160,18 @@ for t in time:
     
     #TODO: Function for calculating Drag Coefficient based on Reynolds Number - IN PROGRESS
     # Calculate Aerodynamic Forces and Acceleration in Aerodynamic Frame
-    F_a = -((rho*np.square(V_a)*Sref_a*Cd_airframe)/2) - (rho*np.square(V_a)*Cd_flap*W_flap*(l1 + l2)) 
+    #? Varying density function imported 
+    rho = atmos.density_func(pos_f[0][0])
+    #? Total drag coefficient of airframe function imported 
+    Cd_total = coef_v2.total_drag_scaled(pos_f[0][0],l_rocket,D,V_b, Sref_a, angle)
+    # Cd_friction = coef_v1.friction_drag(pos_f[0][0], l, D, V_b)[0]
+    # Re = coef_v1.friction_drag(pos_f[0][0], l, D, V_b)[1]
+    # Cd_body = coef_v1.body_drag(l,L_b, L_n, d_b, Cd_friction)
+    # Cd_base = coef_v1.base_drag(d_b, d_d, Cd_body)
+    # Cd_fin = coef_v1.fin_drag(T_f, L_m, n, A_fp, Cd_friction, d_f)
+    # Cd_total = Cd_friction + Cd_body + Cd_base + Cd_fin; 
+    Cd_list.append(Cd_total)
+    F_a = -((rho*np.square(V_a)*Sref_a*Cd_total)/2) - (rho*np.square(V_a)*Cd_flap*W_flap*(l1 + l2)) 
     
     accel_a = F_a/m
     
@@ -179,3 +213,16 @@ for t in time:
     pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
     vel_f = vel_f + accel_f*dt
 
+# plot.plot_3d(pos_vals)
+# plt.show()
+# print(max(pos_vals[-1]))
+time = np.linspace(0,30,len(Cd_list),endpoint=False)
+plt.figure(dpi = 200)
+
+yaw_vals = []
+for x in np.arange(0,len(or_vals)):
+    yaw_vals.append(or_vals[x][1][0])
+plt.plot(time[:-1],yaw_vals)
+plt.ylabel("Yaw"); plt.xlabel("Time")
+plt.show()
+# print(yaw_vals)
