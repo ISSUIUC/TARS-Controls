@@ -20,13 +20,11 @@ def body_aero(velocity_body):
     # takes in beta (side-slip angle), and alpha (angles of attack)
     # needs the velocities in the body frame to calculate beta and alpha
     vx_b = velocity_body[0][0]
-    vy_b = velocity_body[0][1]
-    vz_b = velocity_body[0][2]
-    
+    vy_b = velocity_body[1][0]
+    vz_b = velocity_body[2][0]
+
     alpha = np.arctan2(vz_b,vx_b)
     beta = np.arctan2(vy_b, np.sqrt(vx_b**2 + vz_b**2))
-    
-    R_ba = np.array([[np.cos(beta)*np.cos(alpha), np.sin(beta), np.cos(beta)*np.sin(alpha)], 
-                     [-np.sin(beta)*np.cos(alpha), np.cos(beta), -np.sin(beta)*np.sin(alpha)],
-                     [-np.sin(alpha), 0, np.cos(alpha)]])
+    R_ba = np.array([[np.cos(beta)*np.cos(alpha), np.sin(beta), np.cos(beta)*np.sin(alpha)], [-np.sin(beta)*np.cos(alpha), np.cos(beta), 
+    -np.sin(beta)*np.sin(alpha)],[-np.sin(alpha), 0, np.cos(alpha)]])
     return R_ba
