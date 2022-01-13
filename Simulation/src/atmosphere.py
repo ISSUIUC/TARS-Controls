@@ -44,22 +44,18 @@ def viscosity(z):
     # Return the dynamic viscosity
     return ((T/T0)**(1.5))*((T0 + Su)/(T + Su))*u0
 
-def speed_sound(altitude,a_h,h):
-    
-    # the first 11000 m of flight, the temperature varies linearly with altitude (k/m)
+def speed_sound(altitude):
+    #* the first 11000 m of flight, the temperature varies linearly with altitude (k/m)
     dt_dh = 6.5e-3 
-    
-    # specific heat ratio of air 
+    #* specific heat ratio of air 
     r = 1.4 
-    
-    # ideal gas constant of air R 
+    #* ideal gas constant of air R 
     R = 287.05
-    
-    # temperature under standard condition (15 degrees C at sealevel) kelvin
+    #* temperature under standard condition (15 degrees C at sealevel) kelvin
     T_0 = 288.16 
-    
-    # first derivative 
-    da_dh = 0.5*dt_dh*((r*R/(T_0 + dt_dh*altitude))**0.5)
-    
-    # return linearized speed of sound
-    return a_h + da_dh*(altitude - h)
+    #* Current temperature based on altitute 
+    T = T_0 - dt_dh*altitude
+    #* Calculating speed of sound 
+    a_H = (r*R*T)**0.5
+
+    return a_H
