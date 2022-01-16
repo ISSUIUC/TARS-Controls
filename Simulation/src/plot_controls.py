@@ -87,28 +87,30 @@ def plot_3d_est(points, timestep):
     ax.legend(handles=[max,m1,m2,m3,min])
     
 def plot_accel_time(accel_vals, time_array):
+    
     #Create figure and axes
     fig, axs = plt.subplots(2,sharex=True)
     fig.add_subplot(111,frameon=False)
     plt.tick_params(labelcolor='none', which='both', top=False, bottom=False, left=False, right=False)
     
-    #Lists for storing values
+    #Storing values
     accel_x = []
     accel_y = []
     accel_z = []
-    
     for val in accel_vals:
         accel_x.append(val[0][0])
         accel_y.append(val[1][0])
         accel_z.append(val[2][0])
         
-    axs[0].plot(time_array,accel_x,label="X Velocity")
-    axs[1].plot(time_array,accel_y,label="Y Velocity")
-    axs[1].plot(time_array,accel_z,label="Z Velocity")
+    #Plotting
+    axs[0].plot(time_array,accel_x,label="X Acceleration",color="maroon")
+    axs[1].plot(time_array,accel_y,label="Y Acceleration")
+    axs[1].plot(time_array,accel_z,label="Z Acceleration")
+    axs[0].legend()
     axs[1].legend()
-    plt.ylabel("Velocity (m/s)")
-    # axs[1].x_label("Time (seconds)")
     fig.suptitle("Rocket Acceleration vs Time")
+    plt.ylabel("Acceleration (m/s^2)")
+    plt.xlabel("Time (s)")
     plt.show()
     
     
