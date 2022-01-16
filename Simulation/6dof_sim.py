@@ -14,7 +14,7 @@ import src.rotation as rotation
 #TODO: Debugging
 #Check density predictions line up with OpenRocket/RASAero -> dependant on altitude
 #Check speed of sound predictions line up with OpenRocket/RASAero -> dependant on altitude
-#Check initial acceleration from simulation matches up with OpenRocket/RASAero
+#Check initial acceleration from simulation matches up with OpenRocket/RASAero #! Doesnt look like it
 
 #* Constants
 # Mass of the rocket (dry)
