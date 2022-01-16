@@ -15,6 +15,7 @@ import src.rotation as rotation
 #Check density predictions line up with OpenRocket/RASAero -> dependant on altitude
 #Check speed of sound predictions line up with OpenRocket/RASAero -> dependant on altitude
 #Check initial acceleration from simulation matches up with OpenRocket/RASAero #! Doesnt look like it
+#Do we need different reference areas for drag? Should it be a vector?
 
 #* Constants
 # Mass of the rocket (dry)
