@@ -12,8 +12,6 @@ import src.rocket as rocket
 import src.rotation as rotation
 
 #TODO: Debugging
-#Check density predictions line up with OpenRocket/RASAero -> dependant on altitude
-#Check speed of sound predictions line up with OpenRocket/RASAero -> dependant on altitude
 #Check initial acceleration from simulation matches up with OpenRocket/RASAero #! Doesnt look like it
 #Do we need different reference areas for drag? Should it be a vector?
 
@@ -120,7 +118,7 @@ vel_vals =[]
 angvel_vals = []
 accel_vals = []
 angaccel_vals = []
-
+ref_a_vels = []
 # Time setup
 start_time = 0
 end_time = 30
@@ -145,11 +143,13 @@ for t in time:
     #* Velocity Conversions
     # Rotation from fixed to body frame, Velocity converstion to the body frame
     R_fb = rotation.yaw(or_f[0][0]) @ rotation.pitch(or_f[1][0]) @ rotation.roll(or_f[2][0])  
-    vel_b = R_fb @ vel_f
+    R_bf = np.linalg.inv(R_fb)
+    vel_b = R_bf @ vel_f
     
     # Rotation from body to aerodynamic frame, Velocity in the aerodynamic frame
     R_ba = rotation.body_aero(vel_b)
-    vel_a = R_ba @ vel_b
+    R_ab = np.linalg.inv(R_ba)
+    vel_a = R_ab @ vel_b
     
     #* Force and Torque Calculations
     # Moment Arm from center of mass to center of pressure
@@ -157,7 +157,7 @@ for t in time:
     moment_arm_b = np.array([[c_m - c_p], 
                              [0],
                              [0]]) 
-    moment_arm_a = R_ba @ moment_arm_b
+    moment_arm_a = R_ab @ moment_arm_b
 
     #TODO: Double check this function
     # Calculate the reference area of the rocket
@@ -170,33 +170,31 @@ for t in time:
     
     # Total drag coefficient of airframe function imported 
     Cd_total = rocket.total_drag_scaled(pos_f[0][0],l_rocket,D,vel_b, Sref_a, angle)
-    # Cd_friction = coef_v1.friction_drag(pos_f[0][0], l, D, V_b)[0]
-    # Re = coef_v1.friction_drag(pos_f[0][0], l, D, V_b)[1]
-    # Cd_body = coef_v1.body_drag(l,L_b, L_n, d_b, Cd_friction)
-    # Cd_base = coef_v1.base_drag(d_b, d_d, Cd_body)
-    # Cd_fin = coef_v1.fin_drag(T_f, L_m, n, A_fp, Cd_friction, d_f)
-    # Cd_total = Cd_friction + Cd_body + Cd_base + Cd_fin; 
     Cd_list.append(Cd_total)
+    
     
     # Calculate Aerodynamic Forces and Acceleration in Aerodynamic Frame
     # F_a = -((rho*np.square(V_a)*Sref_a*Cd_total)/2) - (rho*np.square(V_a)*Cd_flap*W_flap*(l1 + l2)) 
-    F_a = -((rho*np.square(vel_a)*Sref_a*Cd_total)/2)      #Using no flaps for now
+    # F_a = -((rho*np.square(vel_a)*Sref_a*Cd_total)/2)      #Using no flaps for now
+    # accel_a = F_a/m
+
+    v_mag = np.linalg.norm(vel_a)
+    F_a = -((rho*(v_mag**2)*Sref_a*Cd_total)/2)*(vel_a/(np.linalg.norm(vel_a)))
     accel_a = F_a/m
-    
+
     # Calculate Torque from Aerodynamic Forces in the Aerodynamic Frame and convert to body frame
     torque_a = np.cross(moment_arm_a, F_a, axis=0)
-    torque_b = np.linalg.inv(R_ba) @ torque_a    
+    torque_b = R_ba @ torque_a    
     
-
     #* Translational + Angular Acceleration Calculations
     # Calculate angular acceleration of the rocket in the body and fixed frames
     #TODO: Double check this inverse conversion 
     angaccel_b = np.linalg.inv(I) @ torque_b
-    angaccel_f = np.linalg.inv(R_fb) @ angaccel_b
+    angaccel_f = R_fb @ angaccel_b
  
     # Calculate acceleration in the body frame, convert to fixed frame and calculate total acceleration
-    accel_b = np.linalg.inv(R_ba) @ accel_a
-    accel_f = np.linalg.inv(R_fb) @ accel_b - np.array([[g],[0],[0]])
+    accel_b = R_ba @ accel_a
+    accel_f = R_fb @ accel_b - np.array([[g],[0],[0]])
     
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f[0][0]) == -1):
@@ -211,6 +209,7 @@ for t in time:
     accel_vals.append(accel_f)
     angaccel_vals.append(angaccel_f)
     Cd_list.append(Cd_total)
+    ref_a_vels.append(Sref_a)
 
     
     # Calculate new angular rates and orientation using current values
@@ -223,39 +222,43 @@ for t in time:
 
 print(max(pos_vals[-1][0]))
 
-# ? 3D Trajectory Plot
-plot.plot_3d(pos_vals)
-plt.show()
-
-# time = np.linspace(0,30,len(pos_vals),endpoint=False)
-# plt.figure(dpi = 200)
-# # plt.ylabel("Altitude"); plt.xlabel("Time")
-# # plt.plot(time,Cd_list)
-# # plt.show()
-
-
-pitch_vals = []
-time = np.linspace(0,30,len(or_vals),endpoint=False)
-for x in np.arange(0,len(or_vals)):
-    pitch_vals.append(or_vals[x][1][0])
-plt.plot(time,pitch_vals)
-plt.ylabel("Pitch"); plt.xlabel("Time")
-plt.show()
-
-#? Coefficient of Drag Plot 
+# plotting reference area of the rocket against time
 plt.figure(dpi = 200)
-time = np.linspace(0,30,len(Cd_list),endpoint=False)
-plt.plot(time, Cd_list)
-plt.xlabel("Time");plt.ylabel("Cd")
+time = np.linspace(0,30,len(ref_a_vels))
+plt.plot(time,ref_a_vels)
+plt.xlabel("Time"); plt.ylabel("Reference area (m^2)")
 plt.show()
 
-# print(Cd_list)
+
+# # # checking the yaw pitch roll values
+# yaw_vals = []
+# pitch_vals = []
+# roll_vals = []
+# time = np.linspace(0,30,len(or_vals),endpoint=False)
+# for x in np.arange(0,len(or_vals)):
+#     pitch_vals.append(or_vals[x][1][0])
+#     yaw_vals.append(or_vals[x][0][0])
+#     roll_vals.append(or_vals[x][2][0])
+
+# plt.plot(time,yaw_vals, label="Yaw"); plt.plot(time,pitch_vals, label="Pitch"); plt.plot(time,roll_vals, label="Roll")
+# plt.ylabel("Rad"); plt.xlabel("Time")
+# plt.legend()
+# plt.show()
+
+# #? Coefficient of Drag Plot 
+# plt.figure(dpi = 200)
+# time = np.linspace(0,30,len(Cd_list),endpoint=False)
+# plt.plot(time, Cd_list)
+# plt.xlabel("Time");plt.ylabel("Cd")
+# plt.show()
+
+
 #Calculate the number of steps simulated before break 
 simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
-plot.plot_3d_est(pos_vals, dt, True)
-# # Plot yaw
+# plot.plot_3d_est(pos_vals, dt, True)
+# # # Plot yaw
 # plt.figure(dpi = 200) 
 # yaw_vals = []
 # accel_vals = []
@@ -268,3 +271,5 @@ plot.plot_3d_est(pos_vals, dt, True)
 # print(yaw_vals)
 # Plot acceleration
 plot.plot_accel_time(accel_vals,time_flight)
+
+
