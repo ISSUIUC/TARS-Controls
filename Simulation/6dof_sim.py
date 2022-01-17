@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
-from sympy import Matrix
+from sympy import Matrix, false
 
 #* Import Helper Function Library 
 import src.atmosphere as atmosphere
@@ -223,8 +223,7 @@ for t in time:
 simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
-# plot.plot_3d(pos_vals)
-
+plot.plot_3d_est(pos_vals, dt, True)
 # # Plot yaw
 # plt.figure(dpi = 200) 
 # yaw_vals = []
@@ -236,6 +235,5 @@ time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 # plt.ylabel("Yaw (radians)"); plt.xlabel("Time (seconds)")
 # plt.show()
 # print(yaw_vals)
-
 # Plot acceleration
 plot.plot_accel_time(accel_vals,time_flight)
