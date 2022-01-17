@@ -111,9 +111,9 @@ class constants:
     #v_0_f = np.array([vx,vy,vz]) # initial velocity in fixed frame
 
     #angular velocity
-    roll_rate = 1.73*10**(-6) #degrees/s #initial roll rate
-    pitch_rate = -0.01335 #degrees/s #initial pitch rate
-    yaw_rate = -0.0013 #degrees/s #initial yaw rate
+    roll_rate = -2.54*10**(-8) # rad/s initial roll rate
+    pitch_rate = 6.55*10**(-5) # rad/s initial pitch rate
+    yaw_rate = -1.69*10**(-5) # rad/s initial yaw rate
     angular_vel_0_f = np.array([roll_rate,pitch_rate,yaw_rate]) #iniital angular velocities in fixed frame
 
     #acceleration
@@ -409,7 +409,7 @@ class coef_v2:
         Re_c = 51*(Rs/l)**(-1.039)
 
         if Re < 10e4:
-            C_f = 1.48*10**(-2)
+            C_f = 1.48*(10**(-2))
         elif Re > 10e4 and Re < Re_c:
             C_f = 1/((1.5*math.log(Re) - 5.6)**2)
         elif Re > Re_c:
@@ -437,8 +437,6 @@ class coef_v2:
         #* A_fp: fin platform area
         A_fp = 0.011532235
         A_wet_fins = 6*A_fp
-        #? A_ref: aerodynamic reference area of the rocket body
-
         #? t: thickness of the fins
         t = 0.0029972
         #? c: mean aerodynamic chord length 
@@ -446,6 +444,7 @@ class coef_v2:
         tip_chord = 0.0762
         taper_ratio = tip_chord/root_chord
         c = root_chord*(2/3)*(1 + taper_ratio + taper_ratio**2)/(1 + taper_ratio)
+        
         Cd_f = C_fc * ((1 + (1/(2*f_b)))*A_wet_body + (1 + 2*t/c)*A_wet_fins)/A_ref
 
         return Cd_f

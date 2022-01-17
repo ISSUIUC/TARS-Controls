@@ -106,9 +106,9 @@ vel_f = np.array([[constants.vx],
                   [constants.lateral_velocity],
                   [0]]) # Vx, Vy, Vz
 
-angvel_f = np.array([[np.deg2rad(constants.yaw_rate)],
-                     [np.deg2rad(constants.pitch_rate)],
-                     [np.deg2rad(constants.roll_rate)]]) # Yaw rate, Pitch rate, Roll rate
+angvel_f = np.array([[constants.yaw_rate],
+                     [constants.pitch_rate],
+                     [constants.roll_rate]]) # Yaw rate, Pitch rate, Roll rate
 
 # Initialize lists to store values at all time steps
 pos_vals = []
@@ -164,13 +164,8 @@ for t in time:
     rho = atmos.density_func(pos_f[0][0])
     #? Total drag coefficient of airframe function imported 
     Cd_total = coef_v2.total_drag_scaled(pos_f[0][0],l_rocket,D,V_b, Sref_a, angle)
-    # Cd_friction = coef_v1.friction_drag(pos_f[0][0], l, D, V_b)[0]
-    # Re = coef_v1.friction_drag(pos_f[0][0], l, D, V_b)[1]
-    # Cd_body = coef_v1.body_drag(l,L_b, L_n, d_b, Cd_friction)
-    # Cd_base = coef_v1.base_drag(d_b, d_d, Cd_body)
-    # Cd_fin = coef_v1.fin_drag(T_f, L_m, n, A_fp, Cd_friction, d_f)
-    # Cd_total = Cd_friction + Cd_body + Cd_base + Cd_fin; 
-    Cd_list.append(Cd_total)
+    # Cd_total = coef_v2.total_drag(pos_f[0][0],l_rocket,D,V_b, Sref_a, angle)
+    
     F_a = -((rho*np.square(V_a)*Sref_a*Cd_total)/2) - (rho*np.square(V_a)*Cd_flap*W_flap*(l1 + l2)) 
     
     accel_a = F_a/m
@@ -204,6 +199,8 @@ for t in time:
     angvel_vals.append(angvel_f)
     accel_vals.append(accel_f)
     angaccel_vals.append(angaccel_f)
+    Cd_list.append(Cd_total)
+
     
     # Calculate new angular rates and orientation using current values
     or_f = or_f + angvel_f*dt + (0.5 * (angaccel_f * (dt**2)))
@@ -213,16 +210,32 @@ for t in time:
     pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
     vel_f = vel_f + accel_f*dt
 
-# plot.plot_3d(pos_vals)
-# plt.show()
-# print(max(pos_vals[-1]))
-time = np.linspace(0,30,len(Cd_list),endpoint=False)
-plt.figure(dpi = 200)
+print(max(pos_vals[-1][0]))
 
-yaw_vals = []
-for x in np.arange(0,len(or_vals)):
-    yaw_vals.append(or_vals[x][1][0])
-plt.plot(time[:-1],yaw_vals)
-plt.ylabel("Yaw"); plt.xlabel("Time")
+# ? 3D Trajectory Plot
+plot.plot_3d(pos_vals)
 plt.show()
-# print(yaw_vals)
+
+# time = np.linspace(0,30,len(pos_vals),endpoint=False)
+# plt.figure(dpi = 200)
+# # plt.ylabel("Altitude"); plt.xlabel("Time")
+# # plt.plot(time,Cd_list)
+# # plt.show()
+
+
+pitch_vals = []
+time = np.linspace(0,30,len(or_vals),endpoint=False)
+for x in np.arange(0,len(or_vals)):
+    pitch_vals.append(or_vals[x][1][0])
+plt.plot(time,pitch_vals)
+plt.ylabel("Pitch"); plt.xlabel("Time")
+plt.show()
+
+#? Coefficient of Drag Plot 
+plt.figure(dpi = 200)
+time = np.linspace(0,30,len(Cd_list),endpoint=False)
+plt.plot(time, Cd_list)
+plt.xlabel("Time");plt.ylabel("Cd")
+plt.show()
+
+# print(Cd_list)
