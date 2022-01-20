@@ -71,7 +71,7 @@ qdot = sym.Matrix([q1dot, q2dot, q3dot, q4dot]) # Derivative of ^^
 #eulerdot = QuatToEul(qdot)
 #psidot, thetadot, phidot = eulerdot[0], eulerdot[1], eulerdot[2]
 
-omega = sym.Matrix([psidot, thetadot, phidot])          # Instantaneous angular velocity vector
+omega = sym.Matrix([phidot, thetadot, psidot])           # Instantaneous angular velocity vector
 #omegadot = sym.Matrix([psiddot, thetaddot, phiddot])    # Instantaneous angular acceleration vector
 
 CP_vect = sym.Matrix([-dCP, 0, 0])     # BDY frame vector pointing from CG to CP
@@ -133,9 +133,9 @@ rddot_func = sym.Matrix([ sym.S(0) ,
 q_func = 0.5 * QuatMult(q, sym.Matrix([[omega], [0]]))
 
 # State transition function of angular velocity vector (BDY frame)
-omega_func = sym.Matrix([ (mx + (Iyy-Izz)*theta*phi)/Ixx,
-                          (my + (Izz-Ixx)*phi*theta)/Iyy,
-                          (mz + (Ixx-Iyy)*psi*theta)/Izz])
+omega_func = sym.Matrix([ (mx + (Iyy-Izz)*thetadot*psidot)/Ixx,
+                          (my + (Izz-Ixx)*psidot*phidot)/Iyy,
+                          (mz + (Ixx-Iyy)*phidot*thetadot)/Izz])
 
 # TOTAL state transition function f:
 f = sym.Matrix([ r_func     ,
@@ -148,32 +148,34 @@ f = sym.Matrix([ r_func     ,
 ###############################################################################
 # Constructing Measurement Functions (i.e. the state measurement function h)
 
-h = sym.Matrix([ z       ,
+h = sym.Matrix([ x       ,
+                 y       ,
+                 z       ,
                  xddot   ,
                  yddot   ,
                  zddot   ,
-                 psidot  ,
+                 phidot  ,
                  thetadot,
-                 phidot  ])
+                 psidot  ])
 
 ###############################################################################
 # Linearization
 
 states = \
-    [x,y,z,xdot,ydot,zdot,xddot,yddot,zddot,q1,q2,q3,q4,psidot,thetadot,phidot]
+    [x,y,z,xdot,ydot,zdot,xddot,yddot,zddot,q1,q2,q3,q4,phidot,thetadot,psidot]
 
 symbolic_variables = \
-    [x,y,z,xdot,ydot,zdot,xddot,yddot,zddot,q1,q2,q3,q4,psi,theta,phi,psidot,thetadot,phidot]
+    [x,y,z,xdot,ydot,zdot,xddot,yddot,zddot,q1,q2,q3,q4,phi,theta,psi,phidot,thetadot,psidot]
 
 # Equilibrium states
 x_e, y_e, z_e = 0, 0, 0
-xdot_e, ydot_e, zdot_e = 0, 0, 100
+xdot_e, ydot_e, zdot_e = 0, 0, -100
 xddot_e, yddot_e, zddot_e = 0, 0, 0
 
-psi_e, theta_e, phi_e = 0, (sym.pi/2)-0.01, 0
-psidot_e, thetadot_e, phidot_e = 0, 0, 0
+phi_e, theta_e, psi_e = 0, (sym.pi/2)-0.01, 0
+phidot_e, thetadot_e, psidot_e = 0, 0, 0
 
-q_eqb = EulToQuat(sym.Matrix([psi_e, theta_e, phi_e]))
+q_eqb = EulToQuat(sym.Matrix([phi_e, theta_e, psi_e]))
 q1_e = float(q_eqb[0]) 
 q2_e = float(q_eqb[1])
 q3_e = float(q_eqb[2])
@@ -185,11 +187,11 @@ C_lambda = sym.lambdify(symbolic_variables, h.jacobian(states))
 
 A = A_lambda(x_e, y_e, z_e, xdot_e, ydot_e, zdot_e, \
              xddot_e, yddot_e, zddot_e,q1_e, q2_e, q3_e, q4_e, \
-             psi_e, theta_e, phi_e, psidot_e, thetadot_e, phidot_e)
+             phi_e, theta_e, psi_e, phidot_e, thetadot_e, psidot_e)
 
 C = C_lambda(x_e, y_e, z_e, xdot_e, ydot_e, zdot_e, \
              xddot_e, yddot_e, zddot_e,q1_e, q2_e, q3_e, q4_e, \
-             psi_e, theta_e, phi_e, psidot_e, thetadot_e, phidot_e)
+             phi_e, theta_e, psi_e, phidot_e, thetadot_e, psidot_e)
 
 print("### A MATRIX: \n")
 print(A)
