@@ -32,17 +32,21 @@ def drag_from_csv(z, velocity_body, pro):
     vz_b = velocity_body[2][0]
     alpha = abs(round(np.rad2deg(np.arctan2(vz_b,vx_b)), 0))
 
-    if alpha <= 15:
-        mach_index_array = np.where(mach_num == mach)[0]; alpha_index_array = np.where(aoa == alpha)[0]
-        mach_set = set(mach_index_array); alpha_set = set(alpha_index_array)
-        intersection = list(mach_set.intersection(alpha_index_array))
+    print(mach,alpha)
 
-        index = intersection[0]
-        
-        return cd[index]
-    else:
-        return 0.5853
 
+    mach_index_array = np.where(mach_num == mach)[0]; alpha_index_array = np.where(aoa == alpha)[0]
+    mach_set = set(mach_index_array); alpha_set = set(alpha_index_array)
+    intersection = list(mach_set.intersection(alpha_index_array))
+
+    if len(intersection) == 0:
+        Cd_list.append(Cd_list[-1])
+        return Cd_list[-1]
+
+    index = intersection[0]
+    Cd_list.append(cd[index])
+    return cd[index]
+ 
 
 #TODO: Debugging
 #Check initial acceleration from simulation matches up with OpenRocket/RASAero #! Doesnt look like it
@@ -123,7 +127,7 @@ or_f = np.array([[0],
                  [0]]) # Yaw, Pitch, Roll
 
 vel_f = np.array([[constants.vx],
-                  [constants.lateral_velocity],
+                  [0],
                   [0]]) # Vx, Vy, Vz
 
 angvel_f = np.array([[constants.yaw_rate],
