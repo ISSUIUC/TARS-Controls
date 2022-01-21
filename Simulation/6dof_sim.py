@@ -1,7 +1,9 @@
+from platform import mac_ver
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
 from sympy import Matrix, false
+import pandas as pd
 
 #* Import Helper Function Library 
 import src.atmosphere as atmosphere
@@ -10,6 +12,37 @@ import src.conversion as conversion
 import src.plot_controls as plot
 import src.rocket as rocket
 import src.rotation as rotation
+
+#* Importing RasAero Packege
+rasaero = pd.read_csv("Simulation/Src/RASAero.csv")
+# extracting the columns of interest 
+mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
+# narrowing down the columns using mach number range (0.02 - 1.01)
+min_index = min(np.where(mach_num == 0.01)[0])
+max_index = min(np.where(mach_num == 1.01)[0])
+# re-make the lists using this range 
+mach_num = mach_num[min_index:max_index:1]; aoa = aoa[min_index:max_index:1]; cd = cd[min_index:max_index:1]; protub = protub[min_index:max_index:1]
+
+# Python function to print common elements in three sorted arrays
+
+def drag_from_csv(z, velocity_body, pro):
+    mach = round(np.linalg.norm(velocity_body) / atmosphere.speed_sound(z),2)
+    vx_b = velocity_body[0][0]
+    vy_b = velocity_body[1][0]
+    vz_b = velocity_body[2][0]
+    alpha = abs(round(np.rad2deg(np.arctan2(vz_b,vx_b)), 0))
+
+    if alpha <= 15:
+        mach_index_array = np.where(mach_num == mach)[0]; alpha_index_array = np.where(aoa == alpha)[0]
+        mach_set = set(mach_index_array); alpha_set = set(alpha_index_array)
+        intersection = list(mach_set.intersection(alpha_index_array))
+
+        index = intersection[0]
+        
+        return cd[index]
+    else:
+        return 0.5853
+
 
 #TODO: Debugging
 #Check initial acceleration from simulation matches up with OpenRocket/RASAero #! Doesnt look like it
@@ -20,21 +53,7 @@ import src.rotation as rotation
 m = 21.22  #kg  
 # acceleration of gravity
 g = 9.81 #m/s^2
-#  lift coefficient of the rocket 
-# Cl_airframe = 0.063 #* From last launch
-# lift coefficient of the flaps 
-# Cl_flap = 2*np.pi*np.sin(45) #*From last launch
-# drag coefficient of the rocket 
-# Cd_airframe = 0.53551
-# drag coefficient of the flaps
-# Cd_flap = 2*np.pi*np.sin(45) #* From last launch
-# Width of the flaps 
-# W_flap = 0.0254 # meters #* From last launch
-# Diameter of the rocket 
-# D = 0.1056132 # meters #* From last launch
-# reference area of the rocket 
-# Sref_a = np.pi*(D/2)**2 
-# Length of the rocket (nosecone + body tube) (m)
+# length of rocket 
 l_rocket = 3.02
 
 # nosecone angle (rad)
@@ -119,6 +138,7 @@ angvel_vals = []
 accel_vals = []
 angaccel_vals = []
 ref_a_vels = []
+
 # Time setup
 start_time = 0
 end_time = 30
@@ -169,15 +189,15 @@ for t in time:
     rho = atmosphere.density(pos_f[0][0])
     
     # Total drag coefficient of airframe function imported 
-    Cd_total = rocket.total_drag_scaled(pos_f[0][0],l_rocket,D,vel_b, Sref_a, angle)
+    # Cd_total = rocket.total_drag_scaled(pos_f[0][0],l_rocket,D,vel_b, Sref_a, angle)
+    Cd_total = drag_from_csv(pos_f[0][0],vel_b,0)
+    # inter = drag_from_csv(pos_f[0][0],vel_b,0)
+    
+    # print(inter)
+    # print(mach,alpha, pro)
     Cd_list.append(Cd_total)
     
-    
-    # Calculate Aerodynamic Forces and Acceleration in Aerodynamic Frame
-    # F_a = -((rho*np.square(V_a)*Sref_a*Cd_total)/2) - (rho*np.square(V_a)*Cd_flap*W_flap*(l1 + l2)) 
-    # F_a = -((rho*np.square(vel_a)*Sref_a*Cd_total)/2)      #Using no flaps for now
-    # accel_a = F_a/m
-
+    # calculating the sum of aerodynamic forces on the rocket body
     v_mag = np.linalg.norm(vel_a)
     F_a = -((rho*(v_mag**2)*Sref_a*Cd_total)/2)*(vel_a/(np.linalg.norm(vel_a)))
     accel_a = F_a/m
@@ -211,6 +231,7 @@ for t in time:
     Cd_list.append(Cd_total)
     ref_a_vels.append(Sref_a)
 
+
     
     # Calculate new angular rates and orientation using current values
     or_f = or_f + angvel_f*dt + (0.5 * (angaccel_f * (dt**2)))
@@ -223,39 +244,46 @@ for t in time:
 print(max(pos_vals[-1][0]))
 
 # plotting reference area of the rocket against time
-plt.figure(dpi = 200)
-time = np.linspace(0,30,len(ref_a_vels))
-plt.plot(time,ref_a_vels)
-plt.xlabel("Time"); plt.ylabel("Reference area (m^2)")
-plt.show()
+# plt.figure(dpi = 200)
+# time = np.linspace(0,30,len(ref_a_vels))
+# plt.plot(time,ref_a_vels)
+# plt.xlabel("Time"); plt.ylabel("Reference area (m^2)")
+# plt.show()
 
 
 # # # checking the yaw pitch roll values
-# yaw_vals = []
-# pitch_vals = []
-# roll_vals = []
-# time = np.linspace(0,30,len(or_vals),endpoint=False)
-# for x in np.arange(0,len(or_vals)):
-#     pitch_vals.append(or_vals[x][1][0])
-#     yaw_vals.append(or_vals[x][0][0])
-#     roll_vals.append(or_vals[x][2][0])
+yaw_vals = []
+pitch_vals = []
+roll_vals = []
+pitch_rate = []
+yaw_rate = []
+roll_rate = []
+time = np.linspace(0,30,len(or_vals),endpoint=False)
+for x in np.arange(0,len(angvel_vals)):
+    pitch_vals.append(or_vals[x][1][0])
+    yaw_vals.append(or_vals[x][0][0])
+    roll_vals.append(or_vals[x][2][0])
+    yaw_rate.append(angvel_vals[x][0][0])
+    pitch_rate.append(angvel_vals[x][1][0])
+    roll_rate.append(angvel_vals[x][2][0])
 
-# plt.plot(time,yaw_vals, label="Yaw"); plt.plot(time,pitch_vals, label="Pitch"); plt.plot(time,roll_vals, label="Roll")
-# plt.ylabel("Rad"); plt.xlabel("Time")
-# plt.legend()
-# plt.show()
+
+plt.plot(time,yaw_vals, label="Yaw Rate"); plt.plot(time,pitch_vals, label="Pitch Rate"); #plt.plot(time,roll_vals, label="Roll Rate")
+plt.ylabel("Rad/s"); plt.xlabel("Time")
+plt.legend()
+plt.show()
 
 # #? Coefficient of Drag Plot 
-# plt.figure(dpi = 200)
-# time = np.linspace(0,30,len(Cd_list),endpoint=False)
-# plt.plot(time, Cd_list)
-# plt.xlabel("Time");plt.ylabel("Cd")
-# plt.show()
+plt.figure(dpi = 200)
+time = np.linspace(0,30,len(Cd_list),endpoint=False)
+plt.plot(time, Cd_list)
+plt.xlabel("Time");plt.ylabel("CD")
+plt.show()
 
 
 #Calculate the number of steps simulated before break 
-simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
-time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
+# simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
+# time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 # plot.plot_3d_est(pos_vals, dt, True)
 # # # Plot yaw
@@ -270,6 +298,6 @@ time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 # plt.show()
 # print(yaw_vals)
 # Plot acceleration
-plot.plot_accel_time(accel_vals,time_flight)
+# plot.plot_accel_time(accel_vals,time_flight)
 
 
