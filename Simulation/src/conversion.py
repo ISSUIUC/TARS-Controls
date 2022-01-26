@@ -12,3 +12,6 @@ def deg_to_rad(measurement):
 
 def rad_to_deg(measurement):
     return (measurement*180/pi)
+
+def m_to_ft(measurement):
+    return (measurement * 3.28084)

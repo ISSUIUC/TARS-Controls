@@ -14,7 +14,13 @@ import src.plot_controls as plot
 import src.rocket as rocket
 import src.rotation as rotation
 
-#* Importing RasAero Packege
+#TODO: Turn storage arraysinto a dictionary
+#TODO: Plotting Functions
+    # Alpha, Beta, Sref, Yaw, Pitch, Roll
+#TODO: Move csv drag function into src library
+#TODO: Remove Constants from main file while double checking values and make sure everything still works
+
+#* Importing RasAero Package
 rasaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 # extracting the columns of interest 
 mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
@@ -23,8 +29,6 @@ min_index = min(np.where(mach_num == 0.01)[0])
 max_index = min(np.where(mach_num == 1.01)[0])
 # re-make the lists using this range 
 mach_num = mach_num[min_index:max_index:1]; aoa = aoa[min_index:max_index:1]; cd = cd[min_index:max_index:1]; protub = protub[min_index:max_index:1]
-
-# Python function to print common elements in three sorted arrays
 
 def drag_from_csv(z, velocity_body):
     mach = round(np.linalg.norm(velocity_body) / atmosphere.speed_sound(z),2)
@@ -42,11 +46,6 @@ def drag_from_csv(z, velocity_body):
 
     index = intersection[0]
     return cd[index]
- 
-
-#TODO: Debugging
-#Check initial acceleration from simulation matches up with OpenRocket/RASAero #! Doesnt look like it
-#Do we need different reference areas for drag? Should it be a vector?
 
 #* Constants
 # Mass of the rocket (dry)
@@ -169,7 +168,6 @@ for t in time:
     R_ba = rotation.body_aero(vel_b)
     R_ab = np.linalg.inv(R_ba)
     vel_a = R_ab @ vel_b
-    
 
     #* Force and Torque Calculations
     # Moment Arm from center of mass to center of pressure
@@ -179,26 +177,19 @@ for t in time:
                              [0]]) 
     moment_arm_a = R_ab @ moment_arm_b
 
-    #TODO: Double check this function
     # Calculate the reference area of the rocket
-    Sref_a = rocket.sref(vel_b, l_rocket, D)[0]
-    beta = rocket.sref(vel_b, l_rocket, D)[1]
-
-    # print(beta)
-    #TODO: Function for calculating Drag Coefficient based on Reynolds Number - IN PROGRESS
+    Sref_a, beta = rocket.sref(vel_b, l_rocket, D)
     
     # Varying density function imported 
     rho = atmosphere.density(pos_f[0][0])
     
     # Total drag coefficient of airframe function imported 
-    # Cd_total = rocket.total_drag_scaled(pos_f[0][0],l_rocket,D,vel_b, Sref_a, angle)
-    Cd_total = drag_from_csv(pos_f[0][0],vel_b,0)
-    # inter = drag_from_csv(pos_f[0][0],vel_b,0)
+    Cd_total = drag_from_csv(pos_f[0][0],vel_b)
     
     # calculating the sum of aerodynamic forces on the rocket body
     v_mag = np.linalg.norm(vel_a)
 
-    F_a = -((rho*(v_mag**2)*Sref_a*Cd_total)/2)*(vel_a/(np.linalg.norm(vel_a)))
+    F_a = -((rho* (v_mag**2) * Sref_a * Cd_total) / 2) * (vel_a/v_mag)
     accel_a = F_a/m
 
     # Calculate Torque from Aerodynamic Forces in the Aerodynamic Frame and convert to body frame
@@ -207,15 +198,12 @@ for t in time:
     
     #* Translational + Angular Acceleration Calculations
     # Calculate angular acceleration of the rocket in the body and fixed frames
-    #TODO: Double check this inverse conversion 
     angaccel_b = np.linalg.inv(I) @ torque_b
     angaccel_f = R_fb @ angaccel_b
  
     # Calculate acceleration in the body frame, convert to fixed frame and calculate total acceleration
     accel_b = R_ba @ accel_a
     accel_f = R_fb @ accel_b - np.array([[g],[0],[0]])
-    
-    # print(accel_f)
 
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f[0][0]) == -1):
@@ -240,16 +228,13 @@ for t in time:
     pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
     vel_f = vel_f + accel_f*dt
 
-print(max(pos_vals[-1][0]))
-print(t)
+#Print Apogee and total time taken
+print("APOGEE (ft):", conversion.m_to_ft(max(pos_vals[-1][0])))
+print("Total Time Taken (s):", t)
 
-# plotting reference area of the rocket against time
-# plt.figure(dpi = 200)
-# time = np.linspace(0,30,len(ref_a_vels))
-# plt.plot(time,ref_a_vels)
-# plt.xlabel("Time"); plt.ylabel("Reference area (m^2)")
-# plt.show()
-
+#Calculate the number of steps simulated 
+simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
+time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 # # # checking the yaw pitch roll values
 yaw_vals = []
@@ -258,10 +243,6 @@ roll_vals = []
 pitch_rate = []
 yaw_rate = []
 roll_rate = []
-
-#Calculate the number of steps simulated before break 
-simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
-time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 # time = np.linspace(0,30,len(or_vals),endpoint=False)
 for x in np.arange(0,len(angvel_vals)):
@@ -273,11 +254,14 @@ for x in np.arange(0,len(angvel_vals)):
     roll_rate.append(angvel_vals[x][2][0])
 
 
-plt.plot(time,yaw_vals, label="Yaw Rate", linewidth = 3); plt.plot(time,pitch_vals, label="Pitch Rate", linewidth = 3); plt.plot(time,roll_vals, label="Roll Rate")
+plt.plot(time_flight,yaw_vals, label="Yaw Rate", linewidth = 3); plt.plot(time_flight,pitch_vals, label="Pitch Rate", linewidth = 3); #plt.plot(time_flight,roll_vals, label="Roll Rate")
 plt.ylabel("Rad",fontsize = 18); plt.xlabel("Time", fontsize = 18)
 plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
 plt.legend(fontsize = 20)
 plt.show()
+
+plot.plot_accel_time(accel_vals, time_flight)
+
 
 # # #? Coefficient of Drag Plot 
 # plt.figure(dpi = 200)
@@ -285,11 +269,6 @@ plt.show()
 # plt.plot(time, Cd_list)
 # plt.xlabel("Time");plt.ylabel("CD")
 # plt.show()
-
-
-#Calculate the number of steps simulated before break 
-simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
-time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 # plot.plot_3d_est(pos_vals, dt, True)
 # # Plot yaw
@@ -307,5 +286,11 @@ time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 # plot.plot_accel_time(accel_vals,time_flight)
 
 
-plot.plot_accel_time(accel_vals, time_flight)
-print(time_flight[-1])
+
+
+# plotting reference area of the rocket against time
+# plt.figure(dpi = 200)
+# time = np.linspace(0,30,len(ref_a_vels))
+# plt.plot(time,ref_a_vels)
+# plt.xlabel("Time"); plt.ylabel("Reference area (m^2)")
+# plt.show()

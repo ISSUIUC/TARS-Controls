@@ -51,24 +51,6 @@ def sref(velocity_body,l,D):
 
     return sref_b_eff, beta
 
-def sref_body(velocity_body,l,D):
-    #? Takes in np.array velocity_body, the total length of rocket L, and the diameter of D as inputs 
-    #* This function calculates the aerodynamic area of the rocket body
-    #* Assuming the rocket body is a cylinder 
-    #* This depends mainly on the sideslip angle beta 
-    vx_b = velocity_body[0][0]
-    vy_b = velocity_body[1][0]
-    vz_b = velocity_body[2][0]
-
-    beta = np.arctan2(vy_b, np.sqrt(vx_b**2 + vz_b**2))
-
-    #* the length of the body sees by incoming air 
-    l_effective = l*np.cos(beta)
-    #* effective aerodynamic area 
-    sref_b_eff = l_effective*D
-
-    return l_effective, sref_b_eff
-
 def friction_drag(z,l,D,velocity_body,A_ref):
     #? Function takes in altitude "z", total length of the rocket "l", body tube diameter "D", and the body frame velocities 
     #? This function calculates the drag on the rocket due to viscous forces 
