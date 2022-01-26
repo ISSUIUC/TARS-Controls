@@ -19,6 +19,7 @@ import src.rotation as rotation
     # Alpha, Beta, Sref, Yaw, Pitch, Roll
 #TODO: Move csv drag function into src library
 #TODO: Remove Constants from main file while double checking values and make sure everything still works
+#TODO: Double check moment of Inertia values
 
 #* Importing RasAero Package
 rasaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
