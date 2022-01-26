@@ -17,7 +17,10 @@ def plot_3d(points, true_scale):
     if (true_scale):
         ax.set_ylim([-np.max(z), np.max(z)])
         ax.set_xlim([-np.max(z), np.max(z)])
-    ax.scatter(x,y,z, c=[.75,0,0], alpha=1)
+    ax.scatter(x,y,z, color = "tab:blue", alpha=1, label="Trajectory")
+    plt.legend(fontsize = 20)
+    plt.ylim([-20,20]);plt.xlim([-20,20])
+    
     
 
 # plots a trajectory based on an array of 3d points 

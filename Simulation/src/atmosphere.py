@@ -59,3 +59,4 @@ def speed_sound(altitude):
     a_H = (r*R*T)**0.5
 
     return a_H
+

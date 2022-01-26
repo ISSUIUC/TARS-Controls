@@ -39,17 +39,17 @@ def sref(velocity_body,l,D):
     #* Assuming the rocket body is a cylinder 
     #* This depends mainly on the sideslip angle beta 
     vx_b = velocity_body[0][0]
-    vy_b = velocity_body[0][1]
-    vz_b = velocity_body[0][2]
+    vy_b = velocity_body[1][0]
+    vz_b = velocity_body[2][0]
 
     beta = np.arctan2(vy_b, np.sqrt(vx_b**2 + vz_b**2))
+    alpha = np.arctan2(vz_b,vx_b)
+    # true angle between body frame and aerodynamic frame x-axis
+    gamma = np.sqrt(beta**2 + alpha**2)
+    # effective aerodynamic reference area 
+    sref_b_eff = l*np.sin(gamma)*D + np.pi*((D/2)**2)*np.cos(gamma)
 
-    #* the length of the body sees by incoming air 
-    l_effective = l*np.cos(beta)
-    #* effective aerodynamic area 
-    sref_b_eff = l_effective*D
-
-    return l_effective, sref_b_eff
+    return sref_b_eff, beta
 
 def sref_body(velocity_body,l,D):
     #? Takes in np.array velocity_body, the total length of rocket L, and the diameter of D as inputs 
@@ -178,9 +178,9 @@ def para_drag(z,velocity_body):
     return Cd_para
 
 def total_drag(z,l,D,velocity_body,A_ref,angle):
-
+    
     Cd_total = friction_drag(z,l,D,velocity_body,A_ref) + pressure_base_drag(angle,z,velocity_body) + para_drag(z,velocity_body)
-
+    
     return Cd_total
 
 def total_drag_scaled(z,l,D,velocity_body,A_ref,angle):
@@ -196,3 +196,4 @@ def total_drag_scaled(z,l,D,velocity_body,A_ref,angle):
     Cd_scaled = (A_nose/A_ref)*Cd_nose + (A_fins/A_ref)*Cd_fins + (A_base/A_ref)*Cd_base + (A_para/A_ref)*para_drag(z,velocity_body) + friction_drag(z,l,D,velocity_body,A_ref)
 
     return Cd_scaled
+

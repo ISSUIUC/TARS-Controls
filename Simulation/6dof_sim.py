@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
 from sympy import Matrix, false
+from mpl_toolkits import mplot3d
 import pandas as pd
 
 #* Import Helper Function Library 
@@ -25,15 +26,12 @@ mach_num = mach_num[min_index:max_index:1]; aoa = aoa[min_index:max_index:1]; cd
 
 # Python function to print common elements in three sorted arrays
 
-def drag_from_csv(z, velocity_body, pro):
+def drag_from_csv(z, velocity_body):
     mach = round(np.linalg.norm(velocity_body) / atmosphere.speed_sound(z),2)
     vx_b = velocity_body[0][0]
     vy_b = velocity_body[1][0]
     vz_b = velocity_body[2][0]
     alpha = abs(round(np.rad2deg(np.arctan2(vz_b,vx_b)), 0))
-
-    print(mach,alpha)
-
 
     mach_index_array = np.where(mach_num == mach)[0]; alpha_index_array = np.where(aoa == alpha)[0]
     mach_set = set(mach_index_array); alpha_set = set(alpha_index_array)
@@ -84,7 +82,6 @@ A_fp = 0.011532235
 #* fin height 
 d_f = 0.08255
 ###! Ignore if this doesn't work
-
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
 # X points vertically
@@ -127,7 +124,7 @@ or_f = np.array([[0],
                  [0]]) # Yaw, Pitch, Roll
 
 vel_f = np.array([[constants.vx],
-                  [0],
+                  [constants.lateral_velocity],
                   [0]]) # Vx, Vy, Vz
 
 angvel_f = np.array([[constants.yaw_rate],
@@ -175,6 +172,7 @@ for t in time:
     R_ab = np.linalg.inv(R_ba)
     vel_a = R_ab @ vel_b
     
+
     #* Force and Torque Calculations
     # Moment Arm from center of mass to center of pressure
     c_p =  2.19 #m
@@ -185,8 +183,10 @@ for t in time:
 
     #TODO: Double check this function
     # Calculate the reference area of the rocket
-    Sref_a = rocket.sref_body(vel_b, l_rocket, D)[1]
-    
+    Sref_a = rocket.sref(vel_b, l_rocket, D)[0]
+    beta = rocket.sref(vel_b, l_rocket, D)[1]
+
+    # print(beta)
     #TODO: Function for calculating Drag Coefficient based on Reynolds Number - IN PROGRESS
     
     # Varying density function imported 
@@ -203,6 +203,7 @@ for t in time:
     
     # calculating the sum of aerodynamic forces on the rocket body
     v_mag = np.linalg.norm(vel_a)
+
     F_a = -((rho*(v_mag**2)*Sref_a*Cd_total)/2)*(vel_a/(np.linalg.norm(vel_a)))
     accel_a = F_a/m
 
@@ -220,6 +221,8 @@ for t in time:
     accel_b = R_ba @ accel_a
     accel_f = R_fb @ accel_b - np.array([[g],[0],[0]])
     
+    # print(accel_f)
+
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f[0][0]) == -1):
         break
@@ -272,25 +275,26 @@ for x in np.arange(0,len(angvel_vals)):
     roll_rate.append(angvel_vals[x][2][0])
 
 
-plt.plot(time,yaw_vals, label="Yaw Rate"); plt.plot(time,pitch_vals, label="Pitch Rate"); #plt.plot(time,roll_vals, label="Roll Rate")
-plt.ylabel("Rad/s"); plt.xlabel("Time")
-plt.legend()
+plt.plot(time,yaw_vals, label="Yaw Rate", linewidth = 3); plt.plot(time,pitch_vals, label="Pitch Rate", linewidth = 3); plt.plot(time,roll_vals, label="Roll Rate")
+plt.ylabel("Rad",fontsize = 18); plt.xlabel("Time", fontsize = 18)
+plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
+plt.legend(fontsize = 20)
 plt.show()
 
-# #? Coefficient of Drag Plot 
-plt.figure(dpi = 200)
-time = np.linspace(0,30,len(Cd_list),endpoint=False)
-plt.plot(time, Cd_list)
-plt.xlabel("Time");plt.ylabel("CD")
-plt.show()
+# # #? Coefficient of Drag Plot 
+# plt.figure(dpi = 200)
+# time = np.linspace(0,30,len(Cd_list),endpoint=False)
+# plt.plot(time, Cd_list)
+# plt.xlabel("Time");plt.ylabel("CD")
+# plt.show()
 
 
 #Calculate the number of steps simulated before break 
-# simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
-# time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
+simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
+time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 # plot.plot_3d_est(pos_vals, dt, True)
-# # # Plot yaw
+# # Plot yaw
 # plt.figure(dpi = 200) 
 # yaw_vals = []
 # accel_vals = []
@@ -298,10 +302,12 @@ plt.show()
 #     yaw_vals.append(or_vals[x][1][0])
     
 # plt.plot(time_flight,yaw_vals)
-# plt.ylabel("Yaw (radians)"); plt.xlabel("Time (seconds)")
+# plt.ylabel("Yaw (radians)"); plt.xlabel("Time (seconds)")/
 # plt.show()
 # print(yaw_vals)
 # Plot acceleration
 # plot.plot_accel_time(accel_vals,time_flight)
 
 
+plot.plot_accel_time(accel_vals, time_flight)
+print(time_flight[-1])
