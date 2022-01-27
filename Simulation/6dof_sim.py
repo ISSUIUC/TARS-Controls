@@ -21,6 +21,8 @@ import src.rotation as rotation
 #TODO: Remove Constants from main file while double checking values and make sure everything still works
 #TODO: Double check moment of Inertia values
 
+#Adding this comment to test branching
+
 #* Importing RasAero Package
 rasaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 # extracting the columns of interest 
@@ -118,11 +120,11 @@ pos_f = np.array([[constants.x],
                   [0]]) # X, Y, Z
 
 or_f = np.array([[0],
-                 [0],
-                 [0]]) # Yaw, Pitch, Roll
+                 [np.radians(1.291)],
+                 [np.radians(-0.0030712)]]) # Yaw, Pitch, Roll
 
 vel_f = np.array([[constants.vx],
-                  [constants.lateral_velocity],
+                  [0],
                   [0]]) # Vx, Vy, Vz
 
 angvel_f = np.array([[constants.yaw_rate],
@@ -159,6 +161,8 @@ I,c_m = rocket.I_new(0,0)
 Cd_list = []
 for t in time:
     
+    print()
+    
     #* Velocity Conversions
     # Rotation from fixed to body frame, Velocity converstion to the body frame
     R_fb = rotation.yaw(or_f[0][0]) @ rotation.pitch(or_f[1][0]) @ rotation.roll(or_f[2][0])  
@@ -181,6 +185,8 @@ for t in time:
     # Calculate the reference area of the rocket
     Sref_a, beta = rocket.sref(vel_b, l_rocket, D)
     
+    print(beta)
+    
     # Varying density function imported 
     rho = atmosphere.density(pos_f[0][0])
     
@@ -189,6 +195,8 @@ for t in time:
     
     # calculating the sum of aerodynamic forces on the rocket body
     v_mag = np.linalg.norm(vel_a)
+    
+    Sref_a = np.pi*((D/2)**2)
 
     F_a = -((rho* (v_mag**2) * Sref_a * Cd_total) / 2) * (vel_a/v_mag)
     accel_a = F_a/m
