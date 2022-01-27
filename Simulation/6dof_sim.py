@@ -21,8 +21,6 @@ import src.rotation as rotation
 #TODO: Remove Constants from main file while double checking values and make sure everything still works
 #TODO: Double check moment of Inertia values
 
-#Adding this comment to test branching
-
 #* Importing RasAero Package
 rasaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 # extracting the columns of interest 
