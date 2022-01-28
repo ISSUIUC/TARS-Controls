@@ -6,7 +6,7 @@ from sympy import Matrix, false
 from mpl_toolkits import mplot3d
 import pandas as pd
 
-#* Import Helper Function Library 
+#* Import Helper Function Library
 import src.atmosphere as atmosphere
 import src.constants as constants
 import src.conversion as conversion
@@ -23,12 +23,12 @@ import src.rotation as rotation
 
 #* Importing RasAero Package
 rasaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
-# extracting the columns of interest 
+# extracting the columns of interest
 mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
 # narrowing down the columns using mach number range (0.02 - 1.01)
 min_index = min(np.where(mach_num == 0.01)[0])
 max_index = min(np.where(mach_num == 1.01)[0])
-# re-make the lists using this range 
+# re-make the lists using this range
 mach_num = mach_num[min_index:max_index:1]; aoa = aoa[min_index:max_index:1]; cd = cd[min_index:max_index:1]; protub = protub[min_index:max_index:1]
 
 def drag_from_csv(z, velocity_body):
@@ -50,34 +50,34 @@ def drag_from_csv(z, velocity_body):
 
 #* Constants
 # Mass of the rocket (dry)
-m = 21.22  #kg  
+m = 21.22  #kg
 # acceleration of gravity
 g = 9.81 #m/s^2
-# length of rocket 
+# length of rocket
 l_rocket = 3.02
 
 # nosecone angle (rad)
 angle = 0.069189
-###! Ignore this if this doesn't work 
-#* Total length of Rocket 
+###! Ignore this if this doesn't work
+#* Total length of Rocket
 l = 3.0226
-#* Rocket outer diameter 
+#* Rocket outer diameter
 D = 0.1056132
 d_b = D
 d_d = D
-#* Body Tube Length 
+#* Body Tube Length
 L_b = 2.2352
-#* Nose Cone Length 
+#* Nose Cone Length
 L_n = 0.762
 #* Fin thickness
 T_f = 0.0029972
-#* true length of the fin from inner to outer edge/ root chord 
+#* true length of the fin from inner to outer edge/ root chord
 L_m = 0.2032
-#* Number of fins 
+#* Number of fins
 n = 3
-#* fin platform area 
+#* fin platform area
 A_fp = 0.011532235
-#* fin height 
+#* fin height
 d_f = 0.08255
 ###! Ignore if this doesn't work
 #* ---------------------------- Frames we are using --------------------------- #
@@ -130,13 +130,18 @@ angvel_f = np.array([[constants.yaw_rate],
                      [constants.roll_rate]]) # Yaw rate, Pitch rate, Roll rate
 
 # Initialize lists to store values at all time steps
-pos_vals = []
-or_vals = []
-vel_vals =[]
-angvel_vals = []
-accel_vals = []
-angaccel_vals = []
+
 ref_a_vels = []
+
+dic = {
+       "pos_vals":     {"x":[], "y":[], "z":[]},
+       "or_vals":      {"Yaw":[], "Pitch":[], "Roll":[]},
+       "vel_vals":     {"Vx":[], "Vy":[], "Vz":[]},
+       "angvel_vals":  {"Yaw rate":[], "Pitch rate":[], "Roll rate":[]},
+       "accel_vals":   {"Ax":[], "Ay":[], "Az":[]},
+       "angaccel_vals":{"Yaw accel":[], "Pitch accel":[], "Roll accel":[]}
+       }
+
 
 # Time setup
 start_time = 0
@@ -158,15 +163,15 @@ l2 = 0
 I,c_m = rocket.I_new(0,0)
 Cd_list = []
 for t in time:
-    
+
     print()
-    
+
     #* Velocity Conversions
     # Rotation from fixed to body frame, Velocity converstion to the body frame
-    R_fb = rotation.yaw(or_f[0][0]) @ rotation.pitch(or_f[1][0]) @ rotation.roll(or_f[2][0])  
+    R_fb = rotation.yaw(or_f[0][0]) @ rotation.pitch(or_f[1][0]) @ rotation.roll(or_f[2][0])
     R_bf = np.linalg.inv(R_fb)
     vel_b = R_bf @ vel_f
-    
+
     # Rotation from body to aerodynamic frame, Velocity in the aerodynamic frame
     R_ba = rotation.body_aero(vel_b)
     R_ab = np.linalg.inv(R_ba)
@@ -175,25 +180,25 @@ for t in time:
     #* Force and Torque Calculations
     # Moment Arm from center of mass to center of pressure
     c_p =  2.19 #m
-    moment_arm_b = np.array([[c_m - c_p], 
+    moment_arm_b = np.array([[c_m - c_p],
                              [0],
-                             [0]]) 
+                             [0]])
     moment_arm_a = R_ab @ moment_arm_b
 
     # Calculate the reference area of the rocket
     Sref_a, beta = rocket.sref(vel_b, l_rocket, D)
-    
+
     print(beta)
-    
-    # Varying density function imported 
+
+    # Varying density function imported
     rho = atmosphere.density(pos_f[0][0])
-    
-    # Total drag coefficient of airframe function imported 
+
+    # Total drag coefficient of airframe function imported
     Cd_total = drag_from_csv(pos_f[0][0],vel_b)
-    
+
     # calculating the sum of aerodynamic forces on the rocket body
     v_mag = np.linalg.norm(vel_a)
-    
+
     Sref_a = np.pi*((D/2)**2)
 
     F_a = -((rho* (v_mag**2) * Sref_a * Cd_total) / 2) * (vel_a/v_mag)
@@ -201,13 +206,13 @@ for t in time:
 
     # Calculate Torque from Aerodynamic Forces in the Aerodynamic Frame and convert to body frame
     torque_a = np.cross(moment_arm_a, F_a, axis=0)
-    torque_b = R_ba @ torque_a    
-    
+    torque_b = R_ba @ torque_a
+
     #* Translational + Angular Acceleration Calculations
     # Calculate angular acceleration of the rocket in the body and fixed frames
     angaccel_b = np.linalg.inv(I) @ torque_b
     angaccel_f = R_fb @ angaccel_b
- 
+
     # Calculate acceleration in the body frame, convert to fixed frame and calculate total acceleration
     accel_b = R_ba @ accel_a
     accel_f = R_fb @ accel_b - np.array([[g],[0],[0]])
@@ -215,15 +220,40 @@ for t in time:
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f[0][0]) == -1):
         break
-    
+
     #* Updating Values
     # # Append Values to the Arrays
-    pos_vals.append(pos_f)
-    or_vals.append(or_f)
-    vel_vals.append(vel_f)
-    angvel_vals.append(angvel_f)
-    accel_vals.append(accel_f)
-    angaccel_vals.append(angaccel_f)
+
+    dic["pos_vals"]["x"].append(float(pos_f[0]))
+    dic["pos_vals"]["y"].append(float(pos_f[1]))
+    dic["pos_vals"]["z"].append(float(pos_f[2]))
+
+    dic["or_vals"]["Yaw"].append(float(or_f[0]))
+    dic["or_vals"]["Pitch"].append(float(or_f[1]))
+    dic["or_vals"]["Roll"].append(float(or_f[2]))
+
+    dic["vel_vals"]["Vx"].append(float(vel_f[0]))
+    dic["vel_vals"]["Vy"].append(float(vel_f[1]))
+    dic["vel_vals"]["Vz"].append(float(vel_f[2]))
+
+    dic["angvel_vals"]["Yaw rate"].append(float(angvel_f[0]))
+    dic["angvel_vals"]["Pitch rate"].append(float(angvel_f[1]))
+    dic["angvel_vals"]["Roll rate"].append(float(angvel_f[2]))
+
+    dic["accel_vals"]["Ax"].append(float(accel_f[0]))
+    dic["accel_vals"]["Ay"].append(float(accel_f[1]))
+    dic["accel_vals"]["Az"].append(float(accel_f[2]))
+
+    dic["angaccel_vals"]["Yaw accel"].append(float(angaccel_f[0]))
+    dic["angaccel_vals"]["Pitch accel"].append(float(angaccel_f[1]))
+    dic["angaccel_vals"]["Roll accel"].append(float(angaccel_f[2]))
+
+
+
+    Cd_list.append(Cd_total)
+    ref_a_vels.append(Sref_a)
+
+
     Cd_list.append(Cd_total)
     ref_a_vels.append(Sref_a)
 
@@ -236,11 +266,12 @@ for t in time:
     vel_f = vel_f + accel_f*dt
 
 #Print Apogee and total time taken
-print("APOGEE (ft):", conversion.m_to_ft(max(pos_vals[-1][0])))
+#print("APOGEE (ft):", conversion.m_to_ft(max(pos_vals[-1][0])))
+print("APOGEE (ft):", conversion.m_to_ft(max(dic["pos_vals"]["x"])))
 print("Total Time Taken (s):", t)
 
-#Calculate the number of steps simulated 
-simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))) 
+#Calculate the number of steps simulated
+simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time)))
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 # # # checking the yaw pitch roll values
@@ -252,13 +283,14 @@ yaw_rate = []
 roll_rate = []
 
 # time = np.linspace(0,30,len(or_vals),endpoint=False)
-for x in np.arange(0,len(angvel_vals)):
-    pitch_vals.append(or_vals[x][1][0])
-    yaw_vals.append(or_vals[x][0][0])
-    roll_vals.append(or_vals[x][2][0])
-    yaw_rate.append(angvel_vals[x][0][0])
-    pitch_rate.append(angvel_vals[x][1][0])
-    roll_rate.append(angvel_vals[x][2][0])
+for x in np.arange(0,len(dic["angvel_vals"]["Yaw rate"])):
+
+    yaw_vals.append(dic["or_vals"]["Yaw"][x])
+    pitch_vals.append(dic["or_vals"]["Pitch"][x])
+    roll_vals.append(dic["or_vals"]["Roll"][x])
+    yaw_rate.append(dic["angvel_vals"]["Yaw rate"][x])
+    pitch_rate.append(dic["angvel_vals"]["Pitch rate"][x])
+    roll_rate.append(dic["angvel_vals"]["Roll rate"][x])
 
 
 plt.plot(time_flight,yaw_vals, label="Yaw Rate", linewidth = 3); plt.plot(time_flight,pitch_vals, label="Pitch Rate", linewidth = 3); #plt.plot(time_flight,roll_vals, label="Roll Rate")
@@ -267,10 +299,14 @@ plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
 plt.legend(fontsize = 20)
 plt.show()
 
-plot.plot_accel_time(accel_vals, time_flight)
+#accel_vals = []
+#for x in np.arange(0,len(dic["angvel_vals"]["Yaw rate"])):
+#    accel_vals.append(np.array([dic["angaccel_vals"]["Yaw accel"][x], dic["angaccel_vals"]["Pitch accel"][x], dic["angaccel_vals"]["Roll accel"][x]]))
+
+#plot.plot_accel_time(accel_vals, time_flight)
 
 
-# # #? Coefficient of Drag Plot 
+# # #? Coefficient of Drag Plot
 # plt.figure(dpi = 200)
 # time = np.linspace(0,30,len(Cd_list),endpoint=False)
 # plt.plot(time, Cd_list)
@@ -279,12 +315,12 @@ plot.plot_accel_time(accel_vals, time_flight)
 
 # plot.plot_3d_est(pos_vals, dt, True)
 # # Plot yaw
-# plt.figure(dpi = 200) 
+# plt.figure(dpi = 200)
 # yaw_vals = []
 # accel_vals = []
 # for x in np.arange(0,len(or_vals)):
 #     yaw_vals.append(or_vals[x][1][0])
-    
+
 # plt.plot(time_flight,yaw_vals)
 # plt.ylabel("Yaw (radians)"); plt.xlabel("Time (seconds)")/
 # plt.show()
