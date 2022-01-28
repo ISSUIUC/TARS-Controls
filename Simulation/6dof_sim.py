@@ -299,11 +299,7 @@ plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
 plt.legend(fontsize = 20)
 plt.show()
 
-#accel_vals = []
-#for x in np.arange(0,len(dic["angvel_vals"]["Yaw rate"])):
-#    accel_vals.append(np.array([dic["angaccel_vals"]["Yaw accel"][x], dic["angaccel_vals"]["Pitch accel"][x], dic["angaccel_vals"]["Roll accel"][x]]))
-
-#plot.plot_accel_time(accel_vals, time_flight)
+plot.plot_accel_time(dic["accel_vals"], time_flight)
 
 
 # # #? Coefficient of Drag Plot

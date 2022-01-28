@@ -114,10 +114,10 @@ def plot_accel_time(accel_vals, time_array):
     accel_x = []
     accel_y = []
     accel_z = []
-    for val in accel_vals:
-        accel_x.append(val[0][0])
-        accel_y.append(val[1][0])
-        accel_z.append(val[2][0])
+    for val in range(len(accel_vals["Ax"])):
+        accel_x.append(accel_vals["Ax"][val])
+        accel_y.append(accel_vals["Ay"][val])
+        accel_z.append(accel_vals["Az"][val])
         
     #Plotting
     axs[0].plot(time_array,accel_x,label="X Acceleration",color="maroon")
