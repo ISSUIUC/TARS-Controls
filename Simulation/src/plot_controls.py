@@ -65,10 +65,10 @@ def plot_3d_vel(pos_vals, velocities, true_scale):
 
 # plots trajectory with velocity estimated based on a timestep
 def plot_3d_est(pos_vals, timestep, true_scale):
-    velocities = np.zeros(len(points))
-    velocities[0] = abs(np.linalg.norm(points[1] - points[0]))/timestep
+    velocities = np.zeros(len(pos_vals["x"]))
+    velocities[0] = abs(np.linalg.norm(pos_vals["y"] - pos_vals["x"]))/timestep
     for i in range(1, velocities.shape[0]):
-        velocities[i] = abs(np.linalg.norm(points[i] - points[i-1]))/timestep
+        velocities[i] = abs(np.linalg.norm(pos_vals["x"][i] - pos_vals["x"][i-1]))/timestep
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     z = []
