@@ -4,16 +4,16 @@ import numpy as np
 
 
 # plots a trajectory based on an array of 3d points
-def plot_3d(points, true_scale):
+def plot_3d(pos_vals, true_scale):
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     z = []
     x = []
     y = []
-    for i in points:
-        z.append(i[0])
-        x.append(i[1])
-        y.append(i[2])
+    for i in range(len(pos_vals["x"])):
+        z.append(pos_vals["z"][i])
+        x.append(pos_vals["x"][i])
+        y.append(pos_vals["y"][i])
     if (true_scale):
         ax.set_ylim([-np.max(z), np.max(z)])
         ax.set_xlim([-np.max(z), np.max(z)])
@@ -25,16 +25,16 @@ def plot_3d(points, true_scale):
 
 # plots a trajectory based on an array of 3d points 
 # color maps the velocity based on a vector of velocity magnitudes
-def plot_3d_vel(points, velocities, true_scale):
+def plot_3d_vel(pos_vals, velocities, true_scale):
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     z = []
     x = []
     y = []
-    for i in points:
-        z.append(i[0])
-        x.append(i[1])
-        y.append(i[2])
+    for i in range(len(pos_vals["x"])):
+        z.append(pos_vals["z"][i])
+        x.append(pos_vals["x"][i])
+        y.append(pos_vals["y"][i])
     maxv = np.linalg.norm(np.max(velocities, axis=0))
     color = np.zeros((len(velocities), 3))
     med = np.linalg.norm(np.median(velocities, axis=0))
@@ -64,7 +64,7 @@ def plot_3d_vel(points, velocities, true_scale):
 
 
 # plots trajectory with velocity estimated based on a timestep
-def plot_3d_est(points, timestep, true_scale):
+def plot_3d_est(pos_vals, timestep, true_scale):
     velocities = np.zeros(len(points))
     velocities[0] = abs(np.linalg.norm(points[1] - points[0]))/timestep
     for i in range(1, velocities.shape[0]):
@@ -74,10 +74,10 @@ def plot_3d_est(points, timestep, true_scale):
     z = []
     x = []
     y = []
-    for i in points:
-        z.append(i[0])
-        x.append(i[1])
-        y.append(i[2])
+    for i in range(len(pos_vals["x"])):
+        z.append(pos_vals["z"][i])
+        x.append(pos_vals["x"][i])
+        y.append(pos_vals["y"][i])
     maxv = np.max(velocities)
     color = np.zeros((velocities.shape[0], 3))
     med = np.median(velocities)
