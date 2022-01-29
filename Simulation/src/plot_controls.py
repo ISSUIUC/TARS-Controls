@@ -4,16 +4,16 @@ import numpy as np
 
 
 # plots a trajectory based on an array of 3d points
-def plot_3d(points, true_scale):
+def plot_3d(pos_vals, true_scale):
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     z = []
     x = []
     y = []
-    for i in points:
-        z.append(i[0])
-        x.append(i[1])
-        y.append(i[2])
+    for i in range(len(pos_vals["x"])):
+        z.append(pos_vals["z"][i])
+        x.append(pos_vals["x"][i])
+        y.append(pos_vals["y"][i])
     if (true_scale):
         ax.set_ylim([-np.max(z), np.max(z)])
         ax.set_xlim([-np.max(z), np.max(z)])
@@ -25,16 +25,16 @@ def plot_3d(points, true_scale):
 
 # plots a trajectory based on an array of 3d points 
 # color maps the velocity based on a vector of velocity magnitudes
-def plot_3d_vel(points, velocities, true_scale):
+def plot_3d_vel(pos_vals, velocities, true_scale):
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     z = []
     x = []
     y = []
-    for i in points:
-        z.append(i[0])
-        x.append(i[1])
-        y.append(i[2])
+    for i in range(len(pos_vals["x"])):
+        z.append(pos_vals["z"][i])
+        x.append(pos_vals["x"][i])
+        y.append(pos_vals["y"][i])
     maxv = np.linalg.norm(np.max(velocities, axis=0))
     color = np.zeros((len(velocities), 3))
     med = np.linalg.norm(np.median(velocities, axis=0))
@@ -64,20 +64,20 @@ def plot_3d_vel(points, velocities, true_scale):
 
 
 # plots trajectory with velocity estimated based on a timestep
-def plot_3d_est(points, timestep, true_scale):
-    velocities = np.zeros(len(points))
-    velocities[0] = abs(np.linalg.norm(points[1] - points[0]))/timestep
+def plot_3d_est(pos_vals, timestep, true_scale):
+    velocities = np.zeros(len(pos_vals["x"]))
+    velocities[0] = abs(np.linalg.norm(pos_vals["y"] - pos_vals["x"]))/timestep
     for i in range(1, velocities.shape[0]):
-        velocities[i] = abs(np.linalg.norm(points[i] - points[i-1]))/timestep
+        velocities[i] = abs(np.linalg.norm(pos_vals["x"][i] - pos_vals["x"][i-1]))/timestep
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     z = []
     x = []
     y = []
-    for i in points:
-        z.append(i[0])
-        x.append(i[1])
-        y.append(i[2])
+    for i in range(len(pos_vals["x"])):
+        z.append(pos_vals["z"][i])
+        x.append(pos_vals["x"][i])
+        y.append(pos_vals["y"][i])
     maxv = np.max(velocities)
     color = np.zeros((velocities.shape[0], 3))
     med = np.median(velocities)
@@ -114,10 +114,10 @@ def plot_accel_time(accel_vals, time_array):
     accel_x = []
     accel_y = []
     accel_z = []
-    for val in accel_vals:
-        accel_x.append(val[0][0])
-        accel_y.append(val[1][0])
-        accel_z.append(val[2][0])
+    for val in range(len(accel_vals["Ax"])):
+        accel_x.append(accel_vals["Ax"][val])
+        accel_y.append(accel_vals["Ay"][val])
+        accel_z.append(accel_vals["Az"][val])
         
     #Plotting
     axs[0].plot(time_array,accel_x,label="X Acceleration",color="maroon")
