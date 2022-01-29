@@ -133,6 +133,7 @@ angvel_f = np.array([[constants.yaw_rate],
 
 ref_a_vels = []
 
+# Dictionary for simulation values
 dic = {
        "pos_vals":     {"x":[], "y":[], "z":[]},
        "or_vals":      {"Yaw":[], "Pitch":[], "Roll":[]},
