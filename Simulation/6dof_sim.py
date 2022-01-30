@@ -14,7 +14,8 @@ import src.plot_controls as plot
 import src.rocket as rocket
 import src.rotation as rotation
 
-#TODO: Turn storage arraysinto a dictionary
+#TODO: Make dictionary appending into functions
+#TODO: Add other values into dictionary
 #TODO: Plotting Functions
     # Alpha, Beta, Sref, Yaw, Pitch, Roll
 #TODO: Move csv drag function into src library
@@ -22,7 +23,7 @@ import src.rotation as rotation
 #TODO: Double check moment of Inertia values
 
 #* Importing RasAero Package
-rasaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
+rasaero = pd.read_csv("Lookup/RASAero.csv")
 # extracting the columns of interest
 mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
 # narrowing down the columns using mach number range (0.02 - 1.01)
@@ -135,7 +136,6 @@ dic = {
        "angaccel_vals":{"Yaw accel":[], "Pitch accel":[], "Roll accel":[]}
        }
 
-
 # Time setup
 start_time = 0
 end_time = 30
@@ -157,8 +157,6 @@ I,c_m = rocket.I_new(0,0)
 Cd_list = []
 for t in time:
 
-    print()
-
     #* Velocity Conversions
     # Rotation from fixed to body frame, Velocity converstion to the body frame
     R_fb = rotation.yaw(or_f[0][0]) @ rotation.pitch(or_f[1][0]) @ rotation.roll(or_f[2][0])
@@ -178,12 +176,7 @@ for t in time:
                              [0]])
     moment_arm_a = R_ab @ moment_arm_b
 
-    # Calculate the reference area of the rocket
-    Sref_a, beta = rocket.sref(vel_b, l_rocket, D)
-
-    print(beta)
-
-    # Varying density function imported
+    # Density varies with altitude
     rho = atmosphere.density(pos_f[0][0])
 
     # Total drag coefficient of airframe function imported
@@ -192,8 +185,10 @@ for t in time:
     # calculating the sum of aerodynamic forces on the rocket body
     v_mag = np.linalg.norm(vel_a)
 
+    #Approximation - use the area of a circle for reference area
     Sref_a = np.pi*((D/2)**2)
 
+    #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
     F_a = -((rho* (v_mag**2) * Sref_a * Cd_total) / 2) * (vel_a/v_mag)
     accel_a = F_a/m
 
@@ -241,12 +236,7 @@ for t in time:
     dic["angaccel_vals"]["Pitch accel"].append(float(angaccel_f[1]))
     dic["angaccel_vals"]["Roll accel"].append(float(angaccel_f[2]))
 
-
-
-    Cd_list.append(Cd_total)
-    ref_a_vels.append(Sref_a)
-
-
+    #TODO: Add to dict
     Cd_list.append(Cd_total)
     ref_a_vels.append(Sref_a)
 
@@ -259,34 +249,18 @@ for t in time:
     vel_f = vel_f + accel_f*dt
 
 #Print Apogee and total time taken
-#print("APOGEE (ft):", conversion.m_to_ft(max(pos_vals[-1][0])))
 print("APOGEE (ft):", conversion.m_to_ft(max(dic["pos_vals"]["x"])))
 print("Total Time Taken (s):", t)
 
-#Calculate the number of steps simulated
+#* --------------------------------- Plotting --------------------------------- #
+
+#Calculate the number of steps simulated and create a new linspace
 simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time)))
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
-# # # checking the yaw pitch roll values
-yaw_vals = []
-pitch_vals = []
-roll_vals = []
-pitch_rate = []
-yaw_rate = []
-roll_rate = []
-
-# time = np.linspace(0,30,len(or_vals),endpoint=False)
-for x in np.arange(0,len(dic["angvel_vals"]["Yaw rate"])):
-
-    yaw_vals.append(dic["or_vals"]["Yaw"][x])
-    pitch_vals.append(dic["or_vals"]["Pitch"][x])
-    roll_vals.append(dic["or_vals"]["Roll"][x])
-    yaw_rate.append(dic["angvel_vals"]["Yaw rate"][x])
-    pitch_rate.append(dic["angvel_vals"]["Pitch rate"][x])
-    roll_rate.append(dic["angvel_vals"]["Roll rate"][x])
-
-
-plt.plot(time_flight,yaw_vals, label="Yaw Rate", linewidth = 3); plt.plot(time_flight,pitch_vals, label="Pitch Rate", linewidth = 3); #plt.plot(time_flight,roll_vals, label="Roll Rate")
+plt.plot(time_flight,dic["Yaw"], label="Yaw Rate", linewidth = 3)
+plt.plot(time_flight,dic["Pitch"], label="Pitch Rate", linewidth = 3)
+plt.plot(time_flight,dic["Roll"], label="Roll Rate")
 plt.ylabel("Rad",fontsize = 18); plt.xlabel("Time", fontsize = 18)
 plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
 plt.legend(fontsize = 20)
@@ -316,9 +290,6 @@ plot.plot_accel_time(dic["accel_vals"], time_flight)
 # print(yaw_vals)
 # Plot acceleration
 # plot.plot_accel_time(accel_vals,time_flight)
-
-
-
 
 # plotting reference area of the rocket against time
 # plt.figure(dpi = 200)
