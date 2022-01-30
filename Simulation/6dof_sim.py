@@ -113,21 +113,13 @@ d_f = 0.08255
 #* ------------------------------ Simulation Code ----------------------------- #
 
 # NumPy arrays to store current states
-pos_f = np.array([[constants.x],
-                  [0],
-                  [0]]) # X, Y, Z
+pos_f = constants.init_pos_f
 
-or_f = np.array([[0],
-                 [np.radians(1.291)],
-                 [np.radians(-0.0030712)]]) # Yaw, Pitch, Roll
+or_f = constants.init_or_f
 
-vel_f = np.array([[constants.vx],
-                  [0],
-                  [0]]) # Vx, Vy, Vz
+vel_f = constants.init_vel_f
 
-angvel_f = np.array([[constants.yaw_rate],
-                     [constants.pitch_rate],
-                     [constants.roll_rate]]) # Yaw rate, Pitch rate, Roll rate
+angvel_f = constants.init_angvel_f
 
 # Initialize lists to store values at all time steps
 
