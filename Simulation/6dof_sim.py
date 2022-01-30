@@ -14,7 +14,6 @@ import src.plot_controls as plot
 import src.rocket as rocket
 import src.rotation as rotation
 
-#TODO: Turn storage arraysinto a dictionary
 #TODO: Plotting Functions
     # Alpha, Beta, Sref, Yaw, Pitch, Roll
 #TODO: Move csv drag function into src library
