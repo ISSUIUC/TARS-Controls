@@ -19,7 +19,6 @@ import src.rotation as rotation
 #TODO: Plotting Functions
     # Alpha, Beta, Sref, Yaw, Pitch, Roll
 #TODO: Move csv drag function into src library
-#TODO: Remove Constants from main file while double checking values and make sure everything still works
 #TODO: Double check moment of Inertia values
 
 #* Importing RasAero Package
@@ -49,38 +48,6 @@ def drag_from_csv(z, velocity_body):
     index = intersection[0]
     return cd[index]
 
-#* Constants
-# Mass of the rocket (dry)
-m = 21.22  #kg
-# acceleration of gravity
-g = 9.81 #m/s^2
-# length of rocket
-l_rocket = 3.02
-
-# nosecone angle (rad)
-angle = 0.069189
-###! Ignore this if this doesn't work
-#* Total length of Rocket
-l = 3.0226
-#* Rocket outer diameter
-D = 0.1056132
-d_b = D
-d_d = D
-#* Body Tube Length
-L_b = 2.2352
-#* Nose Cone Length
-L_n = 0.762
-#* Fin thickness
-T_f = 0.0029972
-#* true length of the fin from inner to outer edge/ root chord
-L_m = 0.2032
-#* Number of fins
-n = 3
-#* fin platform area
-A_fp = 0.011532235
-#* fin height
-d_f = 0.08255
-###! Ignore if this doesn't work
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
 # X points vertically
@@ -122,11 +89,9 @@ vel_f = constants.init_vel_f
 
 angvel_f = constants.init_angvel_f
 
-# Initialize lists to store values at all time steps
-
+# Initialize dictionary to store values at all time steps
 ref_a_vels = []
 
-# Dictionary for simulation values
 dic = {
        "pos_vals":     {"x":[], "y":[], "z":[]},
        "or_vals":      {"Yaw":[], "Pitch":[], "Roll":[]},
@@ -153,7 +118,7 @@ l2 = 0
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
-I,c_m = rocket.I_new(0,0)
+I, c_m, m = rocket.I_new(0,0)
 Cd_list = []
 for t in time:
 
@@ -186,11 +151,11 @@ for t in time:
     v_mag = np.linalg.norm(vel_a)
 
     #Approximation - use the area of a circle for reference area
-    Sref_a = np.pi*((D/2)**2)
+    Sref_a = rocket.sref_approx(constants.D)
 
     #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
     F_a = -((rho* (v_mag**2) * Sref_a * Cd_total) / 2) * (vel_a/v_mag)
-    accel_a = F_a/m
+    accel_a = F_a/constants.m0
 
     # Calculate Torque from Aerodynamic Forces in the Aerodynamic Frame and convert to body frame
     torque_a = np.cross(moment_arm_a, F_a, axis=0)
@@ -203,7 +168,7 @@ for t in time:
 
     # Calculate acceleration in the body frame, convert to fixed frame and calculate total acceleration
     accel_b = R_ba @ accel_a
-    accel_f = R_fb @ accel_b - np.array([[g],[0],[0]])
+    accel_f = R_fb @ accel_b - np.array([[constants.g],[0],[0]])
 
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f[0][0]) == -1):
@@ -258,9 +223,9 @@ print("Total Time Taken (s):", t)
 simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time)))
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
-plt.plot(time_flight,dic["Yaw"], label="Yaw Rate", linewidth = 3)
-plt.plot(time_flight,dic["Pitch"], label="Pitch Rate", linewidth = 3)
-plt.plot(time_flight,dic["Roll"], label="Roll Rate")
+plt.plot(time_flight,dic["or_vals"]["Yaw"], label="Yaw Rate", linewidth = 3)
+plt.plot(time_flight,dic["or_vals"]["Pitch"], label="Pitch Rate", linewidth = 3)
+plt.plot(time_flight,dic["or_vals"]["Roll"], label="Roll Rate")
 plt.ylabel("Rad",fontsize = 18); plt.xlabel("Time", fontsize = 18)
 plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
 plt.legend(fontsize = 20)
