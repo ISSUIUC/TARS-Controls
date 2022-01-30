@@ -29,7 +29,7 @@ def I_new(m,r_m):
     Iyy_new = Iyy_0 + m*d1**2 + m0*d2**2
     Izz_new = Iyy_new
     I = np.diag(np.array([Ixx_new,Iyy_new,Izz_new]))
-    return(I,new_r_CG)
+    return(I,new_r_CG,new_m)
 
 def sref(velocity_body,l,D):
     
@@ -50,6 +50,10 @@ def sref(velocity_body,l,D):
     sref_b_eff = l*np.sin(gamma)*D + np.pi*((D/2)**2)*np.cos(gamma)
 
     return sref_b_eff, beta
+
+def sref_approx(D):
+    # Approximates reference area as a circle
+    return np.pi*((D/2)**2)
 
 def friction_drag(z,l,D,velocity_body,A_ref):
     #? Function takes in altitude "z", total length of the rocket "l", body tube diameter "D", and the body frame velocities 
