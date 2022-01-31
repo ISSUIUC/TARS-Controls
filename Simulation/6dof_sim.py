@@ -13,6 +13,7 @@ import src.conversion as conversion
 import src.plot_controls as plot
 import src.rocket as rocket
 import src.rotation as rotation
+import src.RASAero_lookup as rasaero
 
 #TODO: Make dictionary appending into functions
 #TODO: Add other values into dictionary
@@ -22,32 +23,7 @@ import src.rotation as rotation
 #TODO: Double check moment of Inertia values
 
 #* Importing RasAero Package
-rasaero = pd.read_csv("Lookup/RASAero.csv")
-# extracting the columns of interest
-mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
-# narrowing down the columns using mach number range (0.02 - 1.01)
-min_index = min(np.where(mach_num == 0.01)[0])
-max_index = min(np.where(mach_num == 1.01)[0])
-# re-make the lists using this range
-mach_num = mach_num[min_index:max_index:1]; aoa = aoa[min_index:max_index:1]; cd = cd[min_index:max_index:1]; protub = protub[min_index:max_index:1]
-
-def drag_from_csv(z, velocity_body):
-    mach = round(np.linalg.norm(velocity_body) / atmosphere.speed_sound(z),2)
-    vx_b = velocity_body[0][0]
-    vy_b = velocity_body[1][0]
-    vz_b = velocity_body[2][0]
-    alpha = abs(round(np.rad2deg(np.arctan2(vz_b,vx_b)), 0))
-
-    mach_index_array = np.where(mach_num == mach)[0]; alpha_index_array = np.where(aoa == alpha)[0]
-    mach_set = set(mach_index_array); alpha_set = set(alpha_index_array)
-    intersection = list(mach_set.intersection(alpha_index_array))
-
-    if len(intersection) == 0:
-        return Cd_list[-1]
-
-    index = intersection[0]
-    return cd[index]
-
+RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
 # X points vertically
@@ -145,8 +121,8 @@ for t in time:
     rho = atmosphere.density(pos_f[0][0])
 
     # Total drag coefficient of airframe function imported
-    Cd_total = drag_from_csv(pos_f[0][0],vel_b)
-
+    Cd_total = rasaero.drag_from_csv(pos_f[0][0],vel_b, RASaero, Cd_list)
+    
     # calculating the sum of aerodynamic forces on the rocket body
     v_mag = np.linalg.norm(vel_a)
 
@@ -225,7 +201,7 @@ time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 plt.plot(time_flight,dic["or_vals"]["Yaw"], label="Yaw Rate", linewidth = 3)
 plt.plot(time_flight,dic["or_vals"]["Pitch"], label="Pitch Rate", linewidth = 3)
-plt.plot(time_flight,dic["or_vals"]["Roll"], label="Roll Rate")
+# plt.plot(time_flight,dic["or_vals"]["Roll"], label="Roll Rate")
 plt.ylabel("Rad",fontsize = 18); plt.xlabel("Time", fontsize = 18)
 plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
 plt.legend(fontsize = 20)
