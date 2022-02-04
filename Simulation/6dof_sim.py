@@ -13,72 +13,17 @@ import src.conversion as conversion
 import src.plot_controls as plot
 import src.rocket as rocket
 import src.rotation as rotation
+import src.RASAero_lookup as rasaero
 
+#TODO: Make dictionary appending into functions
+#TODO: Add other values into dictionary
 #TODO: Plotting Functions
     # Alpha, Beta, Sref, Yaw, Pitch, Roll
 #TODO: Move csv drag function into src library
-#TODO: Remove Constants from main file while double checking values and make sure everything still works
 #TODO: Double check moment of Inertia values
 
 #* Importing RasAero Package
-rasaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
-# extracting the columns of interest
-mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
-# narrowing down the columns using mach number range (0.02 - 1.01)
-min_index = min(np.where(mach_num == 0.01)[0])
-max_index = min(np.where(mach_num == 1.01)[0])
-# re-make the lists using this range
-mach_num = mach_num[min_index:max_index:1]; aoa = aoa[min_index:max_index:1]; cd = cd[min_index:max_index:1]; protub = protub[min_index:max_index:1]
-
-def drag_from_csv(z, velocity_body):
-    mach = round(np.linalg.norm(velocity_body) / atmosphere.speed_sound(z),2)
-    vx_b = velocity_body[0][0]
-    vy_b = velocity_body[1][0]
-    vz_b = velocity_body[2][0]
-    alpha = abs(round(np.rad2deg(np.arctan2(vz_b,vx_b)), 0))
-
-    mach_index_array = np.where(mach_num == mach)[0]; alpha_index_array = np.where(aoa == alpha)[0]
-    mach_set = set(mach_index_array); alpha_set = set(alpha_index_array)
-    intersection = list(mach_set.intersection(alpha_index_array))
-
-    if len(intersection) == 0:
-        return Cd_list[-1]
-
-    index = intersection[0]
-    return cd[index]
-
-#* Constants
-# Mass of the rocket (dry)
-m = 21.22  #kg
-# acceleration of gravity
-g = 9.81 #m/s^2
-# length of rocket
-l_rocket = 3.02
-
-# nosecone angle (rad)
-angle = 0.069189
-###! Ignore this if this doesn't work
-#* Total length of Rocket
-l = 3.0226
-#* Rocket outer diameter
-D = 0.1056132
-d_b = D
-d_d = D
-#* Body Tube Length
-L_b = 2.2352
-#* Nose Cone Length
-L_n = 0.762
-#* Fin thickness
-T_f = 0.0029972
-#* true length of the fin from inner to outer edge/ root chord
-L_m = 0.2032
-#* Number of fins
-n = 3
-#* fin platform area
-A_fp = 0.011532235
-#* fin height
-d_f = 0.08255
-###! Ignore if this doesn't work
+RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
 # X points vertically
@@ -120,11 +65,9 @@ vel_f = constants.init_vel_f
 
 angvel_f = constants.init_angvel_f
 
-# Initialize lists to store values at all time steps
-
+# Initialize dictionary to store values at all time steps
 ref_a_vels = []
 
-# Dictionary for simulation values
 dic = {
        "pos_vals":     {"x":[], "y":[], "z":[]},
        "or_vals":      {"Yaw":[], "Pitch":[], "Roll":[]},
@@ -133,7 +76,6 @@ dic = {
        "accel_vals":   {"Ax":[], "Ay":[], "Az":[]},
        "angaccel_vals":{"Yaw accel":[], "Pitch accel":[], "Roll accel":[]}
        }
-
 
 # Time setup
 start_time = 0
@@ -152,11 +94,9 @@ l2 = 0
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
-I,c_m = rocket.I_new(0,0)
+I, c_m, m = rocket.I_new(0,0)
 Cd_list = []
 for t in time:
-
-    print()
 
     #* Velocity Conversions
     # Rotation from fixed to body frame, Velocity converstion to the body frame
@@ -177,24 +117,21 @@ for t in time:
                              [0]])
     moment_arm_a = R_ab @ moment_arm_b
 
-    # Calculate the reference area of the rocket
-    Sref_a, beta = rocket.sref(vel_b, l_rocket, D)
-
-    print(beta)
-
-    # Varying density function imported
+    # Density varies with altitude
     rho = atmosphere.density(pos_f[0][0])
 
     # Total drag coefficient of airframe function imported
-    Cd_total = drag_from_csv(pos_f[0][0],vel_b)
-
+    Cd_total = rasaero.drag_from_csv(pos_f[0][0],vel_b, RASaero, Cd_list)
+    
     # calculating the sum of aerodynamic forces on the rocket body
     v_mag = np.linalg.norm(vel_a)
 
-    Sref_a = np.pi*((D/2)**2)
+    #Approximation - use the area of a circle for reference area
+    Sref_a = rocket.sref_approx(constants.D)
 
+    #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
     F_a = -((rho* (v_mag**2) * Sref_a * Cd_total) / 2) * (vel_a/v_mag)
-    accel_a = F_a/m
+    accel_a = F_a/constants.m0
 
     # Calculate Torque from Aerodynamic Forces in the Aerodynamic Frame and convert to body frame
     torque_a = np.cross(moment_arm_a, F_a, axis=0)
@@ -207,7 +144,7 @@ for t in time:
 
     # Calculate acceleration in the body frame, convert to fixed frame and calculate total acceleration
     accel_b = R_ba @ accel_a
-    accel_f = R_fb @ accel_b - np.array([[g],[0],[0]])
+    accel_f = R_fb @ accel_b - np.array([[constants.g],[0],[0]])
 
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f[0][0]) == -1):
@@ -240,12 +177,7 @@ for t in time:
     dic["angaccel_vals"]["Pitch accel"].append(float(angaccel_f[1]))
     dic["angaccel_vals"]["Roll accel"].append(float(angaccel_f[2]))
 
-
-
-    Cd_list.append(Cd_total)
-    ref_a_vels.append(Sref_a)
-
-
+    #TODO: Add to dict
     Cd_list.append(Cd_total)
     ref_a_vels.append(Sref_a)
 
@@ -258,34 +190,18 @@ for t in time:
     vel_f = vel_f + accel_f*dt
 
 #Print Apogee and total time taken
-#print("APOGEE (ft):", conversion.m_to_ft(max(pos_vals[-1][0])))
 print("APOGEE (ft):", conversion.m_to_ft(max(dic["pos_vals"]["x"])))
 print("Total Time Taken (s):", t)
 
-#Calculate the number of steps simulated
+#* --------------------------------- Plotting --------------------------------- #
+
+#Calculate the number of steps simulated and create a new linspace
 simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time)))
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
-# # # checking the yaw pitch roll values
-yaw_vals = []
-pitch_vals = []
-roll_vals = []
-pitch_rate = []
-yaw_rate = []
-roll_rate = []
-
-# time = np.linspace(0,30,len(or_vals),endpoint=False)
-for x in np.arange(0,len(dic["angvel_vals"]["Yaw rate"])):
-
-    yaw_vals.append(dic["or_vals"]["Yaw"][x])
-    pitch_vals.append(dic["or_vals"]["Pitch"][x])
-    roll_vals.append(dic["or_vals"]["Roll"][x])
-    yaw_rate.append(dic["angvel_vals"]["Yaw rate"][x])
-    pitch_rate.append(dic["angvel_vals"]["Pitch rate"][x])
-    roll_rate.append(dic["angvel_vals"]["Roll rate"][x])
-
-
-plt.plot(time_flight,yaw_vals, label="Yaw Rate", linewidth = 3); plt.plot(time_flight,pitch_vals, label="Pitch Rate", linewidth = 3); #plt.plot(time_flight,roll_vals, label="Roll Rate")
+plt.plot(time_flight,dic["or_vals"]["Yaw"], label="Yaw Rate", linewidth = 3)
+plt.plot(time_flight,dic["or_vals"]["Pitch"], label="Pitch Rate", linewidth = 3)
+# plt.plot(time_flight,dic["or_vals"]["Roll"], label="Roll Rate")
 plt.ylabel("Rad",fontsize = 18); plt.xlabel("Time", fontsize = 18)
 plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
 plt.legend(fontsize = 20)
@@ -315,9 +231,6 @@ plot.plot_accel_time(dic["accel_vals"], time_flight)
 # print(yaw_vals)
 # Plot acceleration
 # plot.plot_accel_time(accel_vals,time_flight)
-
-
-
 
 # plotting reference area of the rocket against time
 # plt.figure(dpi = 200)
