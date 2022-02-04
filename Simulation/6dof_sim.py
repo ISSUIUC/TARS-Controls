@@ -22,8 +22,7 @@ import src.RASAero_lookup as rasaero
 #TODO: Move csv drag function into src library
 #TODO: Double check moment of Inertia values
 
-#* Importing RasAero Package
-RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
+
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
 # X points vertically
@@ -55,6 +54,9 @@ RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 # pos_f-> position in the fixed frame
 # angvel_b-> angular velocity in the body frame
 #* ------------------------------ Simulation Code ----------------------------- #
+
+# Importing RasAero Package for Coeffiecient of Drag Lookup
+RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
 # NumPy arrays to store current states
 pos_f = constants.init_pos_f
