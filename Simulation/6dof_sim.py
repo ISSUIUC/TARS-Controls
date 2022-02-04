@@ -19,7 +19,6 @@ import src.RASAero_lookup as rasaero
 #TODO: Add other values into dictionary
 #TODO: Plotting Functions
     # Alpha, Beta, Sref, Yaw, Pitch, Roll
-#TODO: Move csv drag function into src library
 #TODO: Double check moment of Inertia values
 
 
@@ -55,7 +54,7 @@ import src.RASAero_lookup as rasaero
 # angvel_b-> angular velocity in the body frame
 #* ------------------------------ Simulation Code ----------------------------- #
 
-# Importing RasAero Package for Coeffiecient of Drag Lookup
+# turImporting RasAero Package for Coeffiecient of Drag Lookup
 RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
 # NumPy arrays to store current states
