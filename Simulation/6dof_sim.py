@@ -200,15 +200,19 @@ print("Total Time Taken (s):", t)
 simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time)))
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
-plt.plot(time_flight,dic["or_vals"]["Yaw"], label="Yaw Rate", linewidth = 3)
-plt.plot(time_flight,dic["or_vals"]["Pitch"], label="Pitch Rate", linewidth = 3)
-# plt.plot(time_flight,dic["or_vals"]["Roll"], label="Roll Rate")
-plt.ylabel("Rad",fontsize = 18); plt.xlabel("Time", fontsize = 18)
-plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
-plt.legend(fontsize = 20)
+plot.plot_3d(dic["pos_vals"],0)
 plt.show()
 
-plot.plot_accel_time(dic["accel_vals"], time_flight)
+
+# plt.plot(time_flight,dic["or_vals"]["Yaw"], label="Yaw Rate", linewidth = 3)
+# plt.plot(time_flight,dic["or_vals"]["Pitch"], label="Pitch Rate", linewidth = 3)
+# # plt.plot(time_flight,dic["or_vals"]["Roll"], label="Roll Rate")
+# plt.ylabel("Rad",fontsize = 18); plt.xlabel("Time", fontsize = 18)
+# plt.xticks(fontsize = 14);plt.yticks(fontsize = 14)
+# plt.legend(fontsize = 20)
+# plt.show()
+
+# plot.plot_accel_time(dic["accel_vals"], time_flight)
 
 
 # # #? Coefficient of Drag Plot

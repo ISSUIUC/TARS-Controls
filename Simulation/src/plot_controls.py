@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
-
 # plots a trajectory based on an array of 3d points
 def plot_3d(pos_vals, true_scale):
     fig = plt.figure()
@@ -17,12 +16,12 @@ def plot_3d(pos_vals, true_scale):
     if (true_scale):
         ax.set_ylim([-np.max(z), np.max(z)])
         ax.set_xlim([-np.max(z), np.max(z)])
-    ax.scatter(x,y,z, color = "tab:blue", alpha=1, label="Trajectory")
-    plt.legend(fontsize = 20)
-    plt.ylim([-20,20]);plt.xlim([-20,20])
-    
-    
 
+    ax.scatter(y,z,x, color = "tab:blue", alpha=1, label="Rocket Trajectory")
+    ax.set_xlabel("X (m) ")
+    plt.legend(fontsize = 15)
+    # plt.ylim([-20,20]);plt.xlim([-20,20])
+    
 # plots a trajectory based on an array of 3d points 
 # color maps the velocity based on a vector of velocity magnitudes
 def plot_3d_vel(pos_vals, velocities, true_scale):
