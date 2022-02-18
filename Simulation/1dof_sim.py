@@ -16,6 +16,7 @@ import src.rocket as rocket
 import src.rotation as rotation
 import src.RASAero_lookup as rasaero
 import src.altimeter as altimeter
+import src.kalman_filter as kalman
 
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
@@ -56,6 +57,8 @@ RASaero = pd.read_csv("Lookup/RASAero.csv")
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
 I, c_m, m = rocket.I_new(0,0)
 
+s_dt = .003
+
 # Initialize dictionary to store values at all time steps
 ref_a_vels = []
 
@@ -79,10 +82,8 @@ pos_f_noise = constants.x
 vel_f = constants.vx
 
 #* Kalman Filter Initialization
-# Initialize states (x), measurement function (H)
-s_dt = 0.003
-x_k = np.array([[pos_f],
-                [vel_f]])
+# Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
+kalman.initialize(pos_f,vel_f, s_dt)
 
 # x_k = np.array([[pos_f_noise],
 #                 [vel_f]])
@@ -90,19 +91,6 @@ x_k = np.array([[pos_f],
 # F = np.array([[1. , 0.003],
             #   [0., 0.99999991]])
 
-F = np.array([[1. , 0.003],
-              [0., 1]])
-
-H = np.array([float(1),0])
-B = np.array([[float(1)],
-              [0]])
-
-# Initialize belief in state 
-# (Covariance [P], White Noise [Q], Measurement Noise Function [R])
-P_k = np.array([[0.01,0],
-              [0,1]])
-Q = Q_continuous_white_noise(dim=2, dt=s_dt ,spectral_density=1)
-R = np.array([1350.0])
 
 # Time setup
 start_time = 0
@@ -123,15 +111,14 @@ for t in time:
     # A-priori 
     #x(-) = Fx + Bu
     #P(-) = FPF.T + Q
-    x_priori = (F @ x_k) + (B @ u)
-    P_priori = (F @ P_k @ F.T) + Q
+    kalman.priori(u)
     
     # Density varies with altitude
     rho = atmosphere.density(pos_f)
 
     # Total drag coefficient of airframe 
-    # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
-    Cd_total = 0
+    Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
+    # Cd_total = 0
 
     #Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D)
@@ -164,17 +151,15 @@ for t in time:
     # A-posteriori update
     # Kalman Gain, posteriori state, Covariance update
     # Update State Guess
+    
     K = P_priori @ H.T * np.reciprocal(H @ P_priori @ H.T + R)
     x_k = x_priori + K @ (np.array([[pos_f],[vel_f]]) - H @ x_priori)
     #x_k = x_priori + K @ (np.array([[pos_f_noise],[vel_f]]) - H @ x_priori)
     P_k = (np.eye(2) - K@H) @ P_priori
+    kalman.update(pos_f, vel_f, Sref_a, rho)
     
-    # F[1][1] = 1 + (Sref_a*rho*0.58*vel_f * s_dt)
-    
-    kalman_dic["alt"].append(x_k[0][0])
-    kalman_dic["vel"].append(x_k[0][1])
-
-    # F[2,2] = 
+    kalman_dic["alt"].append(kalman.x_k[0][0])
+    kalman_dic["vel"].append(kalman.x_k[0][1])
     
 #Print Apogee and total time taken
 print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
@@ -182,7 +167,7 @@ print("Total Time Taken (s):", t)
 
 #* --------------------------------- Plotting --------------------------------- #
 #Calculate the number of steps simulated and create a new linspace
-simulated_steps = int(total_steps * ((t+dt - start_time) / (end_time - start_time)))
+simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time)))
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 
