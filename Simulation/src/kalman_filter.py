@@ -58,7 +58,7 @@ def update(pos_f, vel_f, Sref_a, rho):
     K = P_priori @ H.T * np.reciprocal(H @ P_priori @ H.T + R)
     x_k = x_priori + K @ (np.array([[pos_f],[vel_f]]) - H @ x_priori)
     P_k = (np.eye(2) - K@H) @ P_priori
-    F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
+    # F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
 
 
 

@@ -51,7 +51,7 @@ import src.kalman_filter as kalman
 #* ------------------------------ Simulation Code ----------------------------- #
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
-RASaero = pd.read_csv("Lookup/RASAero.csv")
+RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
@@ -68,7 +68,8 @@ dic = {
        "vel": [],
        "accel": [],
        "CD": [],
-       "Sref": []
+       "Sref": [],
+       "time_sim": []
        }
 
 kalman_dic = {
@@ -78,19 +79,12 @@ kalman_dic = {
 
 # Initial Values
 pos_f = constants.x
-pos_f_noise = constants.x
+pos_f_noise = altimeter.alt_noise(constants.x)
 vel_f = constants.vx
 
 #* Kalman Filter Initialization
 # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-kalman.initialize(pos_f,vel_f, s_dt)
-
-# x_k = np.array([[pos_f_noise],
-#                 [vel_f]])
-
-# F = np.array([[1. , 0.003],
-            #   [0., 0.99999991]])
-
+kalman.initialize(pos_f_noise,vel_f, s_dt)
 
 # Time setup
 start_time = 0
@@ -109,8 +103,6 @@ u = np.array([l])
 for t in time:
     
     # A-priori 
-    #x(-) = Fx + Bu
-    #P(-) = FPF.T + Q
     kalman.priori(u)
     
     # Density varies with altitude
@@ -141,22 +133,15 @@ for t in time:
     dic["accel"].append(float(accel_f))
     dic["CD"].append(float(Cd_total))
     dic["Sref"].append(float(Sref_a))
+    dic["time_sim"].append(float(t))
 
     # Calculate new velocities and positions using current values
     pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
-    pos_f_noise = altimeter.altimeter(pos_f)
+    pos_f_noise = altimeter.alt_noise(pos_f)
     vel_f = vel_f + accel_f*dt
     
-    # Received Sensor Measurements
     # A-posteriori update
-    # Kalman Gain, posteriori state, Covariance update
-    # Update State Guess
-    
-    K = P_priori @ H.T * np.reciprocal(H @ P_priori @ H.T + R)
-    x_k = x_priori + K @ (np.array([[pos_f],[vel_f]]) - H @ x_priori)
-    #x_k = x_priori + K @ (np.array([[pos_f_noise],[vel_f]]) - H @ x_priori)
-    P_k = (np.eye(2) - K@H) @ P_priori
-    kalman.update(pos_f, vel_f, Sref_a, rho)
+    kalman.update(pos_f_noise, vel_f, Sref_a, rho)
     
     kalman_dic["alt"].append(kalman.x_k[0][0])
     kalman_dic["vel"].append(kalman.x_k[0][1])
@@ -166,9 +151,15 @@ print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
 print("Total Time Taken (s):", t)
 
 #* --------------------------------- Plotting --------------------------------- #
-#Calculate the number of steps simulated and create a new linspace
-simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time)))
-time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
+
+# Measurements vs Kalman Filter Graph
+plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
+plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue")
+plt.plot(dic["time_sim"], kalman_dic["alt"],label="Estimation",linestyle="--",color="tab:red")
+plt.xlabel("Time (sec)")
+plt.ylabel("Altitude (m)")
+plt.legend()
+plt.show()
 
 
 # # Acceleration Plot
@@ -184,12 +175,12 @@ time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 # plt.show()
 
 # Altitude Plot
-plt.plot(time_flight,dic["x"])
-plt.plot(time_flight,dic["x_noise"])
-plt.plot(time_flight,kalman_dic["alt"])
-plt.ylabel("Altitude $(m)$")
-plt.xlabel("Time (s)")
-plt.show()
+# plt.plot(time_flight,dic["x"])
+# plt.plot(time_flight,dic["x_noise"])
+# plt.plot(time_flight,kalman_dic["alt"])
+# plt.ylabel("Altitude $(m)$")
+# plt.xlabel("Time (s)")
+# plt.show()
 
 # # CD Plot
 # plt.plot(time_flight,dic["CD"])
