@@ -33,7 +33,7 @@ def initialize(pos_f, vel_f, time_step):
     B = np.array([[1.0],
                     [0.0]])
 
-    # (Covariance [P]
+    # Covariance [P]
     P_k = np.array([[.018,0.009],
                     [0.00005,0.009]])
 
@@ -46,8 +46,9 @@ def initialize(pos_f, vel_f, time_step):
 # Set priori state (guess of next step)
 def priori(u):
     global x_priori, P_priori
-
-    x_priori = (F @ x_k) + (B @ u)
+    
+    # x_priori = (F @ x_k) + ((B @ u).T) #* For some reason doesnt work when B or u is = 0
+    x_priori = F @ x_k
     P_priori = (F @ P_k @ F.T) + Q
 
 # Update Kalman Gain, posteriori state (guess of current step with new data), Covariance update
@@ -58,6 +59,12 @@ def update(pos_f, vel_f, Sref_a, rho):
     K = P_priori @ H.T * np.reciprocal(H @ P_priori @ H.T + R)
     x_k = x_priori + K @ (np.array([[pos_f],[vel_f]]) - H @ x_priori)
     P_k = (np.eye(2) - K@H) @ P_priori
+    
+    # Add to Kalman Dictionary
+    kalman_dic["alt"].append(x_k[0][0])
+    kalman_dic["vel"].append(x_k[1][0])
+    
+    # Extended KF
     # F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
 
 
