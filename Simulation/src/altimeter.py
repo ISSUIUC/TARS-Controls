@@ -8,7 +8,7 @@ def alt_noise(z):
     
     # starting values were +- 1200
     
-    alt_range = 12000
+    alt_range = 1200
     random_decimal = random.randrange(-alt_range,alt_range)/100
     #random_decimal = random.randrange(-10000,10000)/100
 
