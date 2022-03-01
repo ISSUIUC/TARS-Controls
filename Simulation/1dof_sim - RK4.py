@@ -57,7 +57,7 @@ RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
 I, c_m, m = rocket.I_new(0,0)
 
-s_dt = .003
+s_dt = .012
 
 # Initialize dictionary to store values at all time steps
 ref_a_vels = []
@@ -84,8 +84,23 @@ pos_f = constants.x
 pos_f_noise = altimeter.alt_noise(constants.x)
 vel_f = constants.vx
 
-#* Calculating the total mechanical energy, this is assumed to be a constant 
-E_tot = m*9.81*pos_f + 0.5*m*vel_f**2
+# Initial Values for Rk4
+rk4_0 = np.array([pos_f, vel_f])
+rk4_k = rk4_0
+
+# constructing the acceleration vector 
+# ---> derivative of position and velocity
+def accel(u):
+    r1 = u[0]
+    v1 = u[1]
+
+    F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
+    accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
+    accel_f = accel_a - constants.g
+
+    f1 = np.array([v1, accel_f])
+
+    return f1
 
 #* Kalman Filter Initialization
 # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
@@ -94,7 +109,7 @@ kalman.initialize(pos_f_noise,vel_f, s_dt)
 # Time setup
 start_time = 0
 end_time = 30
-total_steps = 10000
+total_steps = 2500
 time = np.linspace(start_time,end_time,total_steps,endpoint=False)
 dt = time[1] - time[0]
 
@@ -110,6 +125,8 @@ for t in time:
     # A-priori 
     kalman.priori(u)
     
+    pos_f = rk4_k[0]
+    vel_f = rk4_k[1]
     # Density varies with altitude
     rho = atmosphere.density(pos_f)
 
@@ -117,45 +134,43 @@ for t in time:
     Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
     # Cd_total = 0
 
-    #Approximation - use the area of a circle for reference area
+    # Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D)
 
-    #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
-    F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
-    accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
-    accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+    # rk4 iteration 
+    y1 = accel(rk4_k)
+    y2 = accel(rk4_k + 0.5*dt*y1)
+    y3 = accel(rk4_k + 0.5*dt*y2)
+    y4 = accel(rk4_k + dt*y3)
+    rk4_kp1 = rk4_k + dt*(y1 + 2*y2 + 2*y3 + y4)/6
+    r_kp1 = rk4_kp1[0]; v_kp1 = rk4_kp1[1]
+
+    # calculating acceleration
+    # F_a = -((rho* (v_kp1**2) * Sref_a * Cd_total) / 2)
+    # accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
+    # accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+
     #* End simulation if rocket reached apogee
-    if (np.sign(vel_f) == -1):
+    if (np.sign(rk4_kp1[1]) == -1):
         break
 
     #* Updating Values
     
+    rk4_k = rk4_kp1
+
     # Append Values to the Arrays
-    dic["x"].append(float(pos_f))
+    dic["x"].append(float(rk4_k[0]))
     dic["x_noise"].append(float(pos_f_noise))
-    dic["vel"].append(float(vel_f))
-    dic["accel"].append(float(accel_f))
+    dic["vel"].append(float(rk4_k[1]))
+    # dic["accel"].append(float(accel_f?))
     dic["CD"].append(float(Cd_total))
     dic["Sref"].append(float(Sref_a))
     dic["time_sim"].append(float(t))
-
-    # Calculate new velocities and positions using current values
-    pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
-    pos_f_noise = altimeter.alt_noise(pos_f)
-    vel_f = vel_f + accel_f*dt
     
+
+    pos_f_noise = altimeter.alt_noise(rk4_k[0])
     # A-posteriori update
-    kalman.update(pos_f_noise, vel_f, Sref_a, rho)
-
-    # calculating the predicted altitude from the energy equation
-    h_predict = (0.5*vel_f**2 + 9.81*pos_f)/9.81
-
-    # constant a for scaling 
-    c = 0.000011
-    y_predict_update = h_predict  + c*(vel_f**2)*(11764.414956131044164 - h_predict)
-    dic["predict_alt"].append(float(h_predict))
-    dic["predict_update_alt"].append(float(y_predict_update))
-
+    kalman.update(pos_f_noise, rk4_kp1[1], Sref_a, rho)
     
     kalman_dic["alt"].append(kalman.x_k[0][0])
     kalman_dic["vel"].append(kalman.x_k[0][1])
@@ -166,30 +181,30 @@ print("Total Time Taken (s):", t)
 
 #* --------------------------------- Plotting --------------------------------- #
 #? Calculating the difference between the predicted altitude and actual altitude 
-difference_pre = []
-difference_post = []
-for num in np.arange(0,len(dic["predict_alt"])):
-    D = dic["predict_alt"][num] - max(dic["x"])
-    d = dic["predict_update_alt"][num] - max(dic["x"])
-    difference_pre.append(D)
-    difference_post.append(d)
+# difference_pre = []
+# difference_post = []
+# for num in np.arange(0,len(dic["predict_alt"])):
+#     D = dic["predict_alt"][num] - max(dic["x"])
+#     d = dic["predict_update_alt"][num] - max(dic["x"])
+#     difference_pre.append(D)
+#     difference_post.append(d)
 
 
 
 # Measurements vs Kalman Filter Graph
-# plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
-plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue", linewidth = 3); plt.legend(fontsize = 10); plt.ylabel("Altitude (m)", fontsize = 14)
-# plt.plot(dic["time_sim"], kalman_dic["alt"],label="Estimation",linestyle="--",color="tab:red")
-plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_alt"],label="Predicted Apogee - Energy Method",linestyle="--", color="tab:green", linewidth = 4.5); plt.legend(fontsize = 10); 
-plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_update_alt"], label="Corrected Prediction", color="tab:cyan", linestyle="dotted", linewidth = 4.5);
-plt.subplot(1,2,1); plt.axhline(y = max(dic["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
+plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue", linewidth = 3); 
+plt.plot(dic["time_sim"], kalman_dic["alt"],label="Estimation",linestyle="--",color="tab:red")
+# plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_alt"],label="Predicted Apogee - Energy Method",linestyle="--", color="tab:green", linewidth = 4.5); plt.legend(fontsize = 10); 
+# plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_update_alt"], label="Corrected Prediction", color="tab:cyan", linestyle="dotted", linewidth = 4.5);
+# plt.subplot(1,2,1); plt.axhline(y = max(dic["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 
 # plt.plot(dic["time_sim"][:-1], difference, label="Difference between Alt_predicted and True", color="tab:blue", linewidth = 3.5, linestyle = "dotted")
-plt.subplot(1,2,2); plt.plot(dic["vel"], difference_pre, label="Pre-correction Error", color="tab:orange", linestyle="dotted", linewidth = 4.5)
-plt.subplot(1,2,2); plt.plot(dic["vel"], difference_post, label="Post-correction Error", color="tab:green", linestyle="dotted", linewidth = 4.5)
+# plt.subplot(1,2,2); plt.plot(dic["vel"], difference_pre, label="Pre-correction Error", color="tab:orange", linestyle="dotted", linewidth = 4.5)
+# plt.subplot(1,2,2); plt.plot(dic["vel"], difference_post, label="Post-correction Error", color="tab:green", linestyle="dotted", linewidth = 4.5)
 
-plt.xlabel("Velocity (m/s)", fontsize = 14)
-plt.ylabel("Error", fontsize = 14)
+plt.xlabel("Time (s)", fontsize = 14)
+plt.ylabel("Altitude (m)", fontsize = 14)
 plt.legend(fontsize = 14)
 plt.show()
 
