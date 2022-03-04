@@ -52,8 +52,9 @@ def initialize(pos_f, vel_f, accel_f, time_step):
     # Measurement Noise Function [R]
     # High-G Accel: 49 - 195 m-Gs accuracy
     # Low-G Accel: .25 m-G accuracy
-    R = np.array([[12.0],
-                  [1.4]])
+    # MUST BE SQUARE
+    R = np.array([[12.0,0],
+                  [0,1.4]])
 
 # Set priori state (guess of next step)
 def priori(u):
