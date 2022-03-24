@@ -102,6 +102,67 @@ def accel(u, rho):
 
     return f1
 
+def rk4_step(state, dt, rho):
+    # rk4 iteration 
+    y1 = accel(state, rho)
+    y2 = accel(state + 0.5*dt*y1, rho)
+    y3 = accel(state + 0.5*dt*y2, rho)
+    y4 = accel(state + dt*y3, rho)
+    rk4_kp1 = state + dt*(y1 + 2*y2 + 2*y3 + y4)/6
+    return rk4_kp1    
+
+def rk4(state, dt):
+    
+    kalman.initialize(pos_f_noise,vel_f, s_dt)
+    
+    while (state[1] > 0):
+        
+        # Define initial flap length at start of control time
+        l = 0
+        u = np.array([l])
+        
+        # A-priori 
+        # kalman.priori(u)
+        
+        # grabbing the current states
+        pos_f = rk4_k[0]
+        pos_f_noise = altimeter.alt_noise(pos_f)
+        vel_f = rk4_k[1]
+        
+        # Density varies with altitude
+        rho = atmosphere.density(pos_f)
+        
+        # Total drag coefficient of airframe 
+        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
+
+        # Approximation - use the area of a circle for reference area
+        Sref_a = rocket.sref_approx(constants.D)
+
+        # rk4 iteration 
+        rk4_kp1 = rk4_step(state, dt, rho)
+        
+        # Append Values to the Arrays
+        dic["x"].append(float(pos_f))
+        dic["x_noise"].append(float(pos_f_noise))
+        dic["vel"].append(float(vel_f))
+        # dic["accel"].append(float(accel_f?))
+        dic["CD"].append(float(Cd_total))
+        dic["Sref"].append(float(Sref_a))
+        dic["time_sim"].append(float(t))
+        
+        # A-posteriori update
+        kalman.update(pos_f_noise, rk4_kp1[1], Sref_a, rho)
+        
+        rk4_k = rk4_kp1
+                
+    return rk4_k
+        
+        
+
+    
+    
+    
+
 #* Kalman Filter Initialization
 # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
 kalman.initialize(pos_f_noise,vel_f, s_dt)
@@ -132,8 +193,8 @@ for t in time:
     rho = atmosphere.density(pos_f)
 
     # Total drag coefficient of airframe 
-    Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
-    # Cd_total = 0
+    # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
+    Cd_total = 0.5
 
     # Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D)
@@ -177,7 +238,7 @@ for t in time:
     # using the previously defined time steps, total_steps can be adjusted based on the amount of computation
     start_time_rk4 = 0
     end_time_rk4 = 30
-    total_steps_rk4 = 1000
+    total_steps_rk4 = 30
     time_rk4 = np.linspace(start_time,end_time,total_steps,endpoint=False)
     dt_rk4 = time[1] - time[0]
     # RK4 within the loop starting conditions 
@@ -194,7 +255,8 @@ for t in time:
         vel_f_rk4 = rk4_k_new[1]
         # grabbing current atmospheric properties 
         rho_rk4 = atmosphere.density(pos_f_rk4)
-        Cd_total_rk4 = rasaero.drag_lookup_1dof(pos_f_rk4,vel_f_rk4,RASaero,dic["CD"])
+        # Cd_total_rk4 = rasaero.drag_lookup_1dof(pos_f_rk4,vel_f_rk4,RASaero,dic["CD"])
+        Cd_total_rk4 = 0.5
         # new rk4 iteration 
         y1_new = accel(rk4_k_new, rho_rk4)
         y2_new = accel(rk4_k_new + 0.5*dt_rk4*y1_new, rho_rk4)
