@@ -90,10 +90,10 @@ rk4_k = rk4_0
 
 # constructing the acceleration vector 
 # ---> derivative of position and velocity
-def accel(u, rho):
+def accel(u, rho, Cd_total):
     r1 = u[0]
     v1 = u[1]
-
+    
     F_a = -((rho* (v1**2) * Sref_a * Cd_total) / 2)
     accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
     accel_f = accel_a - constants.g
@@ -200,10 +200,10 @@ for t in time:
     Sref_a = rocket.sref_approx(constants.D)
 
     # rk4 iteration 
-    y1 = accel(rk4_k, rho)
-    y2 = accel(rk4_k + 0.5*dt*y1, rho)
-    y3 = accel(rk4_k + 0.5*dt*y2, rho)
-    y4 = accel(rk4_k + dt*y3, rho)
+    y1 = accel(rk4_k, rho, Cd_total)
+    y2 = accel(rk4_k + 0.5*dt*y1, rho, Cd_total)
+    y3 = accel(rk4_k + 0.5*dt*y2, rho, Cd_total)
+    y4 = accel(rk4_k + dt*y3, rho, Cd_total)
     rk4_kp1 = rk4_k + dt*(y1 + 2*y2 + 2*y3 + y4)/6
     r_kp1 = rk4_kp1[0]; v_kp1 = rk4_kp1[1]
 
@@ -238,8 +238,8 @@ for t in time:
     # using the previously defined time steps, total_steps can be adjusted based on the amount of computation
     start_time_rk4 = 0
     end_time_rk4 = 30
-    total_steps_rk4 = 30
-    time_rk4 = np.linspace(start_time,end_time,total_steps,endpoint=False)
+    total_steps_rk4 = 1000
+    time_rk4 = np.linspace(start_time_rk4,end_time_rk4,total_steps_rk4,endpoint=False)
     dt_rk4 = time[1] - time[0]
     # RK4 within the loop starting conditions 
     rk4_0_new = np.array([pos_f, vel_f])
@@ -258,10 +258,10 @@ for t in time:
         # Cd_total_rk4 = rasaero.drag_lookup_1dof(pos_f_rk4,vel_f_rk4,RASaero,dic["CD"])
         Cd_total_rk4 = 0.5
         # new rk4 iteration 
-        y1_new = accel(rk4_k_new, rho_rk4)
-        y2_new = accel(rk4_k_new + 0.5*dt_rk4*y1_new, rho_rk4)
-        y3_new = accel(rk4_k_new + 0.5*dt_rk4*y2_new, rho_rk4)
-        y4_new = accel(rk4_k_new + dt_rk4*y3_new, rho_rk4)
+        y1_new = accel(rk4_k_new, rho_rk4, Cd_total_rk4)
+        y2_new = accel(rk4_k_new + 0.5*dt_rk4*y1_new, rho_rk4, Cd_total_rk4)
+        y3_new = accel(rk4_k_new + 0.5*dt_rk4*y2_new, rho_rk4, Cd_total_rk4)
+        y4_new = accel(rk4_k_new + dt_rk4*y3_new, rho_rk4, Cd_total_rk4)
         rk4_kp1_new = rk4_k_new + dt_rk4*(y1_new + 2*y2_new + 2*y3_new + y4_new)/6
         r_kp1_new = rk4_kp1_new[0]; v_kp1_new = rk4_kp1_new[1]
 

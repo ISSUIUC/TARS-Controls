@@ -34,11 +34,11 @@ def initialize(pos_f, vel_f, time_step):
                     [0.0]])
 
     # (Covariance [P]
-    P_k = np.array([[.018,0.009],
-                    [0.00005,0.009]])
+    P_k = np.array([[.0714,0.0356],
+                    [-0.0003419,0.03548]])
 
     # White Noise [Q]
-    Q = Q_continuous_white_noise(dim=2, dt=s_dt, spectral_density=.00899)
+    Q = Q_continuous_white_noise(dim=2, dt=s_dt, spectral_density=.0358)
 
     # Measurement Noise Function [R]
     R = np.array([12.0])
@@ -59,6 +59,7 @@ def update(pos_f, vel_f, Sref_a, rho):
     x_k = x_priori + K @ (np.array([[pos_f],[vel_f]]) - H @ x_priori)
     P_k = (np.eye(2) - K@H) @ P_priori
     # F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
+    # print(P_k)
 
 
 
