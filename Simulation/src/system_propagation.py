@@ -5,6 +5,7 @@ from scipy import linalg
 from sympy import Matrix, false
 from mpl_toolkits import mplot3d
 import pandas as pd
+import time as timer
 
 #* Import Helper Function Library
 import src.atmosphere as atmosphere
@@ -40,7 +41,7 @@ def rk4_step(state, dt, rho, cd, sref):
     rk4_kp1 = state + dt*(y1 + 2*y2 + 2*y3 + y4)/6
     return rk4_kp1
 
-def rk4_inner(initial_state, dt, cd_file):
+def rk4_inner(initial_state, dt, cd_file, poly):
     #* Returns Predicted Altitude
     
     # Initialize starting state and time
@@ -61,10 +62,12 @@ def rk4_inner(initial_state, dt, cd_file):
         
         # Density varies with altitude
         rho = atmosphere.density(pos_f)
+        mach = curr_state[1] / atmosphere.speed_sound(curr_state[0])
         
         # Total drag coefficient of airframe 
         # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,dict["CD"])
-        Cd_total = 0.5
+        # Cd_total = 0.5
+        Cd_total = np.poly1d(poly)(mach)
         
         # rk4 iteration
         predicted_x_vals = np.append(predicted_x_vals, curr_state[0])
@@ -74,16 +77,19 @@ def rk4_inner(initial_state, dt, cd_file):
     
     return max(predicted_x_vals)
 
-def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict):
+def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict, poly):
     
     # Initialize starting state and time
     curr_state = initial_state
     t = 0    
     s_dt = dt
-        
+    
+    # Cd vs Mach Number Polyfit
+    # poly = rasaero.drag_lookup_curve_fit_poly()
+
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-    kalman.initialize(pos_f_noise,initial_state[1], s_dt)
+    kalman.initialize(pos_f_noise,curr_state[1], s_dt)
     
     # Define max and min values for flap actuation
     l_max = conversion.ft_to_m(1/12) # 1 inch actuation length
@@ -108,8 +114,8 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict):
         rho = atmosphere.density(pos_f)
         
         # Total drag coefficient of airframe 
-        # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,dict["CD"])
-        Cd_total = 0.5
+        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,dict["CD"])
+        # Cd_total = 0.5
 
         # Approximation - use the area of a circle for reference area
         Sref_a = rocket.sref_approx(constants.D)
@@ -130,7 +136,11 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict):
         #* (Use Kalman Filter Approximation for starting conditions)
         inner_dt = 0.1
         
-        predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file)
+        # Prediction Runtime check
+        start = int(round(timer.time() * 1000))
+        predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file, poly)
+        end = int(round(timer.time() * 1000)) - start
+
         dict["predict_alt"].append(predicted_apogee)
         
         #TODO: Add check for only updating depending on s_dt
