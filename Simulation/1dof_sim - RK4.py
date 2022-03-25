@@ -5,6 +5,8 @@ from scipy import linalg
 from sympy import Matrix, false
 from mpl_toolkits import mplot3d
 import pandas as pd
+from filterpy.common import Q_continuous_white_noise
+import time as timer
 
 #* Import Helper Function Library
 import src.atmosphere as atmosphere
@@ -50,12 +52,20 @@ from src.system_propagation import rk4_sim
 # angvel_b-> angular velocity in the body frame
 #* ------------------------------ Simulation Code ----------------------------- #
 
+# Simulator Runtime check
+startsim = int(round(timer.time()))
+
 # Importing RasAero Package for Coeffiecient of Drag Lookup
 RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
 I, c_m, m = rocket.I_new(0,0)
+
+s_dt = .012
+
+# Cd vs Mach Number Polyfit
+poly = rasaero.drag_lookup_curve_fit_poly()
 
 # Initialize dictionary to store values at all time steps
 sim_dict = {
@@ -79,6 +89,158 @@ pos_f_noise = altimeter.alt_noise(constants.x)
 vel_f = constants.vx
 init_state = np.array([pos_f, vel_f])
 
+# DRAG LOOK UP
+
+# Initial Values for Rk4
+rk4_0 = np.array([pos_f, vel_f])
+rk4_k = rk4_0
+
+# constructing the acceleration vector 
+# ---> derivative of position and velocity
+def accel(u, rho, Cd_total):
+    r1 = u[0]
+    v1 = u[1]
+    
+    F_a = -((rho* (v1**2) * Sref_a * Cd_total) / 2)
+    accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
+    accel_f = accel_a - constants.g
+
+    f1 = np.array([v1, accel_f])
+
+    return f1
+
+#* Kalman Filter Initialization
+# Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
+kalman.initialize(pos_f_noise,vel_f, s_dt)
+
+# Time setup
+start_time = 0
+end_time = 30
+total_steps = 2500
+time = np.linspace(start_time,end_time,total_steps,endpoint=False)
+dt = time[1] - time[0]
+
+# Define max and min values for flap actuation
+l_max = conversion.ft_to_m(1/12) # 1 inch actuation length
+l_min = 0 # can't have negative actuation
+
+# Define initial flap length at start of control time
+l = 0
+u = np.array([l])
+for t in time:
+
+    
+    # A-priori 
+    kalman.priori(u)
+    # grabbing the current states
+    pos_f = rk4_k[0]
+    vel_f = rk4_k[1]
+    # Density varies with altitude
+    rho = atmosphere.density(pos_f)
+
+    # Total drag coefficient of airframe
+    Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
+    # Cd_total = 0
+
+    # Approximation - use the area of a circle for reference area
+    Sref_a = rocket.sref_approx(constants.D)
+
+    # rk4 iteration 
+    y1 = accel(rk4_k, rho, Cd_total)
+    y2 = accel(rk4_k + 0.5*dt*y1, rho, Cd_total)
+    y3 = accel(rk4_k + 0.5*dt*y2, rho, Cd_total)
+    y4 = accel(rk4_k + dt*y3, rho, Cd_total)
+    rk4_kp1 = rk4_k + dt*(y1 + 2*y2 + 2*y3 + y4)/6
+    r_kp1 = rk4_kp1[0]; v_kp1 = rk4_kp1[1]
+
+    # calculating acceleration
+    # F_a = -((rho* (v_kp1**2) * Sref_a * Cd_total) / 2)
+    # accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
+    # accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+
+    #* End simulation if rocket reached apogee
+    if (np.sign(rk4_k[1]) == -1):
+        break
+
+    #* Updating Values
+    
+    rk4_k = rk4_kp1
+
+    # Append Values to the Arrays
+    dic["x"].append(float(pos_f))
+    dic["x_noise"].append(float(pos_f_noise))
+    dic["vel"].append(float(vel_f))
+    # dic["accel"].append(float(accel_f?))
+    dic["CD"].append(float(Cd_total))
+    dic["Sref"].append(float(Sref_a))
+    dic["time_sim"].append(float(t))
+    
+
+    pos_f_noise = altimeter.alt_noise(pos_f)
+    # A-posteriori update
+    kalman.update(pos_f_noise, rk4_kp1[1], Sref_a, rho)
+
+    # here we implement another RK4 to find the predicted apogee using the states at this timestep
+    # using the previously defined time steps, total_steps can be adjusted based on the amount of computation
+    start_time_rk4 = 0
+    end_time_rk4 = 30
+    total_steps_rk4 = 1000
+    time_rk4 = np.linspace(start_time_rk4,end_time_rk4,total_steps_rk4,endpoint=False)
+    dt_rk4 = time[1] - time[0]
+    # RK4 within the loop starting conditions 
+    rk4_0_new = np.array([pos_f, vel_f])
+    rk4_k_new = rk4_0_new
+
+    # storing values for this Sim
+    x_predicted = []
+    v_predicted = []
+
+    # Prediction Runtime check
+    start = int(round(timer.time() * 1000))
+    #* Starting the RK4 within the loop 
+    for t1 in time_rk4:
+        # grabbing the current states 
+        pos_f_rk4 = rk4_k_new[0]
+        vel_f_rk4 = rk4_k_new[1]
+        # grabbing current atmospheric properties 
+        rho_rk4 = atmosphere.density(pos_f_rk4)
+        mach = vel_f_rk4 / atmosphere.speed_sound(pos_f_rk4)
+        Cd_total_rk4 = np.poly1d(poly)(mach)
+        # Cd_total_rk4 = rasaero.drag_lookup_1dof(pos_f_rk4,vel_f_rk4,RASaero,dic["CD"])
+        # new rk4 iteration 
+        y1_new = accel(rk4_k_new, rho_rk4, Cd_total_rk4)
+        y2_new = accel(rk4_k_new + 0.5*dt_rk4*y1_new, rho_rk4, Cd_total_rk4)
+        y3_new = accel(rk4_k_new + 0.5*dt_rk4*y2_new, rho_rk4, Cd_total_rk4)
+        y4_new = accel(rk4_k_new + dt_rk4*y3_new, rho_rk4, Cd_total_rk4)
+        rk4_kp1_new = rk4_k_new + dt_rk4*(y1_new + 2*y2_new + 2*y3_new + y4_new)/6
+        r_kp1_new = rk4_kp1_new[0]; v_kp1_new = rk4_kp1_new[1]
+
+        #* End simulation if rocket reached apogee
+        if (np.sign(rk4_k_new[1]) == -1):
+            break
+        # updating the values
+        rk4_k_new = rk4_kp1_new
+        # parsing the values
+        x_predicted.append(pos_f_rk4)
+        v_predicted.append(pos_f_rk4)
+
+    # Prediction Runtime check
+    end = int(round(timer.time() * 1000)) - start
+    
+    kalman_dic["alt"].append(kalman.x_k[0][0])
+    kalman_dic["vel"].append(kalman.x_k[0][1])
+    dic["predict_alt"].append(max(x_predicted))
+
+# Simulator Runtime check
+endsim = int(round(timer.time()))
+    
+#Print Apogee and total time taken
+print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
+print("Total Time Taken (s):", t)
+print("Simulator Runtime (s): ", endsim - startsim)
+
+#DRAG LOOK UP
+
 # Run Simulation
 dt = 0.03
 flight_time, kalman_dict = rk4_sim(init_state, pos_f_noise, dt, RASaero, sim_dict)
@@ -86,6 +248,7 @@ flight_time, kalman_dict = rk4_sim(init_state, pos_f_noise, dt, RASaero, sim_dic
 #Print Apogee and total time taken
 print("APOGEE (ft):", conversion.m_to_ft(max(sim_dict["x"])))
 print("Flight Time (s):", flight_time)
+
 
 #* --------------------------------- Plotting --------------------------------- #
 #? Calculating the difference between the predicted altitude and actual altitude 
