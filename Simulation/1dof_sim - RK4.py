@@ -6,6 +6,7 @@ from sympy import Matrix, false
 from mpl_toolkits import mplot3d
 import pandas as pd
 from filterpy.common import Q_continuous_white_noise
+import time as timer
 
 #* Import Helper Function Library
 import src.atmosphere as atmosphere
@@ -50,6 +51,9 @@ import src.kalman_filter as kalman
 # angvel_b-> angular velocity in the body frame
 #* ------------------------------ Simulation Code ----------------------------- #
 
+# Simulator Runtime check
+startsim = int(round(timer.time()))
+
 # Importing RasAero Package for Coeffiecient of Drag Lookup
 RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
@@ -58,6 +62,9 @@ RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 I, c_m, m = rocket.I_new(0,0)
 
 s_dt = .012
+
+# Cd vs Mach Number Polyfit
+poly = rasaero.drag_lookup_curve_fit_poly()
 
 # Initialize dictionary to store values at all time steps
 ref_a_vels = []
@@ -131,7 +138,7 @@ for t in time:
     # Density varies with altitude
     rho = atmosphere.density(pos_f)
 
-    # Total drag coefficient of airframe 
+    # Total drag coefficient of airframe
     Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
     # Cd_total = 0
 
@@ -187,6 +194,9 @@ for t in time:
     # storing values for this Sim
     x_predicted = []
     v_predicted = []
+
+    # Prediction Runtime check
+    start = int(round(timer.time() * 1000))
     #* Starting the RK4 within the loop 
     for t1 in time_rk4:
         # grabbing the current states 
@@ -194,7 +204,9 @@ for t in time:
         vel_f_rk4 = rk4_k_new[1]
         # grabbing current atmospheric properties 
         rho_rk4 = atmosphere.density(pos_f_rk4)
-        Cd_total_rk4 = rasaero.drag_lookup_1dof(pos_f_rk4,vel_f_rk4,RASaero,dic["CD"])
+        mach = vel_f_rk4 / atmosphere.speed_sound(pos_f_rk4)
+        Cd_total_rk4 = np.poly1d(poly)(mach)
+        # Cd_total_rk4 = rasaero.drag_lookup_1dof(pos_f_rk4,vel_f_rk4,RASaero,dic["CD"])
         # new rk4 iteration 
         y1_new = accel(rk4_k_new, rho_rk4, Cd_total_rk4)
         y2_new = accel(rk4_k_new + 0.5*dt_rk4*y1_new, rho_rk4, Cd_total_rk4)
@@ -212,15 +224,20 @@ for t in time:
         x_predicted.append(pos_f_rk4)
         v_predicted.append(pos_f_rk4)
 
-
+    # Prediction Runtime check
+    end = int(round(timer.time() * 1000)) - start
     
     kalman_dic["alt"].append(kalman.x_k[0][0])
     kalman_dic["vel"].append(kalman.x_k[0][1])
     dic["predict_alt"].append(max(x_predicted))
+
+# Simulator Runtime check
+endsim = int(round(timer.time()))
     
 #Print Apogee and total time taken
 print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
 print("Total Time Taken (s):", t)
+print("Simulator Runtime (s): ", endsim - startsim)
 
 #* --------------------------------- Plotting --------------------------------- #
 #? Calculating the difference between the predicted altitude and actual altitude 
