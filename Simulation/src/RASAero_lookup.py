@@ -27,16 +27,31 @@ def drag_from_csv(z, velocity_body, rasaero, Cd_list):
     index = intersection[0]
     return cd[index]
 
-def drag_lookup_1dof(z,vel,rasaero,Cd_list):
+def drag_lookup_1dof(z,vel,rasaero,Cd_list, l):
     # extracting the columns of interest
     mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
     # narrowing down the columns using mach number range (0.01 - 1.01)
     min_index = min(np.where(mach_num == 0.01)[0])
     max_index = min(np.where(mach_num == 1.01)[0])
     # re-make the lists using this range
-    mach_num = mach_num[min_index:max_index:1]; aoa = aoa[min_index:max_index:1]; cd = cd[min_index:max_index:1]; protub = protub[min_index:max_index:1]
+    mach_num = mach_num[min_index:max_index:1]; 
+    aoa = aoa[min_index:max_index:1]; 
+    cd = cd[min_index:max_index:1]; 
+    protub = protub[min_index:max_index:1]
+
+    # m_num = []; angle_of_attack = []; Cd = []; proTub = [];
+    # for i in np.arange(0, len(mach_num)):
+    #     if i % 32 == 0 or i % 32 == 1:
+    #         m_num.append(mach_num[i])
+    #         angle_of_attack.append(aoa[i])
+    #         Cd.append(cd[i])
+    #         proTub.append(protub[i])
+
     mach = round(vel / atmosphere.speed_sound(z),2)
- 
+    # if mach < 0.1:
+    #     mach = 0.1
+    # else:
+    #     mach = mach
     # Assuming vertical flight
     alpha = 0
 
@@ -47,5 +62,10 @@ def drag_lookup_1dof(z,vel,rasaero,Cd_list):
     if len(intersection) == 0:
         return Cd_list[-1]
 
-    index = intersection[0]
-    return cd[index]
+    # index = intersection[0]
+    index1 = intersection[0]; index2 = intersection[1]
+    Cd = cd[index1] + l*39.3701*(cd[index2] - cd[index1])
+    # index = m_num.index(mach)
+
+    # return cd[index]
+    return Cd
