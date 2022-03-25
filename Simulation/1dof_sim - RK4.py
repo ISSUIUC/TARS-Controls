@@ -18,6 +18,7 @@ import src.rotation as rotation
 import src.RASAero_lookup as rasaero
 import src.altimeter as altimeter
 import src.kalman_filter as kalman
+from src.system_propagation import rk4_sim
 
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
@@ -67,29 +68,28 @@ s_dt = .012
 poly = rasaero.drag_lookup_curve_fit_poly()
 
 # Initialize dictionary to store values at all time steps
-ref_a_vels = []
-
-dic = {
-       "x":[],
-       "x_noise":[],
-       "vel": [],
-       "accel": [],
-       "CD": [],
-       "Sref": [],
-       "time_sim": [],
-       "predict_alt": [],
-       "predict_update_alt": []
-       }
-
-kalman_dic = {
-        "alt": [],
-        "vel": []
+sim_dict = {
+    "x":[],
+    "x_noise":[],
+    "vel": [],
+    "accel": [],
+    "CD": [],
+    "Sref": [],
+    "time_sim": [],
+    "predict_alt": [],
+    "predict_update_alt": []
 }
+
+# Time between sensor readings / KF updates
+s_dt = 0.03
 
 # Initial Values
 pos_f = constants.x
 pos_f_noise = altimeter.alt_noise(constants.x)
 vel_f = constants.vx
+init_state = np.array([pos_f, vel_f])
+
+# DRAG LOOK UP
 
 # Initial Values for Rk4
 rk4_0 = np.array([pos_f, vel_f])
@@ -239,6 +239,17 @@ print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
 print("Total Time Taken (s):", t)
 print("Simulator Runtime (s): ", endsim - startsim)
 
+#DRAG LOOK UP
+
+# Run Simulation
+dt = 0.03
+flight_time, kalman_dict = rk4_sim(init_state, pos_f_noise, dt, RASaero, sim_dict)
+    
+#Print Apogee and total time taken
+print("APOGEE (ft):", conversion.m_to_ft(max(sim_dict["x"])))
+print("Flight Time (s):", flight_time)
+
+
 #* --------------------------------- Plotting --------------------------------- #
 #? Calculating the difference between the predicted altitude and actual altitude 
 # difference_pre = []
@@ -249,17 +260,15 @@ print("Simulator Runtime (s): ", endsim - startsim)
 #     difference_pre.append(D)
 #     difference_post.append(d)
 
-
-
 # Measurements vs Kalman Filter Graph
-plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
-plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue", linewidth = 3); 
-plt.plot(dic["time_sim"], kalman_dic["alt"],label="Estimation",linestyle="--",color="tab:red")
-plt.plot(dic["time_sim"], dic["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
+plt.plot(sim_dict["time_sim"], sim_dict["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
+plt.plot(sim_dict["time_sim"], sim_dict["x"],label="True Altitude",color="royalblue", linewidth = 3); 
+plt.plot(sim_dict["time_sim"], kalman_dict["alt"],label="Estimation",linestyle="--",color="tab:red")
+plt.plot(sim_dict["time_sim"], sim_dict["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
 # plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_alt"],label="Predicted Apogee - Energy Method",linestyle="--", color="tab:green", linewidth = 4.5); plt.legend(fontsize = 10); 
 # plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_update_alt"], label="Corrected Prediction", color="tab:cyan", linestyle="dotted", linewidth = 4.5);
 # plt.subplot(1,2,1); 
-plt.axhline(y = max(dic["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+plt.axhline(y = max(sim_dict["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 
 # plt.plot(dic["time_sim"][:-1], difference, label="Difference between Alt_predicted and True", color="tab:blue", linewidth = 3.5, linestyle = "dotted")
 # plt.subplot(1,2,2); plt.plot(dic["vel"], difference_pre, label="Pre-correction Error", color="tab:orange", linestyle="dotted", linewidth = 4.5)
