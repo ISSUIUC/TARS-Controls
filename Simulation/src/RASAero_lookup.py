@@ -27,7 +27,7 @@ def drag_from_csv(z, velocity_body, rasaero, Cd_list):
     index = intersection[0]
     return cd[index]
 
-def drag_lookup_1dof(z,vel,rasaero,Cd_list):
+def drag_lookup_1dof(z,vel,rasaero,Cd_list, input):
     # extracting the columns of interest
     mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
     # narrowing down the columns using mach number range (0.01 - 1.01)
@@ -47,8 +47,10 @@ def drag_lookup_1dof(z,vel,rasaero,Cd_list):
     if len(intersection) == 0:
         return Cd_list[-1]
 
-    index = intersection[0]
-    return cd[index]
+    # index = intersection[0]
+    index1 = intersection[0]; index2 = intersection[1]
+    Cd = cd[index1] + input*39.3701*(cd[index2] - cd[index1])
+    return Cd
 
 def drag_lookup_curve_fit_poly():
     mach = np.arange(.01, .99, .01)

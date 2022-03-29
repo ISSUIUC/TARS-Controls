@@ -50,7 +50,7 @@ def rk4_inner(initial_state, dt, cd_file, poly):
     predicted_x_vals = np.array([])
     
     # Approximation - use the area of a circle for reference area
-    Sref_a = rocket.sref_approx(constants.D)
+    Sref_a = rocket.sref_approx(constants.D, 0)
     
     # Simulate until apogee
     while (curr_state[1] > 0):
@@ -89,7 +89,8 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
     "Sref": [],
     "time_sim": [],
     "predict_alt": [],
-    "predict_update_alt": []
+    "predict_update_alt": [],
+    "flap_extension": []
     }
     
     start_time = int(round(timer.time()))
@@ -126,11 +127,11 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
         rho = atmosphere.density(pos_f)
         
         # Total drag coefficient of airframe 
-        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"])
+        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u[0])
         # Cd_total = 0.5
 
         # Approximation - use the area of a circle for reference area
-        Sref_a = rocket.sref_approx(constants.D)
+        Sref_a = rocket.sref_approx(constants.D, u[0])
 
         # rk4 iteration 
         next_state = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
@@ -143,6 +144,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
         sim_dict["CD"].append(float(Cd_total))
         sim_dict["Sref"].append(float(Sref_a))
         sim_dict["time_sim"].append(float(t))
+        sim_dict["flap_extension"].append(float(u[0]))
         
         # Run inner RK4 to find predicted apogee
         #* (Use Kalman Filter Approximation for starting conditions)
@@ -155,8 +157,10 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
         sim_dict["predict_alt"].append(predicted_apogee)
         
         # Control Code
-        
-
+        if (control):
+            k = -0.003
+            u = [-k*predicted_apogee]
+            
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
         kalman.update(pos_f_noise, curr_state[1], Sref_a, rho)
