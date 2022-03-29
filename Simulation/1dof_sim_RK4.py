@@ -52,8 +52,6 @@ from src.system_propagation import rk4_sim
 # angvel_b-> angular velocity in the body frame
 #* ------------------------------ Simulation Code ----------------------------- #
 
-
-
 # Importing RasAero Package for Coeffiecient of Drag Lookup
 RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
@@ -88,7 +86,7 @@ init_state = np.array([pos_f, vel_f])
 des_apogee = conversion.ft_to_m(30000) # meters
 
 # Run Simulation
-dt = 0.03
+dt = 0.006
 # Simulator Runtime check
 startsim = int(round(timer.time()))
 flight_time, kalman_dict = rk4_sim(init_state, pos_f_noise, dt, RASaero, sim_dict, poly)
@@ -120,7 +118,7 @@ plt.plot(sim_dict["time_sim"], sim_dict["predict_alt"], label="Predicted Apogee"
 # plt.subplot(1,2,1); 
 plt.axhline(y = max(sim_dict["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
-
+print(kalman_dict["alt"][-1] - sim_dict["x"][-1])
 
 
 # plt.plot(dic["time_sim"][:-1], difference, label="Difference between Alt_predicted and True", color="tab:blue", linewidth = 3.5, linestyle = "dotted")

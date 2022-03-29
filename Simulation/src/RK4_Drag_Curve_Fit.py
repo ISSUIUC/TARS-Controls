@@ -20,12 +20,9 @@ for i in mach:
 
 poly = np.polyfit(mach,cdlist, 18)
 pfit = np.poly1d(poly)(mach)
-print(poly.tolist())
 
 diff = pfit - cdlist
 maxDiff = np.amax(diff)
-print(maxDiff)
-print(cdlist)
 
 plt.plot(mach, cdlist, label = "lookup")
 plt.plot(mach, pfit, label = "polyfit")

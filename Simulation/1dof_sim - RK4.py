@@ -68,7 +68,7 @@ s_dt = .012
 poly = rasaero.drag_lookup_curve_fit_poly()
 
 # Initialize dictionary to store values at all time steps
-sim_dict = {
+dict = {
     "x":[],
     "x_noise":[],
     "vel": [],
@@ -128,7 +128,6 @@ l_min = 0 # can't have negative actuation
 l = 0
 u = np.array([l])
 for t in time:
-
     
     # A-priori 
     kalman.priori(u)
@@ -139,7 +138,7 @@ for t in time:
     rho = atmosphere.density(pos_f)
 
     # Total drag coefficient of airframe
-    Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
+    Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dict["CD"])
     # Cd_total = 0
 
     # Approximation - use the area of a circle for reference area
@@ -167,13 +166,13 @@ for t in time:
     rk4_k = rk4_kp1
 
     # Append Values to the Arrays
-    dic["x"].append(float(pos_f))
-    dic["x_noise"].append(float(pos_f_noise))
-    dic["vel"].append(float(vel_f))
+    dict["x"].append(float(pos_f))
+    dict["x_noise"].append(float(pos_f_noise))
+    dict["vel"].append(float(vel_f))
     # dic["accel"].append(float(accel_f?))
-    dic["CD"].append(float(Cd_total))
-    dic["Sref"].append(float(Sref_a))
-    dic["time_sim"].append(float(t))
+    dict["CD"].append(float(Cd_total))
+    dict["Sref"].append(float(Sref_a))
+    dict["time_sim"].append(float(t))
     
 
     pos_f_noise = altimeter.alt_noise(pos_f)
@@ -227,15 +226,15 @@ for t in time:
     # Prediction Runtime check
     end = int(round(timer.time() * 1000)) - start
     
-    kalman_dic["alt"].append(kalman.x_k[0][0])
-    kalman_dic["vel"].append(kalman.x_k[0][1])
-    dic["predict_alt"].append(max(x_predicted))
+    # kalman_dic["alt"].append(kalman.x_k[0][0])
+    # kalman_dic["vel"].append(kalman.x_k[0][1])
+    dict["predict_alt"].append(max(x_predicted))
 
 # Simulator Runtime check
 endsim = int(round(timer.time()))
     
 #Print Apogee and total time taken
-print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
+print("APOGEE (ft):", conversion.m_to_ft(max(dict["x"])))
 print("Total Time Taken (s):", t)
 print("Simulator Runtime (s): ", endsim - startsim)
 
@@ -243,10 +242,10 @@ print("Simulator Runtime (s): ", endsim - startsim)
 
 # Run Simulation
 dt = 0.03
-flight_time, kalman_dict = rk4_sim(init_state, pos_f_noise, dt, RASaero, sim_dict)
+flight_time, kalman_dict = rk4_sim(init_state, pos_f_noise, dt, RASaero, dict, poly)
     
 #Print Apogee and total time taken
-print("APOGEE (ft):", conversion.m_to_ft(max(sim_dict["x"])))
+print("APOGEE (ft):", conversion.m_to_ft(max(dict["x"])))
 print("Flight Time (s):", flight_time)
 
 
@@ -261,14 +260,14 @@ print("Flight Time (s):", flight_time)
 #     difference_post.append(d)
 
 # Measurements vs Kalman Filter Graph
-plt.plot(sim_dict["time_sim"], sim_dict["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
-plt.plot(sim_dict["time_sim"], sim_dict["x"],label="True Altitude",color="royalblue", linewidth = 3); 
-plt.plot(sim_dict["time_sim"], kalman_dict["alt"],label="Estimation",linestyle="--",color="tab:red")
-plt.plot(sim_dict["time_sim"], sim_dict["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
+plt.plot(dict["time_sim"], dict["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
+plt.plot(dict["time_sim"], dict["x"],label="True Altitude",color="royalblue", linewidth = 3); 
+plt.plot(dict["time_sim"], kalman_dict["alt"],label="Estimation",linestyle="--",color="tab:red")
+plt.plot(dict["time_sim"], dict["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
 # plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_alt"],label="Predicted Apogee - Energy Method",linestyle="--", color="tab:green", linewidth = 4.5); plt.legend(fontsize = 10); 
 # plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_update_alt"], label="Corrected Prediction", color="tab:cyan", linestyle="dotted", linewidth = 4.5);
 # plt.subplot(1,2,1); 
-plt.axhline(y = max(sim_dict["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+plt.axhline(y = max(dict["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 
 # plt.plot(dic["time_sim"][:-1], difference, label="Difference between Alt_predicted and True", color="tab:blue", linewidth = 3.5, linestyle = "dotted")
 # plt.subplot(1,2,2); plt.plot(dic["vel"], difference_pre, label="Pre-correction Error", color="tab:orange", linestyle="dotted", linewidth = 4.5)

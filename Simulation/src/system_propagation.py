@@ -89,7 +89,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict, poly):
 
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-    kalman.initialize(pos_f_noise,curr_state[1], s_dt)
+    kalman.initialize(pos_f_noise, curr_state[1], s_dt)
     
     # Define max and min values for flap actuation
     l_max = conversion.ft_to_m(1/12) # 1 inch actuation length
@@ -140,15 +140,15 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict, poly):
         start = int(round(timer.time() * 1000))
         predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file, poly)
         end = int(round(timer.time() * 1000)) - start
-
-        dict["predict_alt"].append(predicted_apogee)
         
+        dict["predict_alt"].append(predicted_apogee)
+
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
         kalman.update(pos_f_noise, curr_state[1], Sref_a, rho)
         curr_state = next_state
         t += dt     
-        
+   
     return t, kalman.kalman_dic
         
         
