@@ -1,54 +1,57 @@
 import numpy as np
 import src.rotation as rotation
 
+# Mach 1 at Row 413
+
 # Rocket Properties
-m0 = 21.364 #kg
-r_CP = 219/100 #m
-r_CG = 167.67/100 #m
-I_rotational = 0.030245 #kg*m^2
-I_longitudinal = 15.841 #kg*m^2
-D = 0.1056132 #m
+m0 = 20.352 #kg
+r_CP = 219/100 #m #TODO: Update
+r_CG = 167.67/100 #m #TODO: Update
+I_rotational = 0.030245 #kg*m^2 #TODO: Update
+I_longitudinal = 15.841 #kg*m^2 #TODO: Update
+D = 0.102 #m #! Check
 
 #Positions
-x = 7857.1344 #m #initial alititude
+x = 8744.2 #m #initial alititude
 
-PositionE = 116.21 #m
-PositionN = 0.041193 #m
-Lateral_Distance = 116.21 #m
-Lateral_Direction = 0.02031 #degrees
+PositionE = 116.21 #m #TODO: Update
+PositionN = 0.041193 #m #TODO: Update
+Lateral_Distance = 116.21 #m #TODO: Update
+Lateral_Direction = 0.02031 #degrees #TODO: Update
 
 #Velocities
-vx = 309.25008 #m/s #initial veritcal velocity
-lateral_velocity = 4.7643 #m/s
+vx = 305.58 #m/s #initial vertical velocity
+lateral_velocity = 4.7643 #m/s # TODO: Update
 
 #Angular Rates
-roll_rate = 1.73*10**(-6) #degrees/s #initial roll rate
-pitch_rate = -0.01335 #degrees/s #initial pitch rate
-yaw_rate = -0.0013 #degrees/s #initial yaw rate
+roll_rate = 1.73*10**(-6) #degrees/s #initial roll rate #TODO: Update
+pitch_rate = -0.01335 #degrees/s #initial pitch rate #TODO: Update
+yaw_rate = -0.0013 #degrees/s #initial yaw rate #TODO: Update
 
 #Accelerations
 #gives vertical and lateral acceleration
-ax = -16.442 #m/s^2 #initial vertical acceleration
-lateral_accel = 0.19911 #m/s^2
+ax = -15.605 #m/s^2 #initial vertical acceleration
+lateral_accel = 0.19911 #m/s^2 #TODO: Update
 
 #Orientation
-yaw = 0.018162
-pitch = 1.291
-roll = 0
+yaw = 0.018162 #TODO: Update
+pitch = 1.291 #TODO: Update
+roll = 0 #TODO: Update
 
 #Other Parameters
 g = 9.8 #m/s^2
-initial_alpha = 0.0043818 #deg
-l_rocket = 3.02 #m
-nose_ang = 0.069189 #nosecone angle (rad)
+initial_alpha = 0.0043818 #deg # TODO: Update
+l_rocket = 3.07 #m 
+nose_ang = 0.069189 #nosecone angle (rad) #TODO: Update
 
-L_b = 2.2352 #Body Tube Length 
-L_n = 0.762 #Nose cone length
-T_f = 0.0029972 #Fin Thickness
-L_m = 0.2032 #Length of fin from inner to root chord
-n = 3 #Number of fins
-A_fp = 0.011532235 #Fin Planform Artea
-d_f = 0.08255 # Fin height
+#
+#L_b = 2.2352 #Body Tube Length 
+#L_n = 0.762 #Nose cone length
+#T_f = 0.0029972 #Fin Thickness
+#L_m = 0.2032 #Length of fin from inner to root chord
+#n = 3 #Number of fins
+#A_fp = 0.011532235 #Fin Planform Artea
+#d_f = 0.08255 # Fin height
 
 # Initialization
 init_pos_f = np.array([[x],

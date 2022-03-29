@@ -77,15 +77,27 @@ def rk4_inner(initial_state, dt, cd_file, poly):
     
     return max(predicted_x_vals)
 
-def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict, poly):
+def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
     
+    # Initialize dictionary to store values at all time steps
+    sim_dict = {
+    "x":[],
+    "x_noise":[],
+    "vel": [],
+    "accel": [],
+    "CD": [],
+    "Sref": [],
+    "time_sim": [],
+    "predict_alt": [],
+    "predict_update_alt": []
+    }
+    
+    start_time = int(round(timer.time()))
+
     # Initialize starting state and time
     curr_state = initial_state
-    t = 0    
-    s_dt = dt
-    
-    # Cd vs Mach Number Polyfit
-    # poly = rasaero.drag_lookup_curve_fit_poly()
+    t = 0
+    s_dt = dt #!
 
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
@@ -114,7 +126,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict, poly):
         rho = atmosphere.density(pos_f)
         
         # Total drag coefficient of airframe 
-        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,dict["CD"])
+        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"])
         # Cd_total = 0.5
 
         # Approximation - use the area of a circle for reference area
@@ -124,13 +136,13 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict, poly):
         next_state = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
         
         # Append Values to the Arrays
-        dict["x"].append(float(pos_f))
-        dict["x_noise"].append(float(pos_f_noise))
-        dict["vel"].append(float(vel_f))
+        sim_dict["x"].append(float(pos_f))
+        sim_dict["x_noise"].append(float(pos_f_noise))
+        sim_dict["vel"].append(float(vel_f))
         # dic["accel"].append(float(accel_f?))
-        dict["CD"].append(float(Cd_total))
-        dict["Sref"].append(float(Sref_a))
-        dict["time_sim"].append(float(t))
+        sim_dict["CD"].append(float(Cd_total))
+        sim_dict["Sref"].append(float(Sref_a))
+        sim_dict["time_sim"].append(float(t))
         
         # Run inner RK4 to find predicted apogee
         #* (Use Kalman Filter Approximation for starting conditions)
@@ -140,15 +152,21 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, dict, poly):
         start = int(round(timer.time() * 1000))
         predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file, poly)
         end = int(round(timer.time() * 1000)) - start
+        sim_dict["predict_alt"].append(predicted_apogee)
         
-        dict["predict_alt"].append(predicted_apogee)
+        # Control Code
+        
 
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
         kalman.update(pos_f_noise, curr_state[1], Sref_a, rho)
         curr_state = next_state
         t += dt     
+        
+    end_time = int(round(timer.time()))
+    sim_time = end_time - start_time
+
    
-    return t, kalman.kalman_dic
+    return t, kalman.kalman_dic, sim_time, sim_dict
         
         
