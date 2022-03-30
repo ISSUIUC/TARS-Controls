@@ -16,7 +16,7 @@ def alt_noise(z):
 
 def h_predicted(pos, vel):
     h_predict = (0.5*vel**2 + 9.81*pos)/9.81
-    c = 0.000005
+    c = 0.0000095
     y_predict_update = h_predict  + c*(vel**2)*(9144 - h_predict)
 
     return y_predict_update

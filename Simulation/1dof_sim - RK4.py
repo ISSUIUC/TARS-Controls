@@ -128,9 +128,12 @@ u = np.array([l])
 
 # Apogee goal and initial gain for input "u"
 apogee_goal = conversion.ft_to_m(30000) # meters
-k = 0.003
+kp, kI, kd = 0.0001, 0.0005, 0.0005
+# kp, kI, kd = 0, 0, 0
+
 for t in time:
 
+    e_sum = 0
     
     # A-priori 
     kalman.priori(u)
@@ -178,17 +181,19 @@ for t in time:
     kalman.update(pos_f_noise, rk4_kp1[1], Sref_a, rho)
 
     #* energy method 
-    y_predict_update_t1 = altimeter.h_predicted(pos_f, vel_f)
+    y_predict_update_t = altimeter.h_predicted(rk4_k[0], rk4_k[1])
+
+    y_predict_update_t1 = altimeter.h_predicted(rk4_kp1[0], rk4_kp1[1])
 
     #? Control Input 
     # only using the proportional controller & need to define error "e"
-
+    e_prev = y_predict_update_t - apogee_goal
     e = y_predict_update_t1  - apogee_goal
-    # e = apogee_goal - pos_f
+    e_sum = e_sum + e*dt
+    dedt = (e - e_prev)/dt
 
-    u_t1 = k*e
-
-    du_max = 0.01
+    du_max = 0.001
+    u_t1 = kp*e + kI*e_sum + kd*dedt
     u1_cmd_t1 = u_t1 + np.sign((u_t1 - u[0])/dt)*min(abs((u_t1 - u[0])/dt), du_max)*dt
 
     

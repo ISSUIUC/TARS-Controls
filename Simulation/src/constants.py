@@ -10,7 +10,8 @@ I_longitudinal = 15.841 #kg*m^2
 D = 0.1056132 #m
 
 #Positions
-x = 7857.1344 #m #initial alititude
+# x = 7857.1344 #m #initial alititude
+x = 6000
 
 PositionE = 116.21 #m
 PositionN = 0.041193 #m
