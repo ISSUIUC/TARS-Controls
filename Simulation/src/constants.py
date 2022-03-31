@@ -1,5 +1,9 @@
 import numpy as np
 import src.rotation as rotation
+import pandas as pd
+import src.OpenRocket_lookup as ork
+
+ORK = pd.read_csv("Simulation/Lookup/OpenRocket5800_mk5.csv")
 
 # Rocket Properties
 m0 = 21.0535 #kg
@@ -20,7 +24,7 @@ Lateral_Distance = 116.21 #m
 Lateral_Direction = 0.02031 #degrees
 
 #Velocities
-vx = 308 #m/s #initial veritcal velocity
+vx = ork.alt_vel_poly_fit(x, ORK) #m/s #initial veritcal velocity
 lateral_velocity = 4.7643 #m/s
 
 #Angular Rates
