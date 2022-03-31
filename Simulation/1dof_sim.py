@@ -81,15 +81,16 @@ kalman_dic = {
 
 # Initial Values
 pos_f = constants.x
-pos_f_noise = altimeter.alt_noise(constants.x)
+pos_f_noisy = altimeter.alt_noise(constants.x)
 vel_f = constants.vx
+accel_f = constants.ax
 
 #* Calculating the total mechanical energy, this is assumed to be a constant 
 E_tot = m*9.81*pos_f + 0.5*m*vel_f**2
 
 #* Kalman Filter Initialization
 # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-kalman.initialize(pos_f_noise,vel_f, s_dt)
+kalman.initialize(pos_f_noisy, vel_f, accel_f, s_dt)
 
 # Time setup
 start_time = 0
@@ -132,7 +133,7 @@ for t in time:
     
     # Append Values to the Arrays
     dic["x"].append(float(pos_f))
-    dic["x_noise"].append(float(pos_f_noise))
+    dic["x_noise"].append(float(pos_f_noisy))
     dic["vel"].append(float(vel_f))
     dic["accel"].append(float(accel_f))
     dic["CD"].append(float(Cd_total))
@@ -141,7 +142,7 @@ for t in time:
 
     # Calculate new velocities and positions using current values
     pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
-    pos_f_noise = altimeter.alt_noise(pos_f)
+    pos_f_noisy = altimeter.alt_noise(pos_f)
     vel_f = vel_f + accel_f*dt
     
     # A-posteriori update
@@ -155,10 +156,9 @@ for t in time:
     y_predict_update = h_predict  + c*(vel_f**2)*(11764.414956131044164 - h_predict)
     dic["predict_alt"].append(float(h_predict))
     dic["predict_update_alt"].append(float(y_predict_update))
-
     
-    kalman_dic["alt"].append(kalman.x_k[0][0])
-    kalman_dic["vel"].append(kalman.x_k[0][1])
+    # kalman_dic["alt"].append(kalman.x_k[0][0])
+    # kalman_dic["vel"].append(kalman.x_k[0][1])
     
 #Print Apogee and total time taken
 print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
@@ -173,8 +173,6 @@ for num in np.arange(0,len(dic["predict_alt"])):
     d = dic["predict_update_alt"][num] - max(dic["x"])
     difference_pre.append(D)
     difference_post.append(d)
-
-
 
 # Measurements vs Kalman Filter Graph
 # plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
@@ -192,6 +190,24 @@ plt.xlabel("Velocity (m/s)", fontsize = 14)
 plt.ylabel("Error", fontsize = 14)
 plt.legend(fontsize = 14)
 plt.show()
+
+# Velocity Measurements vs Kalman Filter Graph
+plt.plot(dic["time_sim"], dic["vel"],label="True Velocity",color="royalblue")
+plt.plot(dic["time_sim"], kalman.kalman_dic["vel"],label="Estimation",linestyle="--",color="tab:red")
+plt.xlabel("Time (sec)")
+plt.ylabel("Velocity (m/s)")
+plt.legend()
+plt.show()
+
+# Acceleration Measurements vs Kalman Filter Graph
+plt.plot(dic["time_sim"], dic["accel"],label="True Acceleration",color="royalblue")
+plt.plot(dic["time_sim"], kalman.kalman_dic["accel"],label="Estimation",linestyle="--",color="tab:red")
+plt.xlabel("Time (sec)")
+plt.ylabel("Acceleration ($m/s^2$)")
+plt.legend()
+plt.show()
+
+
 
 
 

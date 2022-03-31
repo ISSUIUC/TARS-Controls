@@ -2,38 +2,33 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
-# plots a trajectory based on an array of 3d points
-def plot_3d(pos_vals, true_scale):
+# plots a trajectory based on a dictionary of 3d points
+def plot_3d(dic, true_scale):
     fig = plt.figure()
     ax = plt.axes(projection='3d')
-    z = []
-    x = []
-    y = []
-    for i in range(len(pos_vals["x"])):
-        z.append(pos_vals["z"][i])
-        x.append(pos_vals["x"][i])
-        y.append(pos_vals["y"][i])
+    z = (dic["x"])
+    y = (dic["y"])
+    x = (dic["z"])
     if (true_scale):
         ax.set_ylim([-np.max(z), np.max(z)])
         ax.set_xlim([-np.max(z), np.max(z)])
 
-    ax.scatter(y,z,x, color = "tab:blue", alpha=1, label="Rocket Trajectory")
+    ax.scatter(x,y,z, color = "tab:blue", alpha=1, label="Rocket Trajectory")
     ax.set_xlabel("X (m) ")
     plt.legend(fontsize = 15)
     # plt.ylim([-20,20]);plt.xlim([-20,20])
     
 # plots a trajectory based on an array of 3d points 
 # color maps the velocity based on a vector of velocity magnitudes
-def plot_3d_vel(pos_vals, velocities, true_scale):
+def plot_3d_vel(pos_dic, vel_dic, true_scale):
     fig = plt.figure()
     ax = plt.axes(projection='3d')
-    z = []
-    x = []
-    y = []
-    for i in range(len(pos_vals["x"])):
-        z.append(pos_vals["z"][i])
-        x.append(pos_vals["x"][i])
-        y.append(pos_vals["y"][i])
+    z = (pos_dic["x"])
+    y = (pos_dic["y"])
+    x = (pos_dic["z"])
+    velocities = []
+    for i in range(len(vel_dic["Vx"])):
+        velocities.append(np.sqrt(vel_dic["Vx"][i]**2 + vel_dic["Vy"][i]**2 + vel_dic["Vz"][i]**2))
     maxv = np.linalg.norm(np.max(velocities, axis=0))
     color = np.zeros((len(velocities), 3))
     med = np.linalg.norm(np.median(velocities, axis=0))
@@ -51,7 +46,8 @@ def plot_3d_vel(pos_vals, velocities, true_scale):
         ax.set_xlim([-np.max(z), np.max(z)])
     fig.suptitle("Velocity Based on User Input")
     ax.scatter(x,y,z, c=color, alpha=1)
-
+    ax.set_xlabel("X (m) ")
+    plt.legend(fontsize = 15)
     # create color key
     vrange = maxv-minv
     max = mpatches.Patch(color=[1,0,0], label=maxv)
