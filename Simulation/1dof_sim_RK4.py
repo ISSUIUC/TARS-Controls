@@ -70,7 +70,7 @@ pos_f_noise = altimeter.alt_noise(constants.x)
 vel_f = ork.alt_vel_poly_fit(pos_f, ORK, apogee_time=31.011)
 constants.vx = vel_f
 init_state = np.array([pos_f, vel_f])
-des_apogee = conversion.ft_to_m(10000) #meters
+des_apogee = conversion.ft_to_m(30000) #meters
 
 # Time between sensor readings / KF updates
 s_dt = 0.03
@@ -103,12 +103,13 @@ print("Simulator Runtime (Control) (s): ", sim_time_c)
 #     difference_post.append(d)
 
 #* Compare Control vs No Control
+plt.subplot(1,2,1)
 plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="Altitude (No Control)",color="royalblue", linewidth = 3); 
 plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Altitude (Control)",color="green", linewidth = 3); 
 plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 
-# plt.subplot(1,2,2)
-# plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
+plt.subplot(1,2,2)
+plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
 
 #* Measurements vs Kalman Filter Graph
 # plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
