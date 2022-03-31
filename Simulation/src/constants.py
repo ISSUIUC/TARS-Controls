@@ -1,8 +1,6 @@
 import numpy as np
 import src.rotation as rotation
 
-# Mach 1 at Row 155
-
 # Rocket Properties
 m0 = 18.356 #kg
 r_CP = 219/100 #m #TODO: Update
@@ -12,7 +10,7 @@ I_longitudinal = 15.841 #kg*m^2 #TODO: Update
 D = 0.102 #m 
 
 #Positions
-x = 1468.4 #m #initial alititude
+x = 1009.2 #m #initial alititude (burnout)
 
 PositionE = 116.21 #m #TODO: Update
 PositionN = 0.041193 #m #TODO: Update
@@ -20,7 +18,7 @@ Lateral_Distance = 116.21 #m #TODO: Update
 Lateral_Direction = 0.02031 #degrees #TODO: Update
 
 #Velocities
-vx = 334.29 #m/s #initial vertical velocity
+vx = 0
 lateral_velocity = 4.7643 #m/s # TODO: Update
 
 #Angular Rates

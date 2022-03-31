@@ -16,6 +16,7 @@ import src.plot_controls as plot
 import src.rocket as rocket
 import src.rotation as rotation
 import src.RASAero_lookup as rasaero
+import src.OpenRocket_lookup as ork
 import src.altimeter as altimeter
 import src.kalman_filter as kalman
 from src.system_propagation import rk4_sim
@@ -54,6 +55,7 @@ from src.system_propagation import rk4_sim
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
 RASaero = pd.read_csv("Simulation/Lookup/RASAero_Mk5.csv")
+ORK = pd.read_csv("Simulation/OpenRocket Simulations/Test_Intrepid_mk5_April.csv")
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
@@ -65,7 +67,8 @@ poly = rasaero.drag_lookup_curve_fit_poly()
 # Initial + Desired Values
 pos_f = constants.x
 pos_f_noise = altimeter.alt_noise(constants.x)
-vel_f = constants.vx
+vel_f = ork.alt_vel_poly_fit(pos_f, ORK, apogee_time=31.011)
+constants.vx = vel_f
 init_state = np.array([pos_f, vel_f])
 des_apogee = conversion.ft_to_m(10000) #meters
 
