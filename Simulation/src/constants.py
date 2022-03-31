@@ -1,18 +1,18 @@
 import numpy as np
 import src.rotation as rotation
 
-# Mach 1 at Row 413
+# Mach 1 at Row 155
 
 # Rocket Properties
-m0 = 20.352 #kg
+m0 = 18.356 #kg
 r_CP = 219/100 #m #TODO: Update
 r_CG = 167.67/100 #m #TODO: Update
 I_rotational = 0.030245 #kg*m^2 #TODO: Update
 I_longitudinal = 15.841 #kg*m^2 #TODO: Update
-D = 0.102 #m #! Check
+D = 0.102 #m 
 
 #Positions
-x = 8744.2 #m #initial alititude
+x = 1468.4 #m #initial alititude
 
 PositionE = 116.21 #m #TODO: Update
 PositionN = 0.041193 #m #TODO: Update
@@ -20,7 +20,7 @@ Lateral_Distance = 116.21 #m #TODO: Update
 Lateral_Direction = 0.02031 #degrees #TODO: Update
 
 #Velocities
-vx = 305.58 #m/s #initial vertical velocity
+vx = 334.29 #m/s #initial vertical velocity
 lateral_velocity = 4.7643 #m/s # TODO: Update
 
 #Angular Rates
@@ -30,7 +30,7 @@ yaw_rate = -0.0013 #degrees/s #initial yaw rate #TODO: Update
 
 #Accelerations
 #gives vertical and lateral acceleration
-ax = -15.605 #m/s^2 #initial vertical acceleration
+ax = -26.893 #m/s^2 #initial vertical acceleration
 lateral_accel = 0.19911 #m/s^2 #TODO: Update
 
 #Orientation

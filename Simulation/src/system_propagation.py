@@ -159,7 +159,18 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
         # Control Code
         if (control):
             k = -0.003
-            u = [-k*predicted_apogee]
+            u = -k*predicted_apogee
+            # u = u_t1 + np.sign((u_t1 - u[0])/dt)*min(abs((u_t1 - u[0])/dt), du_max)*dt
+            
+            #* Control Input Damping 
+            if (u > l_max):
+                u = l_max
+            elif (u < l_min):
+                u = l_min
+                
+            u = [u]
+            
+            # print("Flap Extension: ", u[0])
             
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)

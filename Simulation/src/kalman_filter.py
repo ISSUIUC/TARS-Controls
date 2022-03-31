@@ -13,7 +13,6 @@ x_priori = np.zeros([2,1])
 P_priori = np.zeros([2,2])
 current_time = 0
 
-
 kalman_dic = {
     "alt": [],
     "vel": [],
