@@ -116,10 +116,10 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, contr
     # Limit flap actuation speed
     du_max = 0.001
     # Define Controller Gains
-    kp, kI, kd = 0.0001, 0.0005, 0.0005
+    kp, kI, kd = 0.000001, 0.0005, 0.0005
     
     # Fix This:
-    sim_dict["predict_alt"].append(15000)
+    # sim_dict["predict_alt"].append(38000)
 
     
     # Get initial Apogee Prediction    
@@ -169,9 +169,9 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, contr
         # Calculate apogee errors 
         # Get instantaneous change in apogee error with respect to time
         apogee_error = predicted_apogee - desired_apogee
-        prev_apgee_error = sim_dict["predict_alt"][-1] - desired_apogee
-        dedt = (apogee_error - prev_apgee_error)/dt #! use dt for now, should be s_dt
-        e_sum = e_sum + (apogee_error * dt) #! use dt for now, should be s_dt
+        # prev_apgee_error = sim_dict["predict_alt"][-1] - desired_apogee
+        # dedt = (apogee_error - prev_apgee_error)/dt #! use dt for now, should be s_dt
+        # e_sum = e_sum + (apogee_error * dt) #! use dt for now, should be s_dt
         
         # Append prediction to list
         sim_dict["predict_alt"].append(predicted_apogee)
@@ -180,7 +180,8 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, contr
         if (control):
             
             prev_u = u
-            u = kp*apogee_error + kI*e_sum + kd*dedt
+            # u = kp*apogee_error + kI*e_sum + kd*dedt
+            u = kp*apogee_error
             u = u + np.sign((u - prev_u)/dt)*min(abs((u - prev_u)/dt), du_max)*dt
             
             #* Control Input Damping 
