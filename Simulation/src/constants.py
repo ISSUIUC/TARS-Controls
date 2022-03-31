@@ -41,6 +41,7 @@ g = 9.8 #m/s^2
 initial_alpha = 0.0043818 #deg # TODO: Update
 l_rocket = 3.07 #m 
 nose_ang = 0.069189 #nosecone angle (rad) #TODO: Update
+flap_width = 0.03175 #m
 
 #
 #L_b = 2.2352 #Body Tube Length 

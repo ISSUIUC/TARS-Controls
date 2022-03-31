@@ -53,7 +53,7 @@ def sref(velocity_body,l,D):
 
 def sref_approx(D, flap_length):
     # Approximates reference area as a circle
-    return np.pi*((D/2)**2) + 2*flap_length*0.0254
+    return np.pi*((D/2)**2) + 2*flap_length*constants.flap_width
 
 def friction_drag(z,l,D,velocity_body,A_ref):
     #? Function takes in altitude "z", total length of the rocket "l", body tube diameter "D", and the body frame velocities 
