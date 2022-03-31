@@ -69,7 +69,9 @@ dic = {
        "accel": [],
        "CD": [],
        "Sref": [],
-       "time_sim": []
+       "time_sim": [],
+       "predict_alt": [],
+       "predict_update_alt": []
        }
 
 kalman_dic = {
@@ -82,6 +84,9 @@ pos_f = constants.x
 pos_f_noisy = altimeter.alt_noise(constants.x)
 vel_f = constants.vx
 accel_f = constants.ax
+
+#* Calculating the total mechanical energy, this is assumed to be a constant 
+E_tot = m*9.81*pos_f + 0.5*m*vel_f**2
 
 #* Kalman Filter Initialization
 # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
@@ -120,7 +125,6 @@ for t in time:
     F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
     accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
     accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
-
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f) == -1):
         break
@@ -142,7 +146,16 @@ for t in time:
     vel_f = vel_f + accel_f*dt
     
     # A-posteriori update
-    kalman.update(pos_f_noisy, accel_f, Sref_a, rho)
+    kalman.update(pos_f_noise, vel_f, Sref_a, rho)
+
+    # calculating the predicted altitude from the energy equation
+    h_predict = (0.5*vel_f**2 + 9.81*pos_f)/9.81
+
+    # constant a for scaling 
+    c = 0.000011
+    y_predict_update = h_predict  + c*(vel_f**2)*(11764.414956131044164 - h_predict)
+    dic["predict_alt"].append(float(h_predict))
+    dic["predict_update_alt"].append(float(y_predict_update))
     
     # kalman_dic["alt"].append(kalman.x_k[0][0])
     # kalman_dic["vel"].append(kalman.x_k[0][1])
@@ -152,14 +165,30 @@ print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
 print("Total Time Taken (s):", t)
 
 #* --------------------------------- Plotting --------------------------------- #
+#? Calculating the difference between the predicted altitude and actual altitude 
+difference_pre = []
+difference_post = []
+for num in np.arange(0,len(dic["predict_alt"])):
+    D = dic["predict_alt"][num] - max(dic["x"])
+    d = dic["predict_update_alt"][num] - max(dic["x"])
+    difference_pre.append(D)
+    difference_post.append(d)
 
-# Position Measurements vs Kalman Filter Graph
-plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
-plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue")
-plt.plot(dic["time_sim"], kalman.kalman_dic["alt"],label="Estimation",linestyle="--",color="tab:red")
-plt.xlabel("Time (sec)")
-plt.ylabel("Altitude (m)")
-plt.legend()
+# Measurements vs Kalman Filter Graph
+# plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
+plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue", linewidth = 3); plt.legend(fontsize = 10); plt.ylabel("Altitude (m)", fontsize = 14)
+# plt.plot(dic["time_sim"], kalman_dic["alt"],label="Estimation",linestyle="--",color="tab:red")
+plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_alt"],label="Predicted Apogee - Energy Method",linestyle="--", color="tab:green", linewidth = 4.5); plt.legend(fontsize = 10); 
+plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_update_alt"], label="Corrected Prediction", color="tab:cyan", linestyle="dotted", linewidth = 4.5);
+plt.subplot(1,2,1); plt.axhline(y = max(dic["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+
+# plt.plot(dic["time_sim"][:-1], difference, label="Difference between Alt_predicted and True", color="tab:blue", linewidth = 3.5, linestyle = "dotted")
+plt.subplot(1,2,2); plt.plot(dic["vel"], difference_pre, label="Pre-correction Error", color="tab:orange", linestyle="dotted", linewidth = 4.5)
+plt.subplot(1,2,2); plt.plot(dic["vel"], difference_post, label="Post-correction Error", color="tab:green", linestyle="dotted", linewidth = 4.5)
+
+plt.xlabel("Velocity (m/s)", fontsize = 14)
+plt.ylabel("Error", fontsize = 14)
+plt.legend(fontsize = 14)
 plt.show()
 
 # Velocity Measurements vs Kalman Filter Graph
@@ -177,6 +206,8 @@ plt.xlabel("Time (sec)")
 plt.ylabel("Acceleration ($m/s^2$)")
 plt.legend()
 plt.show()
+
+
 
 
 
