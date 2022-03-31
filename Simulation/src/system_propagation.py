@@ -77,7 +77,7 @@ def rk4_inner(initial_state, dt, cd_file, poly):
     
     return max(predicted_x_vals)
 
-def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
+def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, control=0):
     
     # Initialize dictionary to store values at all time steps
     sim_dict = {
@@ -99,6 +99,9 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
     curr_state = initial_state
     t = 0
     s_dt = dt #!
+    
+    #Error summation for integral
+    e_sum = 0
 
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
@@ -107,16 +110,24 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
     # Define max and min values for flap actuation
     l_max = conversion.ft_to_m(1/12) # 1 inch actuation length
     l_min = 0 # can't have negative actuation
-    
     # Define initial flap length at start of control time
-    l = 0
-    u = np.array([l])
+    u = 0
     
+    # Limit flap actuation speed
+    du_max = 0.001
+    # Define Controller Gains
+    kp, kI, kd = 0.0001, 0.0005, 0.0005
+    
+    # Fix This:
+    sim_dict["predict_alt"].append(15000)
+
+    
+    # Get initial Apogee Prediction    
     # Simulate until apogee
     while (curr_state[1] > 0):
         
         # A-priori (before current state is reached)
-        kalman.priori(u)
+        kalman.priori([u])
         
         # grabbing the current states
         pos_f = curr_state[0]
@@ -127,11 +138,11 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
         rho = atmosphere.density(pos_f)
         
         # Total drag coefficient of airframe 
-        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u[0])
+        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u)
         # Cd_total = 0.5
 
         # Approximation - use the area of a circle for reference area
-        Sref_a = rocket.sref_approx(constants.D, u[0])
+        Sref_a = rocket.sref_approx(constants.D, u)
 
         # rk4 iteration 
         next_state = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
@@ -144,7 +155,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
         sim_dict["CD"].append(float(Cd_total))
         sim_dict["Sref"].append(float(Sref_a))
         sim_dict["time_sim"].append(float(t))
-        sim_dict["flap_extension"].append(float(u[0]))
+        sim_dict["flap_extension"].append(float(u))
         
         # Run inner RK4 to find predicted apogee
         #* (Use Kalman Filter Approximation for starting conditions)
@@ -154,24 +165,30 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, control=0):
         start = int(round(timer.time() * 1000))
         predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file, poly)
         end = int(round(timer.time() * 1000)) - start
+        
+        # Calculate apogee errors 
+        # Get instantaneous change in apogee error with respect to time
+        apogee_error = predicted_apogee - desired_apogee
+        prev_apgee_error = sim_dict["predict_alt"][-1] - desired_apogee
+        dedt = (apogee_error - prev_apgee_error)/dt #! use dt for now, should be s_dt
+        e_sum = e_sum + (apogee_error * dt) #! use dt for now, should be s_dt
+        
+        # Append prediction to list
         sim_dict["predict_alt"].append(predicted_apogee)
         
         # Control Code
         if (control):
-            k = -0.003
-            u = -k*predicted_apogee
-            # u = u_t1 + np.sign((u_t1 - u[0])/dt)*min(abs((u_t1 - u[0])/dt), du_max)*dt
+            
+            prev_u = u
+            u = kp*apogee_error + kI*e_sum + kd*dedt
+            u = u + np.sign((u - prev_u)/dt)*min(abs((u - prev_u)/dt), du_max)*dt
             
             #* Control Input Damping 
             if (u > l_max):
                 u = l_max
             elif (u < l_min):
                 u = l_min
-                
-            u = [u]
-            
-            # print("Flap Extension: ", u[0])
-            
+             
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
         kalman.update(pos_f_noise, curr_state[1], Sref_a, rho)

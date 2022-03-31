@@ -62,6 +62,7 @@ def update(pos_f, vel_f, Sref_a, rho):
     
     
     current_time += s_dt
+    
     kalman_dic["alt"].append(x_k[0][0])
     kalman_dic["vel"].append(x_k[1][0])
     kalman_dic["time"].append(current_time)
