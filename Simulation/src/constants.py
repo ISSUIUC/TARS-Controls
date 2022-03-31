@@ -2,16 +2,17 @@ import numpy as np
 import src.rotation as rotation
 
 # Rocket Properties
-m0 = 21.364 #kg
-r_CP = 219/100 #m
-r_CG = 167.67/100 #m
+m0 = 21.0535 #kg
+r_CP = 233/100 #m
+r_CG = 205/100 #m
 I_rotational = 0.030245 #kg*m^2
 I_longitudinal = 15.841 #kg*m^2
-D = 0.1056132 #m
+D = 0.102 #m
 
 #Positions
 # x = 7857.1344 #m #initial alititude
-x = 6000
+x = 8190
+# x = 6000
 
 PositionE = 116.21 #m
 PositionN = 0.041193 #m
@@ -19,7 +20,7 @@ Lateral_Distance = 116.21 #m
 Lateral_Direction = 0.02031 #degrees
 
 #Velocities
-vx = 309.25008 #m/s #initial veritcal velocity
+vx = 308 #m/s #initial veritcal velocity
 lateral_velocity = 4.7643 #m/s
 
 #Angular Rates
