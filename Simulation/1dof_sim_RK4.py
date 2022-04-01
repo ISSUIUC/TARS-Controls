@@ -55,7 +55,19 @@ from src.system_propagation import rk4_sim
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
 RASaero = pd.read_csv("Simulation/Lookup/RASAero_Mk5.csv")
-ORK = pd.read_csv("Simulation/OpenRocket Simulations/Test_Intrepid_mk5_April.csv")
+ORK = pd.read_csv("Simulation/OpenRocket Simulations/Test_Intrepid_mk5_IREC.csv")
+
+April_apogee_time = 31.011  # sec
+IREC_apogee_time = 45.641   # sec
+
+April_apogee_goal = 15000  # ft
+IREC_apogee_goal = 30000   # ft
+
+April_burnout_alt = 1009.2 # m 
+IREC_burnout_alt = 1483.75 # m
+
+April_m = 18.356
+IREC_m = 20.352
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
@@ -65,12 +77,16 @@ I, c_m, m = rocket.I_new(0,0)
 poly = rasaero.drag_lookup_curve_fit_poly()
 
 # Initial + Desired Values
-pos_f = constants.x
+constants.m0 = IREC_m
+
+pos_f = IREC_burnout_alt
+constants.x = pos_f
 pos_f_noise = altimeter.alt_noise(constants.x)
-vel_f = ork.alt_vel_poly_fit(pos_f, ORK, apogee_time=31.011)
+
+vel_f = ork.alt_vel_poly_fit(pos_f, ORK, apogee_time=IREC_apogee_time)
 constants.vx = vel_f
 init_state = np.array([pos_f, vel_f])
-des_apogee = conversion.ft_to_m(30000) #meters
+des_apogee = conversion.ft_to_m(IREC_apogee_goal) #meters
 
 # Time between sensor readings / KF updates
 s_dt = 0.03
