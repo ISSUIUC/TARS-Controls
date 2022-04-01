@@ -2,7 +2,7 @@ import numpy as np
 import src.rotation as rotation
 
 # Rocket Properties
-m0 = 18.356 #kg
+m0 = 0 #kg
 r_CP = 219/100 #m #TODO: Update
 r_CG = 167.67/100 #m #TODO: Update
 I_rotational = 0.030245 #kg*m^2 #TODO: Update
@@ -10,7 +10,7 @@ I_longitudinal = 15.841 #kg*m^2 #TODO: Update
 D = 0.102 #m 
 
 #Positions
-x = 1009.2 #m #initial alititude (burnout)
+x = 0 #m #initial alititude (burnout)
 
 PositionE = 116.21 #m #TODO: Update
 PositionN = 0.041193 #m #TODO: Update
