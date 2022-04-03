@@ -60,7 +60,7 @@ ORK = pd.read_csv("Simulation/OpenRocket Simulations/Intrepid_mk6_April.csv")
 April_apogee_time = 32.023  # sec
 IREC_apogee_time = 50.041   # sec
 
-April_apogee_goal = 15000  # ft
+April_apogee_goal = 14000  # ft
 IREC_apogee_goal = 30000   # ft
 
 April_burnout_alt = 958.75 # m 

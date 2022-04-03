@@ -189,7 +189,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, contr
                 u = l_max
             elif (u < l_min):
                 u = l_min
-             
+            u = l_max
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
         kalman.update(pos_f_noise, curr_state[1], Sref_a, rho)
