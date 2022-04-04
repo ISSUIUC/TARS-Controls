@@ -69,6 +69,8 @@ IREC_burnout_alt = 1462.25 # m
 April_m = 19.0586
 IREC_m = 21.1066
 
+April_accel = -31.593 #m/s^2
+
 constants.m0 = April_m
 
 # Calculate moments of inertia and center of mass
@@ -79,13 +81,11 @@ I, c_m, m = rocket.I_new(0,0)
 poly = rasaero.drag_lookup_curve_fit_poly()
 
 # Initial + Desired Values
-pos_f = April_burnout_alt
-constants.x = pos_f
+constants.x = April_burnout_alt
 pos_f_noise = altimeter.alt_noise(constants.x)
-
-vel_f = ork.alt_vel_poly_fit(pos_f, ORK, apogee_time=April_apogee_time)
-constants.vx = vel_f
-init_state = np.array([pos_f, vel_f])
+constants.vx = ork.alt_vel_poly_fit(constants.x, ORK, apogee_time=April_apogee_time)
+constants.ax = April_accel
+init_state = np.array([constants.x, constants.vx])
 des_apogee = conversion.ft_to_m(April_apogee_goal) #meters
 
 # Time between sensor readings / KF updates
@@ -93,11 +93,10 @@ s_dt = 0.03
 # Simulation step-size
 dt = 0.006
 
-# Run Sim without control
-flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly, des_apogee)
+# Run Sim with and without control
+flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly, des_apogee, constants.ax)
 print("No Control Sim Finished")
-# Run Sim with control
-flight_time_c, kalman_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly, des_apogee, control=1)
+flight_time_c, kalman_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly, des_apogee, constants.ax, control=1)
 
 #Print Housekeeping Values
 print("APOGEE (No Control) (ft):", conversion.m_to_ft(max(sim_dict_nc["x"])))
@@ -124,8 +123,8 @@ plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="Altitude (No Control)"
 plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Altitude (Control)",color="green", linewidth = 3); 
 plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 
-plt.subplot(1,2,2)
-plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
+# plt.subplot(1,2,2)
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
 
 #* Measurements vs Kalman Filter Graph
 # plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
@@ -143,7 +142,6 @@ plt.xlabel("Time (s)", fontsize = 14)
 plt.ylabel("Altitude (m)", fontsize = 14)
 plt.legend(fontsize = 14)
 plt.show()
-
 
 # # Acceleration Plot
 # plt.plot(time_flight,dic["accel"])

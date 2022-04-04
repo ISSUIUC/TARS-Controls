@@ -16,33 +16,44 @@ current_time = 0
 kalman_dic = {
     "alt": [],
     "vel": [],
+    "accel": [],
     "time": []
 }
 
-def initialize(pos_f, vel_f, time_step):
+def initialize(pos_f, vel_f, accel_f, time_step):
     global s_dt, x_k, F, H, B, P_k, Q, R, current_time
 
     s_dt = time_step
     x_k = np.array([[pos_f],
-                    [vel_f]])
+                    [vel_f],
+                    [accel_f]])
     # F is the state space 'A' matrix
-    F = np.array([[1.0 , s_dt],
-                  [0.0, 1.0]])
+    F = np.array([[1.0, s_dt, (s_dt**2) / 2],
+                  [0.0, 1.0, s_dt],
+                  [0.0, 0.0, 1.0]])
     # H is converstion between measurement and state (analogous to C)
-    H = np.array([1.0,0.0])
+    # We can measure position and acceleration
+    H = np.array([[1.0,0.0,0.0],
+                  [0.0,0.0,1.0]]) 
     # Standard State-Space 'B' Matrix
-    B = np.array([[1.0],
-                  [0.0]])
+    #! Needs Tuning
+    B = np.array([[0.0],
+                  [0.0],
+                  [-1.0]])
 
     # (Covariance [P] 6ms time step
-    P_k = (np.array([[.0714,0.0356],
-                    [-0.0003419,0.03548]]))/2.
+    P_k = np.array([[.018,0.009, 0.005],
+                    [0.009,0.009, 0.0045],
+                    [0.005, 0.0045, 10]])
 
     # White Noise [Q] 6ms time step
-    Q = Q_continuous_white_noise(dim=2, dt=s_dt, spectral_density=.03595) / 2.
+    Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.00899)
 
-    # Measurement Noise Function [R]
-    R = np.array([12.0])
+    # Measurement Noise Function [R], must be SQUARE
+    # High-G Accel: 49 - 195 m-Gs accuracy
+    # Low-G Accel: .25 m-G accuracy
+    R = np.array([[12.0,0],
+                  [0,1.4]])
 
 # Set priori state (guess of next step)
 def priori(u):
@@ -53,18 +64,28 @@ def priori(u):
 
 # Update Kalman Gain, posteriori state (guess of current step with new data), Covariance update
 # Update State Guess
-def update(pos_f, vel_f, Sref_a, rho):
+def update(pos_f, accel_f, Sref_a, rho):
     global K, x_k, P_k, F, current_time
 
-    K = P_priori @ H.T * np.reciprocal(H @ P_priori @ H.T + R)
-    x_k = x_priori + K @ (np.array([[pos_f],[vel_f]]) - H @ x_priori)
-    P_k = (np.eye(2) - K@H) @ P_priori
+    # Update Kalman Gain
+    if (len(R) == 1):
+        K = P_priori @ H.T * np.reciprocal(H @ P_priori @ H.T + R)
+    else:
+        K = (P_priori @ H.T) @ np.linalg.inv(H @ P_priori @ H.T + R) 
+        
+    # Sensor Measurements
+    y_k = np.array([[pos_f], [accel_f]])
     
+    # Posteriori Update
+    x_k = x_priori + K @ (y_k - H @ x_priori)
+    P_k = (np.eye(len(K)) - K@H) @ P_priori
     
+    # Update KF Time
     current_time += s_dt
     
     kalman_dic["alt"].append(x_k[0][0])
     kalman_dic["vel"].append(x_k[1][0])
+    kalman_dic["accel"].append(x_k[2][0])
     kalman_dic["time"].append(current_time)
 
 

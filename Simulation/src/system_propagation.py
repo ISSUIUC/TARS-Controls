@@ -27,19 +27,23 @@ def accel(u, rho, Cd_total, Sref_a):
     F_a = -((rho* (v1**2) * Sref_a * Cd_total) / 2)
     accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
     accel_f = accel_a - constants.g
-
+    
     f1 = np.array([v1, accel_f])
-
-    return f1
+    return f1, accel_f
 
 def rk4_step(state, dt, rho, cd, sref):
     # rk4 iteration 
-    y1 = accel(state, rho, cd, sref)
-    y2 = accel(state + 0.5*dt*y1, rho, cd, sref)
-    y3 = accel(state + 0.5*dt*y2, rho, cd, sref)
-    y4 = accel(state + dt*y3, rho, cd, sref)
+    
+    # state = state[:2]
+    
+    y1,a1 = accel(state, rho, cd, sref)
+    y2,a2 = accel(state + 0.5*dt*y1, rho, cd, sref)
+    y3,a3 = accel(state + 0.5*dt*y2, rho, cd, sref)
+    y4,a4 = accel(state + dt*y3, rho, cd, sref)
+    
+    
     rk4_kp1 = state + dt*(y1 + 2*y2 + 2*y3 + y4)/6
-    return rk4_kp1
+    return rk4_kp1, a1
 
 def rk4_inner(initial_state, dt, cd_file, poly):
     #* Returns Predicted Altitude
@@ -71,13 +75,13 @@ def rk4_inner(initial_state, dt, cd_file, poly):
         
         # rk4 iteration
         predicted_x_vals = np.append(predicted_x_vals, curr_state[0])
-        next_state = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
+        next_state, accel_f = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
         curr_state = next_state
         t += dt    
     
     return max(predicted_x_vals)
 
-def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, control=0):
+def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel_f, control=0):
     
     # Initialize dictionary to store values at all time steps
     sim_dict = {
@@ -105,11 +109,12 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, contr
 
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-    kalman.initialize(pos_f_noise, curr_state[1], s_dt)
+    kalman.initialize(pos_f_noise, curr_state[1], accel_f, s_dt)
     
     # Define max and min values for flap actuation
     l_max = conversion.ft_to_m(1/12) # 1 inch actuation length
     l_min = 0 # can't have negative actuation
+    
     # Define initial flap length at start of control time
     u = 0
     
@@ -145,13 +150,13 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, contr
         Sref_a = rocket.sref_approx(constants.D, u)
 
         # rk4 iteration 
-        next_state = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
+        next_state, accel_f = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
         
         # Append Values to the Arrays
         sim_dict["x"].append(float(pos_f))
         sim_dict["x_noise"].append(float(pos_f_noise))
         sim_dict["vel"].append(float(vel_f))
-        # dic["accel"].append(float(accel_f?))
+        sim_dict["accel"].append(float(accel_f))
         sim_dict["CD"].append(float(Cd_total))
         sim_dict["Sref"].append(float(Sref_a))
         sim_dict["time_sim"].append(float(t))
@@ -190,16 +195,15 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, contr
             elif (u < l_min):
                 u = l_min
             u = l_max
+        
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
-        kalman.update(pos_f_noise, curr_state[1], Sref_a, rho)
+        kalman.update(pos_f_noise, accel_f, Sref_a, rho)
         curr_state = next_state
         t += dt     
         
     end_time = int(round(timer.time()))
     sim_time = end_time - start_time
-
-   
     return t, kalman.kalman_dic, sim_time, sim_dict
         
         
