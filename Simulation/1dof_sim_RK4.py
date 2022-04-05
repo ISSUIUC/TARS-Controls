@@ -54,13 +54,13 @@ from src.system_propagation import rk4_sim
 #* ------------------------------ Simulation Code ----------------------------- #
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
-RASaero = pd.read_csv("Simulation/Lookup/RASAero_Mk5.csv")
+RASaero = pd.read_csv("Simulation/Lookup/RASAero_Intrepid_5800_mk6.csv")
 ORK = pd.read_csv("Simulation/OpenRocket Simulations/Intrepid_mk6_April.csv")
 
 April_apogee_time = 32.023  # sec
 IREC_apogee_time = 50.041   # sec
 
-April_apogee_goal = 14000  # ft
+April_apogee_goal = 15000  # ft
 IREC_apogee_goal = 30000   # ft
 
 April_burnout_alt = 958.75 # m 
@@ -123,8 +123,8 @@ plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="Altitude (No Control)"
 plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Altitude (Control)",color="green", linewidth = 3); 
 plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 
-# plt.subplot(1,2,2)
-# plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
+plt.subplot(1,2,2)
+plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
 
 #* Measurements vs Kalman Filter Graph
 # plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")

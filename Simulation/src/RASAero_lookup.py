@@ -31,7 +31,7 @@ def drag_from_csv(z, velocity_body, rasaero, Cd_list):
 
 def drag_lookup_1dof(z,vel,rasaero,Cd_list, input):
     # extracting the columns of interest
-    mach_num = rasaero.mach.values; aoa = rasaero.alpha_deg.values; cd = rasaero.cd_power_off.values; protub = rasaero.protuberance.values
+    mach_num = rasaero.mach.values; aoa = rasaero.alpha.values; cd = rasaero.CD_Power_Off.values; protub = rasaero.protuberance.values
     # narrowing down the columns using mach number range (0.01 - 1.01)
     min_index = min(np.where(mach_num == 0.01)[0])
     max_index = min(np.where(mach_num == 2.50)[0])
@@ -59,9 +59,9 @@ def drag_lookup_curve_fit_poly():
     mach = np.round(mach, 2)
     cdlist = np.empty(0)
 
-    RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
+    RASaero = pd.read_csv("Simulation/Lookup/RASAero_Intrepid_5800_mk6.csv")
 
-    mach_num = RASaero.mach.values; aoa = RASaero.alpha_deg.values; cd = RASaero.cd_power_off.values; protub = RASaero.protuberance.values
+    mach_num = RASaero.mach.values; aoa = RASaero.alpha.values; cd = RASaero.CD_Power_Off.values; protub = RASaero.protuberance.values
     min_index = min(np.where(mach_num == 0.01)[0])
     max_index = min(np.where(mach_num == 2.50)[0])
     mach_num = mach_num[min_index:max_index:1]; aoa = aoa[min_index:max_index:1]; cd = cd[min_index:max_index:1]; protub = protub[min_index:max_index:1]

@@ -2,15 +2,15 @@ from filterpy.common import Q_continuous_white_noise
 import numpy as np
 
 s_dt = 0
-x_k = np.zeros([2,1])
-F = np.zeros([2,2])
-H = np.zeros([2,1])
-B = np.zeros([2,1])
-P_k = np.zeros([2,2])
+x_k = np.zeros([3,1])
+F = np.zeros([3,3])
+H = np.zeros([2,3])
+B = np.zeros([3,1])
+P_k = np.zeros([3,3])
 Q = 0
-R = np.zeros([1])
-x_priori = np.zeros([2,1])
-P_priori = np.zeros([2,2])
+R = np.zeros([2,2])
+x_priori = np.zeros([3,1])
+P_priori = np.zeros([3,3])
 current_time = 0
 
 kalman_dic = {

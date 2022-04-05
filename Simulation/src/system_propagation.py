@@ -112,7 +112,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
     kalman.initialize(pos_f_noise, curr_state[1], accel_f, s_dt)
     
     # Define max and min values for flap actuation
-    l_max = conversion.ft_to_m(1/12) # 1 inch actuation length
+    l_max = conversion.ft_to_m(.6/12) # 1 inch actuation length
     l_min = 0 # can't have negative actuation
     
     # Define initial flap length at start of control time
@@ -121,7 +121,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
     # Limit flap actuation speed
     du_max = 0.001
     # Define Controller Gains
-    kp, kI, kd = 0.000001, 0.0005, 0.0005
+    kp, kI, kd = 0.001, 0.0005, 0.0005
     
     # Fix This:
     # sim_dict["predict_alt"].append(38000)
@@ -189,12 +189,11 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
             u = kp*apogee_error
             u = u + np.sign((u - prev_u)/dt)*min(abs((u - prev_u)/dt), du_max)*dt
             
-            #* Control Input Damping 
+            # * Control Input Damping 
             if (u > l_max):
                 u = l_max
             elif (u < l_min):
                 u = l_min
-            u = l_max
         
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
