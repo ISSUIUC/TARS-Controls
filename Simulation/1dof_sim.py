@@ -17,6 +17,8 @@ import src.rotation as rotation
 import src.RASAero_lookup as rasaero
 import src.altimeter as altimeter
 import src.kalman_filter as kalman
+import src.interpolation as interp
+import src.propellant_mass as prop
 
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
@@ -51,7 +53,12 @@ import src.kalman_filter as kalman
 #* ------------------------------ Simulation Code ----------------------------- #
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
-RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
+#RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
+RASaero = pd.read_csv("Lookup/RASAero_noAoA.csv")
+
+# Import thrust curve csv
+#thrust_csv = pd.read_csv("Simulation/Lookup/AeroTech_M2500T_Trimmed.csv")
+thrust_csv = pd.read_csv("Lookup/Cesaroni_20146N5800-P_Trimmed.csv")
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
@@ -78,18 +85,23 @@ kalman_dic = {
 }
 
 # Initial Values
-pos_f = constants.x
-pos_f_noisy = altimeter.alt_noise(constants.x)
-vel_f = constants.vx
-accel_f = constants.ax
+# pos_f = constants.x
+# pos_f_noisy = altimeter.alt_noise(constants.x)
+# vel_f = constants.vx
+# accel_f = constants.ax
+
+pos_f = 0
+pos_f_noisy = 0
+vel_f = 0
+accel_f = 0
 
 #* Kalman Filter Initialization
 # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
 kalman.initialize(pos_f_noisy, vel_f, accel_f, s_dt)
 
 # Time setup
-start_time = 0
-end_time = 30
+start_time = 0.082
+end_time = 45
 total_steps = 10000
 time = np.linspace(start_time,end_time,total_steps,endpoint=False)
 dt = time[1] - time[0]
@@ -103,23 +115,44 @@ l = 0
 u = np.array([l])
 for t in time:
     
+    print("altitude:",pos_f)
+    print("velocity:",vel_f)
+
+
     # A-priori 
     kalman.priori(u)
     
     # Density varies with altitude
     rho = atmosphere.density(pos_f)
 
+    # Calculate speed of sound at current altitude
+    a = atmosphere.speed_sound(pos_f)
+
+    # Calculate mach number at current time
+    mach = vel_f/a
+
     # Total drag coefficient of airframe 
-    Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
+    #Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
     # Cd_total = 0
+    Cd_total = interp.cd_interpolation(pos_f, vel_f, 0, 0, RASaero)
 
     #Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D)
 
-    #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
-    F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
-    accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
-    accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+    # add rocket forces for when motor is live during 0.082 < t < 4.264 s
+    if 0.082 <= t <= 4.264:
+        thrust = interp.thrust_interp(t,thrust_csv)
+
+        #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
+        F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
+        accel_a = (thrust + F_a)/constants.m0 # Acceleration due to Aerodynamic Forces
+        accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+
+    else:
+        #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
+        F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
+        accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
+        accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
 
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f) == -1):
