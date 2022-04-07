@@ -92,6 +92,8 @@ def update(pos_f, accel_f, Sref_a, rho):
     # F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
     # print(P_k)
 
+def getStateEst():
+    return x_k
 
 
 

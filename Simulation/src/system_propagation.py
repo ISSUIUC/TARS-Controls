@@ -45,17 +45,20 @@ def rk4_step(state, dt, rho, cd, sref):
     rk4_kp1 = state + dt*(y1 + 2*y2 + 2*y3 + y4)/6
     return rk4_kp1, a1
 
-def rk4_inner(initial_state, dt, cd_file, poly):
+def rk4_inner(pos_int, vel_int, dt, cd_file, poly):
     #* Returns Predicted Altitude
     
     # Initialize starting state and time
-    curr_state = initial_state
+    curr_state = np.array([pos_int, vel_int])
     t = 0    
     predicted_x_vals = np.array([])
     
     # Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D, 0)
     
+    if(curr_state[1] <= 0):
+        return np.array([curr_state[0]])
+
     # Simulate until apogee
     while (curr_state[1] > 0):
         
@@ -112,7 +115,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
     kalman.initialize(pos_f_noise, curr_state[1], accel_f, s_dt)
     
     # Define max and min values for flap actuation
-    l_max = conversion.ft_to_m(.6/12) # 1 inch actuation length
+    l_max = conversion.ft_to_m(constants.max_flap_length/12) # 1 inch actuation length
     l_min = 0 # can't have negative actuation
     
     # Define initial flap length at start of control time
@@ -121,7 +124,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
     # Limit flap actuation speed
     du_max = 0.001
     # Define Controller Gains
-    kp, kI, kd = 0.001, 0.0005, 0.0005
+    kp, kI, kd = 0.0005, 0.0005, 0.0005
     
     # Fix This:
     # sim_dict["predict_alt"].append(38000)
@@ -164,11 +167,14 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
         
         # Run inner RK4 to find predicted apogee
         #* (Use Kalman Filter Approximation for starting conditions)
-        inner_dt = 0.1
+        inner_dt = .1
         
         # Prediction Runtime check
         start = int(round(timer.time() * 1000))
-        predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file, poly)
+        x_k = kalman.getStateEst()
+        kalmanPos = x_k[0][0]
+        kalmanVel = x_k[1][0]
+        predicted_apogee = rk4_inner(kalmanPos, kalmanVel, inner_dt, cd_file, poly)
         end = int(round(timer.time() * 1000)) - start
         
         # Calculate apogee errors 
