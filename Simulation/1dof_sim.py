@@ -17,6 +17,8 @@ import src.rotation as rotation
 import src.RASAero_lookup as rasaero
 import src.altimeter as altimeter
 import src.kalman_filter as kalman
+import src.interpolation as interp
+import src.propellant_mass as prop
 
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
@@ -52,7 +54,13 @@ import src.kalman_filter as kalman
 
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
-RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
+#RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
+RASaero = pd.read_csv("Lookup/RASAero_noAoA.csv")
+
+# Import thrust curve csv
+#thrust_csv = pd.read_csv("Simulation/Lookup/AeroTech_M2500T_Trimmed.csv")
+# NOTE: if this csv is changed for a new motor, the burnout time in the if statements and mass constants will need to be changed
+thrust_csv = pd.read_csv("Lookup/AeroTech_M2500T_Trimmed.csv")
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
@@ -81,20 +89,26 @@ kalman_dic = {
 }
 
 # Initial Values
-pos_f = constants.x
-pos_f_noise = altimeter.alt_noise(constants.x)
-vel_f = constants.vx
+# pos_f = constants.x
+# pos_f_noisy = altimeter.alt_noise(constants.x)
+# vel_f = constants.vx
+# accel_f = constants.ax
+
+pos_f = 0
+pos_f_noisy = 0
+vel_f = 0
+accel_f = 0
 
 #* Calculating the total mechanical energy, this is assumed to be a constant 
 E_tot = m*9.81*pos_f + 0.5*m*vel_f**2
 
 #* Kalman Filter Initialization
 # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-kalman.initialize(pos_f_noise,vel_f, s_dt)
+kalman.initialize(pos_f_noisy, vel_f, accel_f, s_dt)
 
 # Time setup
-start_time = 0
-end_time = 30
+start_time = 0.0
+end_time = 45
 total_steps = 10000
 time = np.linspace(start_time,end_time,total_steps,endpoint=False)
 dt = time[1] - time[0]
@@ -108,23 +122,63 @@ l = 0
 u = np.array([l])
 for t in time:
     
+    print("altitude:",pos_f)
+    print("velocity:",vel_f)
+
+
     # A-priori 
     kalman.priori(u)
     
     # Density varies with altitude
     rho = atmosphere.density(pos_f)
 
+    # Calculate speed of sound at current altitude
+    a = atmosphere.speed_sound(pos_f)
+
+    # Calculate mach number at current time
+    mach = vel_f/a
+
     # Total drag coefficient of airframe 
-    Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
+    #Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
     # Cd_total = 0
+    Cd_total = interp.cd_interpolation(pos_f, vel_f, 0, 0, RASaero)
 
     #Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D)
 
-    #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
-    F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
-    accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
-    accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+
+   
+    if 0 <= t <= 0.019:
+        thrust = 0
+        #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
+        F_a = 0
+        accel_a = (thrust + F_a)/constants.m0 # Acceleration due to Aerodynamic Forces
+        accel_f = 0 # Net Acceleration from Aerodynamic Forces + Gravity
+    
+    # add rocket forces for when motor is live during 0.082 < t < 4.264 s (for April Launch)
+    # for final launch, 0.019 < t < 3.594
+    elif 0.019 < t <= 3.594:
+        #Calulate current mass of rocket at given time
+        m_prop = prop.find_prop_mass_irec(t) # change function call to match which launch
+        current_m = constants.m0 - m_prop
+
+
+        thrust = interp.thrust_interp(t,thrust_csv)
+        print("thrust:",thrust)
+
+        #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
+        F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
+        accel_a = (thrust + F_a)/current_m # Acceleration due to Aerodynamic Forces
+        print("accel:",accel_a)
+
+        accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+
+    else:
+        #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
+        F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
+        accel_a = F_a/constants.mf # Acceleration due to Aerodynamic Forces
+        accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f) == -1):
         break
@@ -133,7 +187,7 @@ for t in time:
     
     # Append Values to the Arrays
     dic["x"].append(float(pos_f))
-    dic["x_noise"].append(float(pos_f_noise))
+    dic["x_noise"].append(float(pos_f_noisy))
     dic["vel"].append(float(vel_f))
     dic["accel"].append(float(accel_f))
     dic["CD"].append(float(Cd_total))
@@ -142,24 +196,15 @@ for t in time:
 
     # Calculate new velocities and positions using current values
     pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
-    pos_f_noise = altimeter.alt_noise(pos_f)
+    pos_f_noisy = altimeter.alt_noise(pos_f)
     vel_f = vel_f + accel_f*dt
     
     # A-posteriori update
-    kalman.update(pos_f_noise, vel_f, Sref_a, rho)
 
-    # calculating the predicted altitude from the energy equation
-    h_predict = (0.5*vel_f**2 + 9.81*pos_f)/9.81
-
-    # constant a for scaling 
-    c = 0.000011
-    y_predict_update = h_predict  + c*(vel_f**2)*(11764.414956131044164 - h_predict)
-    dic["predict_alt"].append(float(h_predict))
-    dic["predict_update_alt"].append(float(y_predict_update))
-
+    kalman.update(pos_f_noisy, accel_f, Sref_a, rho)
     
-    kalman_dic["alt"].append(kalman.x_k[0][0])
-    kalman_dic["vel"].append(kalman.x_k[0][1])
+    # kalman_dic["alt"].append(kalman.x_k[0][0])
+    # kalman_dic["vel"].append(kalman.x_k[0][1])
     
 #Print Apogee and total time taken
 print("APOGEE (ft):", conversion.m_to_ft(max(dic["x"])))
@@ -177,23 +222,33 @@ for num in np.arange(0,len(dic["predict_alt"])):
 
 
 
-# Measurements vs Kalman Filter Graph
-# plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
-plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue", linewidth = 3); plt.legend(fontsize = 10); plt.ylabel("Altitude (m)", fontsize = 14)
-# plt.plot(dic["time_sim"], kalman_dic["alt"],label="Estimation",linestyle="--",color="tab:red")
-plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_alt"],label="Predicted Apogee - Energy Method",linestyle="--", color="tab:green", linewidth = 4.5); plt.legend(fontsize = 10) 
-plt.subplot(1,2,1); plt.plot(dic["time_sim"], dic["predict_update_alt"], label="Corrected Prediction", color="tab:cyan", linestyle="dotted", linewidth = 4.5)
-plt.subplot(1,2,1); plt.plot(dic["time_sim"], kalman_dic["alt"], label="Estimated Altitude", color="yellow", linestyle="dotted", linewidth = 4.5)
-plt.subplot(1,2,1); plt.axhline(y = max(dic["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 
-# plt.plot(dic["time_sim"][:-1], difference, label="Difference between Alt_predicted and True", color="tab:blue", linewidth = 3.5, linestyle = "dotted")
-plt.subplot(1,2,2); plt.plot(dic["vel"], difference_pre, label="Pre-correction Error", color="tab:orange", linestyle="dotted", linewidth = 4.5)
-plt.subplot(1,2,2); plt.plot(dic["vel"], difference_post, label="Post-correction Error", color="tab:green", linestyle="dotted", linewidth = 4.5)
-
-plt.xlabel("Velocity (m/s)", fontsize = 14)
-plt.ylabel("Error", fontsize = 14)
-plt.legend(fontsize = 14)
+# Position Measurements vs Kalman Filter Graph
+plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
+plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue")
+plt.plot(dic["time_sim"], kalman.kalman_dic["alt"],label="Estimation",linestyle="--",color="tab:red")
+plt.xlabel("Time (sec)")
+plt.ylabel("Altitude (m)")
+plt.legend()
 plt.show()
+
+# Velocity Measurements vs Kalman Filter Graph
+plt.plot(dic["time_sim"], dic["vel"],label="True Velocity",color="royalblue")
+plt.plot(dic["time_sim"], kalman.kalman_dic["vel"],label="Estimation",linestyle="--",color="tab:red")
+plt.xlabel("Time (sec)")
+plt.ylabel("Velocity (m/s)")
+plt.legend()
+plt.show()
+
+# Acceleration Measurements vs Kalman Filter Graph
+plt.plot(dic["time_sim"], dic["accel"],label="True Acceleration",color="royalblue")
+plt.plot(dic["time_sim"], kalman.kalman_dic["accel"],label="Estimation",linestyle="--",color="tab:red")
+plt.xlabel("Time (sec)")
+plt.ylabel("Acceleration ($m/s^2$)")
+plt.legend()
+plt.show()
+
+
 
 
 

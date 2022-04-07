@@ -2,12 +2,15 @@ import numpy as np
 import src.rotation as rotation
 
 # Rocket Properties
-m0 = 0 #kg
-r_CP = 219/100 #m #TODO: Update
-r_CG = 167.67/100 #m #TODO: Update
-I_rotational = 0.030245 #kg*m^2 #TODO: Update
-I_longitudinal = 15.841 #kg*m^2 #TODO: Update
-D = 0.102 #m 
+m0 = 30.544 # kg, for IREC, full mass before burnout
+#m0 = 23.782 # kg, for April, full mass before motor burn
+mf = 21.364 #kg, for IREC launch, after burnout
+#mf = 19.0586 # kg, for April, after burnout
+r_CP = 219/100 #m
+r_CG = 167.67/100 #m
+I_rotational = 0.030245 #kg*m^2
+I_longitudinal = 15.841 #kg*m^2
+D = 0.1056132 #m
 
 #Positions
 x = 0 #m #initial alititude (burnout)

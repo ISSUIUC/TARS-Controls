@@ -8,6 +8,7 @@ H = np.zeros([2,3])
 B = np.zeros([3,1])
 P_k = np.zeros([3,3])
 Q = 0
+
 R = np.zeros([2,2])
 x_priori = np.zeros([3,1])
 P_priori = np.zeros([3,3])
@@ -23,14 +24,17 @@ kalman_dic = {
 def initialize(pos_f, vel_f, accel_f, time_step):
     global s_dt, x_k, F, H, B, P_k, Q, R, current_time
 
+
     s_dt = time_step
     x_k = np.array([[pos_f],
                     [vel_f],
                     [accel_f]])
+
     # F is the state space 'A' matrix
     F = np.array([[1.0, s_dt, (s_dt**2) / 2],
                   [0.0, 1.0, s_dt],
                   [0.0, 0.0, 1.0]])
+
     # H is converstion between measurement and state (analogous to C)
     # We can measure position and acceleration
     H = np.array([[1.0,0.0,0.0],
@@ -42,35 +46,41 @@ def initialize(pos_f, vel_f, accel_f, time_step):
                   [-1.0]])
 
     # (Covariance [P] 6ms time step
+
     P_k = np.array([[.018,0.009, 0.005],
                     [0.009,0.009, 0.0045],
                     [0.005, 0.0045, 10]])
 
-    # White Noise [Q] 6ms time step
+    # White Noise [Q]
     Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.00899)
 
-    # Measurement Noise Function [R], must be SQUARE
+    # Measurement Noise Function [R]
     # High-G Accel: 49 - 195 m-Gs accuracy
     # Low-G Accel: .25 m-G accuracy
+    # MUST BE SQUARE
+    
+
     R = np.array([[12.0,0],
                   [0,1.4]])
 
 # Set priori state (guess of next step)
 def priori(u):
     global x_priori, P_priori
-
-    x_priori = (F @ x_k) + (B @ u)
+    
+    # x_priori = (F @ x_k) + ((B @ u).T) #* For some reason doesnt work when B or u is = 0
+    x_priori = F @ x_k
     P_priori = (F @ P_k @ F.T) + Q
 
 # Update Kalman Gain, posteriori state (guess of current step with new data), Covariance update
+
 # Update State Guess
 def update(pos_f, accel_f, Sref_a, rho):
     global K, x_k, P_k, F, current_time
-
     # Update Kalman Gain
     if (len(R) == 1):
         K = P_priori @ H.T * np.reciprocal(H @ P_priori @ H.T + R)
     else:
+
         K = (P_priori @ H.T) @ np.linalg.inv(H @ P_priori @ H.T + R) 
         
     # Sensor Measurements
@@ -91,7 +101,3 @@ def update(pos_f, accel_f, Sref_a, rho):
 
     # F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
     # print(P_k)
-
-
-
-

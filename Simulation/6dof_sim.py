@@ -201,6 +201,7 @@ simulated_steps = int(total_steps * ((t - start_time) / (end_time - start_time))
 time_flight = np.linspace(start_time,t,simulated_steps,endpoint=False)
 
 plot.plot_3d(dic["pos_vals"],0)
+plot.plot_3d_vel(dic["pos_vals"], dic["vel_vals"],0)
 plt.show()
 
 
