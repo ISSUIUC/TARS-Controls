@@ -58,7 +58,8 @@ RASaero = pd.read_csv("Lookup/RASAero_noAoA.csv")
 
 # Import thrust curve csv
 #thrust_csv = pd.read_csv("Simulation/Lookup/AeroTech_M2500T_Trimmed.csv")
-thrust_csv = pd.read_csv("Lookup/Cesaroni_20146N5800-P_Trimmed.csv")
+# NOTE: if this csv is changed for a new motor, the burnout time in the if statements and mass constants will need to be changed
+thrust_csv = pd.read_csv("Lookup/AeroTech_M2500T_Trimmed.csv")
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
@@ -100,7 +101,7 @@ accel_f = 0
 kalman.initialize(pos_f_noisy, vel_f, accel_f, s_dt)
 
 # Time setup
-start_time = 0.082
+start_time = 0.0
 end_time = 45
 total_steps = 10000
 time = np.linspace(start_time,end_time,total_steps,endpoint=False)
@@ -139,19 +140,36 @@ for t in time:
     #Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D)
 
-    # add rocket forces for when motor is live during 0.082 < t < 4.264 s
-    if 0.082 <= t <= 4.264:
+   
+    if 0 <= t <= 0.019:
+        thrust = 0
+        #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
+        F_a = 0
+        accel_a = (thrust + F_a)/constants.m0 # Acceleration due to Aerodynamic Forces
+        accel_f = 0 # Net Acceleration from Aerodynamic Forces + Gravity
+    
+    # add rocket forces for when motor is live during 0.082 < t < 4.264 s (for April Launch)
+    # for final launch, 0.019 < t < 3.594
+    elif 0.019 < t <= 3.594:
+        #Calulate current mass of rocket at given time
+        m_prop = prop.find_prop_mass_irec(t) # change function call to match which launch
+        current_m = constants.m0 - m_prop
+
+
         thrust = interp.thrust_interp(t,thrust_csv)
+        print("thrust:",thrust)
 
         #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
         F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
-        accel_a = (thrust + F_a)/constants.m0 # Acceleration due to Aerodynamic Forces
+        accel_a = (thrust + F_a)/current_m # Acceleration due to Aerodynamic Forces
+        print("accel:",accel_a)
+
         accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
 
     else:
         #Calculate aerodynamic forces on the rocket and the acceleration in the aerodynamic frame
         F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
-        accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
+        accel_a = F_a/constants.mf # Acceleration due to Aerodynamic Forces
         accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
 
     #* End simulation if rocket reached apogee
