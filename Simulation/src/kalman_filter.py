@@ -13,15 +13,10 @@ x_priori = np.zeros([3,1])
 P_priori = np.zeros([3,3])
 current_time = 0
 
-kalman_dic = {
-    "alt": [],
-    "vel": [],
-    "accel": [],
-    "time": []
-}
+kalman_dic = {}
 
 def initialize(pos_f, vel_f, accel_f, time_step):
-    global s_dt, x_k, F, H, B, P_k, Q, R, current_time
+    global s_dt, x_k, F, H, B, P_k, Q, R, current_time, kalman_dic
 
     s_dt = time_step
     x_k = np.array([[pos_f],
@@ -54,6 +49,13 @@ def initialize(pos_f, vel_f, accel_f, time_step):
     # Low-G Accel: .25 m-G accuracy
     R = np.array([[12.0,0],
                   [0,1.4]])
+
+    kalman_dic = {
+        "alt": [],
+        "vel": [],
+        "accel": [],
+        "time": []
+    }
 
 # Set priori state (guess of next step)
 def priori(u):

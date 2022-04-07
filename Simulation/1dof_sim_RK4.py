@@ -122,6 +122,8 @@ print("Simulator Runtime (Control) (s): ", sim_time_c)
 plt.subplot(1,2,1)
 plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="Altitude (No Control)",color="royalblue", linewidth = 3); 
 plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Altitude (Control)",color="green", linewidth = 3); 
+plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Measurement (No Control)",color="lightsteelblue",linestyle=":")
+plt.plot(kalman_dict_nc["time"], kalman_dict_nc["alt"],label="Estimation (No Control)",linestyle="--",color="tab:red")
 plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 plt.plot(sim_dict_c["time_sim"], sim_dict_c["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
 
@@ -132,7 +134,6 @@ plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extens
 # plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
 # plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="True Altitude",color="royalblue", linewidth = 3); 
 # plt.plot(kalman_dict_nc["time"], kalman_dict_nc["alt"],label="Estimation",linestyle="--",color="tab:red")
-# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
 # plt.axhline(y = max(sim_dict_nc["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 # plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 
