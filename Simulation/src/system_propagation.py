@@ -124,7 +124,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
     # Limit flap actuation speed
     du_max = 0.001
     # Define Controller Gains
-    kp, kI, kd = 0.0005, 0.0005, 0.0005
+    kp, kI, kd = 0.0006, 0.0005, 0.0005
     
     # Fix This:
     # sim_dict["predict_alt"].append(38000)
