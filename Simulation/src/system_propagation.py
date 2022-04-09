@@ -57,19 +57,18 @@ def rk4_inner(pos_int, vel_int, dt, cd_file, poly):
     Sref_a = rocket.sref_approx(constants.D, 0)
     
     if(curr_state[1] <= 0):
-        return np.array([curr_state[0]])
+        return curr_state[0]
 
     # Simulate until apogee
     while (curr_state[1] > 0):
         
         # grabbing the current states
         pos_f = curr_state[0]
-        pos_f_noise = altimeter.alt_noise(pos_f)
         vel_f = curr_state[1]
         
         # Density varies with altitude
         rho = atmosphere.density(pos_f)
-        mach = curr_state[1] / atmosphere.speed_sound(curr_state[0])
+        mach = vel_f / atmosphere.speed_sound(pos_f)
         
         # Total drag coefficient of airframe 
         # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,dict["CD"])
@@ -200,7 +199,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
                 u = l_max
             elif (u < l_min):
                 u = l_min
-        
+
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
         kalman.update(pos_f_noise, accel_f, Sref_a, rho)
