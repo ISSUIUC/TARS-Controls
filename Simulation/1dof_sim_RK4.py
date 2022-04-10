@@ -84,8 +84,6 @@ poly = rasaero.drag_lookup_curve_fit_poly()
 # Initial + Desired Values
 constants.x = April_burnout_alt
 constants.vx = ork.alt_vel_poly_fit(constants.x, ORK, apogee_time=April_apogee_time)
-mach_init = constants.vx / atmosphere.speed_sound(constants.x)
-pos_f_noise = altimeter.alt_noise(constants.x, mach_init)
 constants.ax = April_accel
 init_state = np.array([constants.x, constants.vx])
 des_apogee = conversion.ft_to_m(April_apogee_goal) #meters
@@ -96,9 +94,9 @@ s_dt = 0.03
 dt = 0.006
 
 # Run Sim with and without control
-flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly, des_apogee, constants.ax)
+flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, dt, RASaero, poly, des_apogee, constants.ax)
 print("No Control Sim Finished")
-flight_time_c, kalman_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly, des_apogee, constants.ax, control=1)
+flight_time_c, kalman_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, dt, RASaero, poly, des_apogee, constants.ax, control=1)
 
 #Print Housekeeping Values
 print("APOGEE (No Control) (ft):", conversion.m_to_ft(max(sim_dict_nc["x"])))

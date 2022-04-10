@@ -16,6 +16,7 @@ import src.rocket as rocket
 import src.rotation as rotation
 import src.RASAero_lookup as rasaero
 import src.altimeter as altimeter
+import src.accelerometer as accelerometer
 import src.kalman_filter as kalman
 
 # constructing the acceleration vector 
@@ -45,7 +46,7 @@ def rk4_step(state, dt, rho, cd, sref):
     rk4_kp1 = state + dt*(y1 + 2*y2 + 2*y3 + y4)/6
     return rk4_kp1, a1
 
-def rk4_inner(pos_int, vel_int, dt, cd_file, poly):
+def rk4_inner(pos_int, vel_int, dt, poly):
     #* Returns Predicted Altitude
     
     # Initialize starting state and time
@@ -83,7 +84,7 @@ def rk4_inner(pos_int, vel_int, dt, cd_file, poly):
     
     return max(predicted_x_vals)
 
-def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel_f, control=0):
+def rk4_sim(initial_state, dt, cd_file, poly, desired_apogee, accel_f, control=0):
     
     # Initialize dictionary to store values at all time steps
     sim_dict = {
@@ -105,13 +106,17 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
     curr_state = initial_state
     t = 0
     s_dt = dt #!
+
+    mach_init = curr_state[1] / atmosphere.speed_sound(curr_state[0])
+    pos_f_noise = altimeter.alt_noise(curr_state[1], mach_init)
+    accel_f_noise = accelerometer.accelerometer_noise(accel_f)
     
     #Error summation for integral
     e_sum = 0
 
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-    kalman.initialize(pos_f_noise, curr_state[1], accel_f, s_dt)
+    kalman.initialize(pos_f_noise, curr_state[1], accel_f_noise, s_dt)
     
     # Define max and min values for flap actuation
     l_max = conversion.ft_to_m(constants.max_flap_length/12) # 1 inch actuation length
@@ -140,7 +145,10 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
         pos_f = curr_state[0]
         vel_f = curr_state[1]
         mach = vel_f / atmosphere.speed_sound(pos_f)
+
+        # Adding noise to initial states with sensor readings
         pos_f_noise = altimeter.alt_noise(pos_f, mach)
+        accel_f_noise = accelerometer.accelerometer_noise(accel_f)
         
         # Density varies with altitude
         rho = atmosphere.density(pos_f)
@@ -203,7 +211,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
 
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
-        kalman.update(pos_f_noise, accel_f, Sref_a, rho)
+        kalman.update(pos_f_noise, accel_f_noise, Sref_a, rho)
         curr_state = next_state
         t += dt     
         

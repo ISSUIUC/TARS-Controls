@@ -5,7 +5,7 @@ import src.atmosphere as atmosphere
 def alt_noise(alt_input, mach):
     
     # MS5611 barometer has an accuracy of +- 1.5 mbar (150Pa) which translates roughly to +- 12 m
-    # 90% of test data falls withing +- 1.5 mbar - calculate standard deviation associated with 90% (z = 1.645)
+    # 90% of test data falls within +- 1.5 mbar - calculate standard deviation associated with 90% (z = 1.645)
     # 150Pa = z*s/sqrt(n) where n is number of tests in data set
     # s = 150 / 1.645
     # Lembeck - thermal vacuum chamber for testing
