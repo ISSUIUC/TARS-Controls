@@ -83,8 +83,9 @@ poly = rasaero.drag_lookup_curve_fit_poly()
 
 # Initial + Desired Values
 constants.x = April_burnout_alt
-pos_f_noise = altimeter.alt_noise(constants.x)
 constants.vx = ork.alt_vel_poly_fit(constants.x, ORK, apogee_time=April_apogee_time)
+mach_init = constants.vx / atmosphere.speed_sound(constants.x)
+pos_f_noise = altimeter.alt_noise(constants.x, mach_init)
 constants.ax = April_accel
 init_state = np.array([constants.x, constants.vx])
 des_apogee = conversion.ft_to_m(April_apogee_goal) #meters
@@ -127,8 +128,8 @@ plt.plot(kalman_dict_nc["time"], kalman_dict_nc["alt"],label="Estimation (No Con
 plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 plt.plot(sim_dict_c["time_sim"], sim_dict_c["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
 
-plt.subplot(1,2,2)
-plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
+# plt.subplot(1,2,2)
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
 
 #* Measurements vs Kalman Filter Graph
 # plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")

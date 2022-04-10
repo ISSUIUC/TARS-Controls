@@ -138,8 +138,9 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
         
         # grabbing the current states
         pos_f = curr_state[0]
-        pos_f_noise = altimeter.alt_noise(pos_f)
         vel_f = curr_state[1]
+        mach = vel_f / atmosphere.speed_sound(pos_f)
+        pos_f_noise = altimeter.alt_noise(pos_f, mach)
         
         # Density varies with altitude
         rho = atmosphere.density(pos_f)
