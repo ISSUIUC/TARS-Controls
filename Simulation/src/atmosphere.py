@@ -1,4 +1,6 @@
 # ACCURATE UP TO 11000m
+import src.constants as constants
+
 def pressure(z):
     # temperature under standard condition (15 degrees C at sealevel) kelvin
     P_0 = 101325
@@ -94,3 +96,6 @@ def speed_sound(altitude):
 
     return a_H
 
+# ratio of static pressure downstream of shockwave / upstream
+def pressure_ratio(mach):
+    return 1 + (2 * constants.gamma) / (constants.gamma + 1) * (mach**2 - 1)
