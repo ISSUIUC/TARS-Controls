@@ -50,7 +50,7 @@ def cd_interpolation(altitude, velocity, ang_of_att, extension, rasaero):
 def thrust_interp(time, thrust_csv):
     # define thrust for given times
     thrust = 0
-    
+        
     for row in range(len(thrust_csv['Time (s)'])-1):
 
         if thrust_csv['Time (s)'][row] <= time <= thrust_csv['Time (s)'][row+1]:

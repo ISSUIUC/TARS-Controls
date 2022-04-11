@@ -20,6 +20,7 @@ import src.OpenRocket_lookup as ork
 import src.altimeter as altimeter
 import src.kalman_filter as kalman
 from src.system_propagation import rk4_sim
+import src.propellant_mass as prop
 
 #* ---------------------------- Frames we are using --------------------------- #
 # Fixed Frame - fixed to the launch rail, not taking into account rotation of the Earth
@@ -53,40 +54,53 @@ from src.system_propagation import rk4_sim
 # angvel_b-> angular velocity in the body frame
 #* ------------------------------ Simulation Code ----------------------------- #
 
-# Importing RasAero Package for Coeffiecient of Drag Lookup
+# Set to 1 for IREC launch, 0 for April Launch
+launch_arg = 1
+
+# RASAero File: Stays the same
 RASaero = pd.read_csv("Simulation/Lookup/RASAero_Intrepid_5800_mk6.csv")
-ORK = pd.read_csv("Simulation/OpenRocket Simulations/Intrepid_mk6_April.csv")
 
-April_apogee_time = 32.023  # sec
-IREC_apogee_time = 50.041   # sec
+# Importing RasAero Package for Coeffiecient of Drag Lookup
+or_file = "Simulation/OpenRocket Simulations/Intrepid_mk6_April.csv"
+thrust_file = "Simulation/Lookup/AeroTech_M2500T_Trimmed.csv"
+constants.apogee_time = constants.April_apogee_time
+constants.apogee_goal = constants.April_apogee_goal
+constants.burnout_alt = constants.April_burnout_alt
+constants.m0 = constants.m0_April
+constants.mf = constants.mf_April
+constants.thrust_start = constants.thrust_start_April
+constants.thrust_end = constants.thrust_end_April
+prop_mass_func = prop.find_prop_mass_april
 
-April_apogee_goal = 15000  # ft
-IREC_apogee_goal = 30000   # ft
-
-April_burnout_alt = 958.75 # m 
-IREC_burnout_alt = 1462.25 # m
-
-April_m = 19.0586
-IREC_m = 21.1066
-
-April_accel = -31.593 #m/s^2
-
-constants.m0 = April_m
+# Change values if simulating IREC launch
+if (launch_arg):
+    or_file = "Simulation/OpenRocket Simulations/Intrepid_mk6_IREC.csv"
+    thrust_file = "Simulation/Lookup/Cesaroni_20146N5800-P_Trimmed.csv"
+    constants.apogee_time = constants.IREC_apogee_time
+    constants.apogee_goal = constants.IREC_apogee_goal
+    constants.burnout_alt = constants.IREC_burnout_alt
+    constants.m0 = constants.m0_IREC
+    constants.mf = constants.mf_IREC
+    constants.thrust_start = constants.thrust_start_IREC
+    constants.thrust_end = constants.thrust_end_IREC
+    prop_mass_func = prop.find_prop_mass_irec
+    
+ORK = pd.read_csv(or_file)
+thrust_csv = pd.read_csv(thrust_file)
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
 I, c_m, m = rocket.I_new(0,0)
 
 # Cd vs Mach Number Polyfit
-poly = rasaero.drag_lookup_curve_fit_poly()
+poly_nothrust = rasaero.drag_lookup_curve_fit_poly(0)
+poly_thrust = rasaero.drag_lookup_curve_fit_poly(1)
 
 # Initial + Desired Values
-constants.x = April_burnout_alt
+# Position, Velocity, Acceleration are all 0 at launch
 pos_f_noise = altimeter.alt_noise(constants.x)
-constants.vx = ork.alt_vel_poly_fit(constants.x, ORK, apogee_time=April_apogee_time)
-constants.ax = April_accel
 init_state = np.array([constants.x, constants.vx])
-des_apogee = conversion.ft_to_m(April_apogee_goal) #meters
+des_apogee = conversion.ft_to_m(constants.apogee_goal) #meters
 
 # Time between sensor readings / KF updates
 s_dt = 0.03
@@ -94,9 +108,9 @@ s_dt = 0.03
 dt = 0.006
 
 # Run Sim with and without control
-flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly, des_apogee, constants.ax)
+flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, constants.ax, thrust_csv, prop_mass_func)
 print("No Control Sim Finished")
-flight_time_c, kalman_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly, des_apogee, constants.ax, control=1)
+flight_time_c, kalman_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, constants.ax, thrust_csv, prop_mass_func, control=1)
 
 #Print Housekeeping Values
 print("APOGEE (No Control) (ft):", conversion.m_to_ft(max(sim_dict_nc["x"])))

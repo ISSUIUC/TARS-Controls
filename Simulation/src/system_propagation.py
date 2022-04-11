@@ -17,71 +17,96 @@ import src.rotation as rotation
 import src.RASAero_lookup as rasaero
 import src.altimeter as altimeter
 import src.kalman_filter as kalman
+import src.propellant_mass as prop
+import src.interpolation as interp
 
 # constructing the acceleration vector 
 # ---> derivative of position and velocity
-def accel(u, rho, Cd_total, Sref_a):
+def accel(u, rho, Cd_total, Sref_a, thrust, rocket_mass, before_launch):
     r1 = u[0]
     v1 = u[1]
     
-    F_a = -((rho* (v1**2) * Sref_a * Cd_total) / 2)
-    accel_a = F_a/constants.m0 # Acceleration due to Aerodynamic Forces
-    accel_f = accel_a - constants.g
+    # No acceleration before launch
+    if (before_launch):
+        return np.array([v1, 0]), 0
     
+    # Calculate acceleration on the rocket
+    F_a = -((rho* (v1**2) * Sref_a * Cd_total) / 2)
+    accel_a = (thrust + F_a)/rocket_mass # Acceleration due to Aerodynamic Forces
+    accel_f = accel_a - constants.g
+
     f1 = np.array([v1, accel_f])
     return f1, accel_f
 
-def rk4_step(state, dt, rho, cd, sref):
-    # rk4 iteration 
-    
-    # state = state[:2]
-    
-    y1,a1 = accel(state, rho, cd, sref)
-    y2,a2 = accel(state + 0.5*dt*y1, rho, cd, sref)
-    y3,a3 = accel(state + 0.5*dt*y2, rho, cd, sref)
-    y4,a4 = accel(state + dt*y3, rho, cd, sref)
-    
+def rk4_step(state, dt, rho, cd, sref, thrust, rocket_mass, before_launch):
+
+    #RK4: Use weighted average of 4 different slopes
+    y1,a1 = accel(state, rho, cd, sref, thrust, rocket_mass, before_launch)
+    y2,a2 = accel(state + 0.5*dt*y1, rho, cd, sref, thrust, rocket_mass, before_launch)
+    y3,a3 = accel(state + 0.5*dt*y2, rho, cd, sref, thrust, rocket_mass, before_launch)
+    y4,a4 = accel(state + dt*y3, rho, cd, sref, thrust, rocket_mass, before_launch)
     
     rk4_kp1 = state + dt*(y1 + 2*y2 + 2*y3 + y4)/6
+    #! Test with weighted average of acceleration
+    
     return rk4_kp1, a1
 
-def rk4_inner(initial_state, dt, cd_file, poly):
+def rk4_inner(initial_state, dt, cd_file, poly_nothrust, poly_thrust, time, thrust_csv, start_mass, prop_mass_func):
     #* Returns Predicted Altitude
     
     # Initialize starting state and time
     curr_state = initial_state
-    t = 0    
     predicted_x_vals = np.array([])
+    curr_mass = start_mass
     
     # Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D, 0)
     
+    # Initialize polynomial fit
+    poly = poly_nothrust
+    
     # Simulate until apogee
-    while (curr_state[1] > 0):
+    while (curr_state[1] >= 0):
         
         # grabbing the current states
         pos_f = curr_state[0]
-        pos_f_noise = altimeter.alt_noise(pos_f)
         vel_f = curr_state[1]
         
         # Density varies with altitude
         rho = atmosphere.density(pos_f)
         mach = curr_state[1] / atmosphere.speed_sound(curr_state[0])
         
+        # Initialize variables
+        before_launch = 0
+        thrust = 0
+                
+        # Set thrust and drag values based on time
+        if time < constants.thrust_start: #Before Launch
+            before_launch = 1
+        elif time < constants.thrust_end: #During Thrust
+            curr_mass = constants.m0 - prop_mass_func(time)
+            thrust = interp.thrust_interp(time, thrust_csv)
+            poly = poly_thrust
+        else: # After Burnout
+            curr_mass = constants.mf             
+            poly = poly_nothrust
+        
         # Total drag coefficient of airframe 
-        # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,dict["CD"])
-        # Cd_total = 0.5
+        # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,cd_list, 0, before_launch, before_burnout)
+        #TODO: Update Cd total to have one for thrust included
         Cd_total = np.poly1d(poly)(mach)
         
-        # rk4 iteration
+        # RK4 Update
         predicted_x_vals = np.append(predicted_x_vals, curr_state[0])
-        next_state, accel_f = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
+        next_state, accel_f = rk4_step(curr_state, dt, rho, Cd_total, Sref_a,thrust,curr_mass,before_launch)
         curr_state = next_state
-        t += dt    
+        
+        # Progress Time
+        time += dt
     
     return max(predicted_x_vals)
 
-def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel_f, control=0):
+def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust, desired_apogee, accel_f, thrust_csv, prop_mass_func, control=0):
     
     # Initialize dictionary to store values at all time steps
     sim_dict = {
@@ -102,10 +127,13 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
     # Initialize starting state and time
     curr_state = initial_state
     t = 0
-    s_dt = dt #!
+    s_dt = dt #! Fix this (inner loop should be able to run at specified timestep)
     
     #Error summation for integral
     e_sum = 0
+    
+    #Initialize Mass (with propellant)
+    curr_mass = constants.m0
 
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
@@ -123,13 +151,11 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
     # Define Controller Gains
     kp, kI, kd = 0.001, 0.0005, 0.0005
     
-    # Fix This:
-    # sim_dict["predict_alt"].append(38000)
-
-    
     # Get initial Apogee Prediction    
+    # sim_dict["predict_alt"].append(38000) #!Fix
+
     # Simulate until apogee
-    while (curr_state[1] > 0):
+    while (curr_state[1] >= 0):
         
         # A-priori (before current state is reached)
         kalman.priori([u])
@@ -141,16 +167,30 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
         
         # Density varies with altitude
         rho = atmosphere.density(pos_f)
-        
-        # Total drag coefficient of airframe 
-        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u)
-        # Cd_total = 0.5
 
         # Approximation - use the area of a circle for reference area
         Sref_a = rocket.sref_approx(constants.D, u)
-
+        
+        # Initialize variables
+        Cd_total = 0
+        before_launch = 0
+        before_burnout = 0
+        thrust = 0
+        
+        # Set thrust and drag values based on time
+        if t < constants.thrust_start: #Before Launch
+            before_launch = 1
+            before_burnout = 1
+        elif t < constants.thrust_end: #During Thrust
+            curr_mass = constants.m0 - prop_mass_func(t)
+            thrust = interp.thrust_interp(t, thrust_csv)
+            before_burnout = 1
+        else: # After Burnout
+            curr_mass = constants.mf
+        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u, before_launch, before_burnout)
+             
         # rk4 iteration 
-        next_state, accel_f = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
+        next_state, accel_f = rk4_step(curr_state, dt, rho, Cd_total, Sref_a, thrust, curr_mass, before_launch)
         
         # Append Values to the Arrays
         sim_dict["x"].append(float(pos_f))
@@ -168,7 +208,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
         
         # Prediction Runtime check
         start = int(round(timer.time() * 1000))
-        predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file, poly)
+        predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file, poly_nothrust, poly_thrust, t, thrust_csv, curr_mass, prop_mass_func)
         end = int(round(timer.time() * 1000)) - start
         
         # Calculate apogee errors 
@@ -182,8 +222,8 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly, desired_apogee, accel
         sim_dict["predict_alt"].append(predicted_apogee)
         
         # Control Code
-        if (control):
-            
+        if (control and not before_burnout):
+                
             prev_u = u
             # u = kp*apogee_error + kI*e_sum + kd*dedt
             u = kp*apogee_error

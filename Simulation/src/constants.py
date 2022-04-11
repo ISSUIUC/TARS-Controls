@@ -2,15 +2,38 @@ import numpy as np
 import src.rotation as rotation
 
 # Rocket Properties
-m0 = 30.544 # kg, for IREC, full mass before burnout
-#m0 = 23.782 # kg, for April, full mass before motor burn
-mf = 21.364 #kg, for IREC launch, after burnout
-#mf = 19.0586 # kg, for April, after burnout
+m0_IREC = 30.544 # kg, for IREC, full mass before burnout
+m0_April = 23.782 # kg, for April, full mass before motor burn
+mf_IREC = 21.364 #kg, for IREC launch, after burnout
+mf_April = 19.0586 # kg, for April, after burnout
+
 r_CP = 219/100 #m
 r_CG = 167.67/100 #m
 I_rotational = 0.030245 #kg*m^2
 I_longitudinal = 15.841 #kg*m^2
 D = 0.1056132 #m
+
+April_apogee_time = 32.023  # sec
+IREC_apogee_time = 50.041   # sec
+
+April_apogee_goal = 15000  # ft
+IREC_apogee_goal = 30000   # ft
+
+April_burnout_alt = 958.75 # m 
+IREC_burnout_alt = 1462.25 # m
+
+April_m = 19.0586
+IREC_m = 21.1066
+
+# Accelerations at start of burnout (not needed)
+# April_accel = -31.593 #m/s^2
+# IREC_accel = -30 #! FIX THIS
+
+# Times at which thrust starts and ends
+thrust_start_April = 0.082
+thrust_start_IREC = 0.019
+thrust_end_April = 4.264
+thrust_end_IREC = 3.594
 
 #Positions
 x = 0 #m #initial alititude (burnout)
@@ -31,7 +54,7 @@ yaw_rate = -0.0013 #degrees/s #initial yaw rate #TODO: Update
 
 #Accelerations
 #gives vertical and lateral acceleration
-ax = -26.893 #m/s^2 #initial vertical acceleration
+ax = 0 #m/s^2 #initial vertical acceleration
 lateral_accel = 0.19911 #m/s^2 #TODO: Update
 
 #Orientation

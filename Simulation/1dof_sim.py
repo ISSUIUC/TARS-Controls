@@ -145,8 +145,6 @@ for t in time:
 
     #Approximation - use the area of a circle for reference area
     Sref_a = rocket.sref_approx(constants.D)
-
-
    
     if 0 <= t <= 0.019:
         thrust = 0
@@ -161,7 +159,6 @@ for t in time:
         #Calulate current mass of rocket at given time
         m_prop = prop.find_prop_mass_irec(t) # change function call to match which launch
         current_m = constants.m0 - m_prop
-
 
         thrust = interp.thrust_interp(t,thrust_csv)
         print("thrust:",thrust)

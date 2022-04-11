@@ -44,5 +44,6 @@ def find_prop_mass_irec(time):
 
     # m_prop is mass of propellant consumed at given time, err is the expected error from true solution
     m_prop, err = quad(m_dot_eqn, 0.019, time)
+    
 
     return m_prop
