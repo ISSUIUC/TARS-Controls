@@ -1,4 +1,40 @@
+# ACCURATE UP TO 11000m
+import src.constants as constants
 
+def pressure(z):
+    # temperature under standard condition (15 degrees C at sealevel) kelvin
+    P_0 = 101325
+
+    # pressure under standard condition in (Pa)
+    T_0 = 288.16 
+
+    # Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
+    b = 0.0065
+
+    # gravitational constant 
+    g = 9.81
+
+    R = 287.05
+
+    return P_0 * ((T_0 +(z)*b)/T_0)**(-g/(b*R))
+
+def alt_from_pressure(p):
+    # temperature under standard condition (15 degrees C at sealevel) kelvin
+    P_0 = 101325
+
+    # pressure under standard condition in (Pa)
+    T_0 = 288.16 
+
+    # Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
+    b = 0.0065
+
+    # gravitational constant 
+    g = 9.81
+
+    R = 287.05
+
+    pressureRatio = p/P_0
+    return -(T_0*((pressureRatio)**(b*R/(g)) - 1) * (pressureRatio)**(-b*R/(g)))/b
 
 def density(z):
     
@@ -60,3 +96,6 @@ def speed_sound(altitude):
 
     return a_H
 
+# ratio of static pressure downstream of shockwave / upstream
+def pressure_ratio(mach):
+    return 1 + (2 * constants.gamma) / (constants.gamma + 1) * (mach**2 - 1)

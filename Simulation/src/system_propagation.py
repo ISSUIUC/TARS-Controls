@@ -16,6 +16,7 @@ import src.rocket as rocket
 import src.rotation as rotation
 import src.RASAero_lookup as rasaero
 import src.altimeter as altimeter
+import src.accelerometer as accelerometer
 import src.kalman_filter as kalman
 import src.propellant_mass as prop
 import src.interpolation as interp
@@ -39,7 +40,7 @@ def accel(u, rho, Cd_total, Sref_a, thrust, rocket_mass, before_launch):
     return f1, accel_f
 
 def rk4_step(state, dt, rho, cd, sref, thrust, rocket_mass, before_launch):
-
+    state = np.array([state[0], state[1]])
     #RK4: Use weighted average of 4 different slopes
     y1,a1 = accel(state, rho, cd, sref, thrust, rocket_mass, before_launch)
     y2,a2 = accel(state + 0.5*dt*y1, rho, cd, sref, thrust, rocket_mass, before_launch)
@@ -64,6 +65,9 @@ def rk4_inner(initial_state, dt, cd_file, poly_nothrust, poly_thrust, time, thru
     
     # Initialize polynomial fit
     poly = poly_nothrust
+
+    if(curr_state[1] <= 0):
+        return curr_state[0]
     
     # Simulate until apogee
     while (curr_state[1] >= 0):
@@ -105,7 +109,7 @@ def rk4_inner(initial_state, dt, cd_file, poly_nothrust, poly_thrust, time, thru
     
     return max(predicted_x_vals)
 
-def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust, desired_apogee, accel_f, thrust_csv, prop_mass_func, control=0):
+def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apogee, thrust_csv, prop_mass_func, control=0):
     
     # Initialize dictionary to store values at all time steps
     sim_dict = {
@@ -113,6 +117,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
     "x_noise":[],
     "vel": [],
     "accel": [],
+    "accel_noise": [],
     "CD": [],
     "Sref": [],
     "time_sim": [],
@@ -134,12 +139,16 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
     #Initialize Mass (with propellant)
     curr_mass = constants.m0
 
+    mach_init = curr_state[1] / atmosphere.speed_sound(curr_state[0])
+    pos_f_noise = altimeter.alt_noise(curr_state[0], mach_init)
+    accel_f_noise = accelerometer.accelerometer_noise(curr_state[2])
+
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-    kalman.initialize(pos_f_noise, curr_state[1], accel_f, s_dt)
+    kalman.initialize(pos_f_noise, curr_state[1], accel_f_noise, s_dt)
     
     # Define max and min values for flap actuation
-    l_max = conversion.ft_to_m(.6/12) # 1 inch actuation length
+    l_max = conversion.ft_to_m(constants.max_flap_length/12) # .944 inch actuation length
     l_min = 0 # can't have negative actuation
     
     # Define initial flap length at start of control time
@@ -148,7 +157,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
     # Limit flap actuation speed
     du_max = 0.001
     # Define Controller Gains
-    kp, kI, kd = 0.001, 0.0005, 0.0005
+    kp, kI, kd = 0.00008, 0.0005, 0.0005
     
     # Get initial Apogee Prediction    
     # sim_dict["predict_alt"].append(38000) #!Fix
@@ -161,8 +170,13 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
         
         # grabbing the current states
         pos_f = curr_state[0]
-        pos_f_noise = altimeter.alt_noise(pos_f)
         vel_f = curr_state[1]
+        accel_f = curr_state[2]
+        mach = vel_f / atmosphere.speed_sound(pos_f)
+
+        # Adding noise to initial states with sensor readings
+        pos_f_noise = altimeter.alt_noise(pos_f, mach)
+        accel_f_noise = accelerometer.accelerometer_noise(accel_f)
         
         # Density varies with altitude
         rho = atmosphere.density(pos_f)
@@ -189,13 +203,14 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
         Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u, before_launch, before_burnout)
              
         # rk4 iteration 
-        next_state, accel_f = rk4_step(curr_state, dt, rho, Cd_total, Sref_a, thrust, curr_mass, before_launch)
+        next_state, accel_f = rk4_step(np.array([pos_f, vel_f]), dt, rho, Cd_total, Sref_a, thrust, curr_mass, before_launch)
         
         # Append Values to the Arrays
         sim_dict["x"].append(float(pos_f))
         sim_dict["x_noise"].append(float(pos_f_noise))
         sim_dict["vel"].append(float(vel_f))
         sim_dict["accel"].append(float(accel_f))
+        sim_dict["accel_noise"].append(float(accel_f_noise))
         sim_dict["CD"].append(float(Cd_total))
         sim_dict["Sref"].append(float(Sref_a))
         sim_dict["time_sim"].append(float(t))
@@ -207,7 +222,12 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
         
         # Prediction Runtime check
         start = int(round(timer.time() * 1000))
-        predicted_apogee = rk4_inner(curr_state, inner_dt, cd_file, poly_nothrust, poly_thrust, t, thrust_csv, curr_mass, prop_mass_func)
+        x_k = kalman.getStateEst()
+        kalmanPos = x_k[0][0]
+        kalmanVel = x_k[1][0]
+        kalmanAccel = x_k[2][0]
+        curr_state_est = np.array([kalmanPos, kalmanVel, kalmanAccel])
+        predicted_apogee = rk4_inner(curr_state_est, inner_dt, cd_file, poly_nothrust, poly_thrust, t, thrust_csv, curr_mass, prop_mass_func)
         end = int(round(timer.time() * 1000)) - start
         
         # Calculate apogee errors 
@@ -237,11 +257,11 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
         kalman.update(pos_f_noise, accel_f, Sref_a, rho)
-        curr_state = next_state
+        curr_state = np.array([next_state[0], next_state[1], accel_f])
         t += dt     
         
     end_time = int(round(timer.time()))
     sim_time = end_time - start_time
-    return t, kalman.kalman_dic, sim_time, sim_dict
+    return t, kalman.kalman_dict, sim_time, sim_dict
         
         

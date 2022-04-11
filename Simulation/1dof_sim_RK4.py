@@ -98,8 +98,7 @@ poly_thrust = rasaero.drag_lookup_curve_fit_poly(1)
 
 # Initial + Desired Values
 # Position, Velocity, Acceleration are all 0 at launch
-pos_f_noise = altimeter.alt_noise(constants.x)
-init_state = np.array([constants.x, constants.vx])
+init_state = np.array([constants.x, constants.vx, constants.ax])
 des_apogee = conversion.ft_to_m(constants.apogee_goal) #meters
 
 # Time between sensor readings / KF updates
@@ -108,9 +107,9 @@ s_dt = 0.03
 dt = 0.006
 
 # Run Sim with and without control
-flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, constants.ax, thrust_csv, prop_mass_func)
+flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, thrust_csv, prop_mass_func)
 print("No Control Sim Finished")
-flight_time_c, kalman_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, pos_f_noise, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, constants.ax, thrust_csv, prop_mass_func, control=1)
+flight_time_c, kalman_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, thrust_csv, prop_mass_func, control=1)
 
 #Print Housekeeping Values
 print("APOGEE (No Control) (ft):", conversion.m_to_ft(max(sim_dict_nc["x"])))
@@ -132,53 +131,74 @@ print("Simulator Runtime (Control) (s): ", sim_time_c)
 #     difference_post.append(d)
 
 #* Compare Control vs No Control
-plt.subplot(1,2,1)
-plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="Altitude (No Control)",color="royalblue", linewidth = 3); 
-plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Altitude (Control)",color="green", linewidth = 3); 
-plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+# plt.subplot(1,2,1)
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="Altitude (No Control)",color="royalblue", linewidth = 3); 
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Altitude (Control)",color="green", linewidth = 3);
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
+# plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+# plt.ylabel("Altitude (m)", fontsize = 14)
+
 
 plt.subplot(1,2,2)
 plt.plot(sim_dict_c["time_sim"], sim_dict_c["flap_extension"],label="Flap Extension (Control)",color="royalblue", linewidth = 3); 
+plt.ylabel("Flap Extension Length (m)", fontsize = 14)
 
-#* Measurements vs Kalman Filter Graph
-# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
-# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="True Altitude",color="royalblue", linewidth = 3); 
-# plt.plot(kalman_dict_nc["time"], kalman_dict_nc["alt"],label="Estimation",linestyle="--",color="tab:red")
-# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
-# plt.axhline(y = max(sim_dict_nc["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
-# plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+#* Control Graph (Noisy Measurements, Estimated Altitude, Estimated Apogee)
+plt.subplot(1,2,1)
+plt.plot(sim_dict_c["time_sim"], sim_dict_c["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
+plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="True Altitude",color="royalblue", linewidth = 3); 
+plt.plot(kalman_dict_c["time"], kalman_dict_c["alt"],label="Estimation",linestyle="--",color="tab:red")
+plt.plot(sim_dict_c["time_sim"], sim_dict_c["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
+plt.axhline(y = max(sim_dict_c["x"]), color = "tab:red", linestyle = "dotted", linewidth = 4.5, label="True Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+plt.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
+plt.ylabel("Altitude (m)", fontsize = 14)
 
+# Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
+# plt.subplot(1,2,1)
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="Real Acceleration",color="royalblue", linewidth = 3);  
+# plt.plot(kalman_dict_nc["time"], kalman_dict_nc["alt"],label="Altitude Estimation",linestyle="--",color="tab:red")
+# plt.ylabel("Altitude (m)", fontsize = 14)
+
+# Real Velocity vs Kalman Filter Graph (No Control)
+# plt.subplot(1,2,1)
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["vel"],label="Real Velocity",color="royalblue", linewidth = 3);  
+# plt.plot(kalman_dict_nc["time"], kalman_dict_nc["vel"],label="Velocity Estimation",linestyle="--",color="tab:red")
+# plt.ylabel("Velocity (m/s)", fontsize = 14)
+
+# Acceleration Measurements vs Real Acceleration vs Kalman Filter Graph (No Control)
+# plt.subplot(1,2,1)
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["accel_noise"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["accel"],label="Real Acceleration",color="royalblue", linewidth = 3);  
+# plt.plot(kalman_dict_nc["time"], kalman_dict_nc["accel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
+# plt.ylabel("Acceleration (m/s^2)", fontsize = 14)
+
+
+# Altitude Measurements vs Real Altitude vs Kalman Filter Graph (Control)
+# plt.subplot(1,2,1)
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["x_noise"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Real Acceleration",color="royalblue", linewidth = 3);  
+# plt.plot(kalman_dict_c["time"], kalman_dict_c["alt"],label="Altitude Estimation",linestyle="--",color="tab:red")
+# plt.ylabel("Altitude (m)", fontsize = 14)
+
+# Real Velocity vs Kalman Filter Graph (Control)
+# plt.subplot(1,2,1)
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["vel"],label="Real Velocity",color="royalblue", linewidth = 3);  
+# plt.plot(kalman_dict_c["time"], kalman_dict_c["vel"],label="Velocity Estimation",linestyle="--",color="tab:red")
+# plt.ylabel("Velocity (m/s)", fontsize = 14)
+
+# Acceleration Measurements vs Real Acceleration vs Kalman Filter Graph (Control)
+# plt.subplot(1,2,1)
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["accel_noise"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
+# plt.plot(sim_dict_c["time_sim"], sim_dict_c["accel"],label="Real Acceleration",color="royalblue", linewidth = 3);  
+# plt.plot(kalman_dict_c["time"], kalman_dict_c["accel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
+# plt.ylabel("Acceleration (m/s^2)", fontsize = 14)
+
+# Obsolete Code (Review for deletion)
 # plt.plot(dic["time_sim"][:-1], difference, label="Difference between Alt_predicted and True", color="tab:blue", linewidth = 3.5, linestyle = "dotted")
 # plt.subplot(1,2,2); plt.plot(dic["vel"], difference_pre, label="Pre-correction Error", color="tab:orange", linestyle="dotted", linewidth = 4.5)
 # plt.subplot(1,2,2); plt.plot(dic["vel"], difference_post, label="Post-correction Error", color="tab:green", linestyle="dotted", linewidth = 4.5)
 
 plt.xlabel("Time (s)", fontsize = 14)
-plt.ylabel("Altitude (m)", fontsize = 14)
 plt.legend(fontsize = 14)
 plt.show()
-
-# # Acceleration Plot
-# plt.plot(time_flight,dic["accel"])
-# plt.ylabel("Acceleration $(m / s^2)$")
-# plt.xlabel("Time (s)")
-# plt.show()
-
-# # Velocity Plot
-# plt.plot(time_flight,dic["vel"])
-# plt.ylabel("Vertical Velocity $(m / s)$")
-# plt.xlabel("Time (s)")
-# plt.show()
-
-# Altitude Plot
-# plt.plot(time_flight,dic["x"])
-# plt.plot(time_flight,dic["x_noise"])
-# plt.plot(time_flight,kalman_dic["alt"])
-# plt.ylabel("Altitude $(m)$")
-# plt.xlabel("Time (s)")
-# plt.show()
-
-# # CD Plot
-# plt.plot(time_flight,dic["CD"])
-# plt.ylabel("CD")
-# plt.xlabel("Time (s)")
-# plt.show()

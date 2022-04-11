@@ -14,16 +14,12 @@ x_priori = np.zeros([3,1])
 P_priori = np.zeros([3,3])
 current_time = 0
 
-kalman_dic = {
-    "alt": [],
-    "vel": [],
-    "accel": [],
-    "time": []
-}
+kalman_dict = {}
 
 def initialize(pos_f, vel_f, accel_f, time_step):
-    global s_dt, x_k, F, H, B, P_k, Q, R, current_time
+    global s_dt, x_k, F, H, B, P_k, Q, R, current_time, kalman_dict
 
+    current_time = 0
 
     s_dt = time_step
     x_k = np.array([[pos_f],
@@ -63,6 +59,13 @@ def initialize(pos_f, vel_f, accel_f, time_step):
     R = np.array([[12.0,0],
                   [0,1.4]])
 
+    kalman_dict = {
+        "alt": [],
+        "vel": [],
+        "accel": [],
+        "time": []}
+
+
 # Set priori state (guess of next step)
 def priori(u):
     global x_priori, P_priori
@@ -93,11 +96,13 @@ def update(pos_f, accel_f, Sref_a, rho):
     # Update KF Time
     current_time += s_dt
     
-    kalman_dic["alt"].append(x_k[0][0])
-    kalman_dic["vel"].append(x_k[1][0])
-    kalman_dic["accel"].append(x_k[2][0])
-    kalman_dic["time"].append(current_time)
+    kalman_dict["alt"].append(x_k[0][0])
+    kalman_dict["vel"].append(x_k[1][0])
+    kalman_dict["accel"].append(x_k[2][0])
+    kalman_dict["time"].append(current_time)
 
 
     # F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
     # print(P_k)
+def getStateEst():
+    return x_k
