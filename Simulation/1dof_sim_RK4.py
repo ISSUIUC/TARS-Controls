@@ -119,6 +119,13 @@ print("Simulator Runtime (Control) (s): ", sim_time_c)
 
 #* Compare Control vs No Control
 plt.subplot(1,2,1)
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["accel_noise"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["accel"],label="Real Acceleration",color="royalblue", linewidth = 3);  
+# plt.plot(kalman_dict_nc["time"], kalman_dict_nc["accel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
+
+# plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["vel"],label="Real Acceleration",color="royalblue", linewidth = 3);  
+# plt.plot(kalman_dict_nc["time"], kalman_dict_nc["vel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
+
 plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x"],label="Altitude (No Control)",color="royalblue", linewidth = 3); 
 plt.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Altitude (Control)",color="green", linewidth = 3); 
 plt.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Measurement (No Control)",color="lightsteelblue",linestyle=":")

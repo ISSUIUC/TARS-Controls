@@ -91,6 +91,7 @@ def rk4_sim(initial_state, dt, cd_file, poly, desired_apogee, accel_f, control=0
     "x_noise":[],
     "vel": [],
     "accel": [],
+    "accel_noise": [],
     "CD": [],
     "Sref": [],
     "time_sim": [],
@@ -107,7 +108,7 @@ def rk4_sim(initial_state, dt, cd_file, poly, desired_apogee, accel_f, control=0
     s_dt = dt #!
 
     mach_init = curr_state[1] / atmosphere.speed_sound(curr_state[0])
-    pos_f_noise = altimeter.alt_noise(curr_state[1], mach_init)
+    pos_f_noise = altimeter.alt_noise(curr_state[0], mach_init)
     accel_f_noise = accelerometer.accelerometer_noise(accel_f)
     
     #Error summation for integral
@@ -167,6 +168,7 @@ def rk4_sim(initial_state, dt, cd_file, poly, desired_apogee, accel_f, control=0
         sim_dict["x_noise"].append(float(pos_f_noise))
         sim_dict["vel"].append(float(vel_f))
         sim_dict["accel"].append(float(accel_f))
+        sim_dict["accel_noise"].append(float(accel_f_noise))
         sim_dict["CD"].append(float(Cd_total))
         sim_dict["Sref"].append(float(Sref_a))
         sim_dict["time_sim"].append(float(t))
