@@ -43,10 +43,6 @@ def cd_interpolation(altitude, velocity, ang_of_att, extension, rasaero):
     
     return Cd
 
-
-
-
-
 def thrust_interp(time, thrust_csv):
     # define thrust for given times
     thrust = 0

@@ -55,7 +55,7 @@ import src.propellant_mass as prop
 #* ------------------------------ Simulation Code ----------------------------- #
 
 # Set to 1 for IREC launch, 0 for April Launch
-launch_arg = 1
+launch_arg = 0
 
 # RASAero File: Stays the same
 RASaero = pd.read_csv("Simulation/Lookup/RASAero_Intrepid_5800_mk6.csv")

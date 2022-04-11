@@ -93,7 +93,6 @@ def rk4_inner(initial_state, dt, cd_file, poly_nothrust, poly_thrust, time, thru
         
         # Total drag coefficient of airframe 
         # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,cd_list, 0, before_launch, before_burnout)
-        #TODO: Update Cd total to have one for thrust included
         Cd_total = np.poly1d(poly)(mach)
         
         # RK4 Update
@@ -172,7 +171,6 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
         Sref_a = rocket.sref_approx(constants.D, u)
         
         # Initialize variables
-        Cd_total = 0
         before_launch = 0
         before_burnout = 0
         thrust = 0
@@ -187,6 +185,7 @@ def rk4_sim(initial_state, pos_f_noise, dt, cd_file, poly_nothrust, poly_thrust,
             before_burnout = 1
         else: # After Burnout
             curr_mass = constants.mf
+            
         Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u, before_launch, before_burnout)
              
         # rk4 iteration 
