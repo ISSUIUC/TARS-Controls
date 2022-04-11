@@ -81,7 +81,6 @@ def rk4_inner(pos_int, vel_int, dt, poly):
         next_state, accel_f = rk4_step(curr_state, dt, rho, Cd_total, Sref_a)
         curr_state = next_state
         t += dt    
-    
     return max(predicted_x_vals)
 
 def rk4_sim(initial_state, dt, cd_file, poly, desired_apogee, accel_f, control=0):
@@ -128,7 +127,7 @@ def rk4_sim(initial_state, dt, cd_file, poly, desired_apogee, accel_f, control=0
     # Limit flap actuation speed
     du_max = 0.001
     # Define Controller Gains
-    kp, kI, kd = 0.0006, 0.0005, 0.0005
+    kp, kI, kd = 0.0003, 0.0005, 0.0005
     
     # Fix This:
     # sim_dict["predict_alt"].append(38000)
@@ -182,7 +181,8 @@ def rk4_sim(initial_state, dt, cd_file, poly, desired_apogee, accel_f, control=0
         x_k = kalman.getStateEst()
         kalmanPos = x_k[0][0]
         kalmanVel = x_k[1][0]
-        predicted_apogee = rk4_inner(kalmanPos, kalmanVel, inner_dt, cd_file, poly)
+        predicted_apogee = rk4_inner(kalmanPos, kalmanVel, inner_dt, poly)
+        # predicted_apogee = rk4_inner(pos_f, vel_f, inner_dt, poly)
         end = int(round(timer.time() * 1000)) - start
         
         # Calculate apogee errors 
