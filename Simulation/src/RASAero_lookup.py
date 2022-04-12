@@ -66,6 +66,7 @@ def drag_lookup_1dof(z,vel,rasaero,Cd_list, input, before_launch, before_burnout
 
     # index = intersection[0]
     index1 = intersection[0]; index2 = intersection[1]
+    
     Cd = cd[index1] + input*39.3701*(cd[index2] - cd[index1])
     return Cd
 

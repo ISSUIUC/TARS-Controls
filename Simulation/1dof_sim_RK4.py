@@ -121,14 +121,6 @@ print("Flight Time (Control) (s):", flight_time_c)
 print("Simulator Runtime (Control) (s): ", sim_time_c)
 
 #* --------------------------------- Plotting --------------------------------- #
-#? Calculating the difference between the predicted altitude and actual altitude 
-# difference_pre = []
-# difference_post = []
-# for num in np.arange(0,len(dic["predict_alt"])):
-#     D = dic["predict_alt"][num] - max(dic["x"])
-#     d = dic["predict_update_alt"][num] - max(dic["x"])
-#     difference_pre.append(D)
-#     difference_post.append(d)
 
 #* Compare Control vs No Control
 # plt.subplot(1,2,1)
@@ -173,7 +165,6 @@ plt.ylabel("Altitude (m)", fontsize = 14)
 # plt.plot(kalman_dict_nc["time"], kalman_dict_nc["accel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
 # plt.ylabel("Acceleration (m/s^2)", fontsize = 14)
 
-
 # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (Control)
 # plt.subplot(1,2,1)
 # plt.plot(sim_dict_c["time_sim"], sim_dict_c["x_noise"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
@@ -193,11 +184,6 @@ plt.ylabel("Altitude (m)", fontsize = 14)
 # plt.plot(sim_dict_c["time_sim"], sim_dict_c["accel"],label="Real Acceleration",color="royalblue", linewidth = 3);  
 # plt.plot(kalman_dict_c["time"], kalman_dict_c["accel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
 # plt.ylabel("Acceleration (m/s^2)", fontsize = 14)
-
-# Obsolete Code (Review for deletion)
-# plt.plot(dic["time_sim"][:-1], difference, label="Difference between Alt_predicted and True", color="tab:blue", linewidth = 3.5, linestyle = "dotted")
-# plt.subplot(1,2,2); plt.plot(dic["vel"], difference_pre, label="Pre-correction Error", color="tab:orange", linestyle="dotted", linewidth = 4.5)
-# plt.subplot(1,2,2); plt.plot(dic["vel"], difference_post, label="Post-correction Error", color="tab:green", linestyle="dotted", linewidth = 4.5)
 
 plt.xlabel("Time (s)", fontsize = 14)
 plt.legend(fontsize = 14)
