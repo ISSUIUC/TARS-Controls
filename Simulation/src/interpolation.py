@@ -6,7 +6,7 @@ import sys
 
 # for inputs, extension is a value in inches, between 0 and 0.5. rasaero is the csv file pulled from Lookup
 
-def cd_interpolation(altitude, velocity, ang_of_att, extension, rasaero):
+def cd_interpolation(altitude, velocity, ang_of_att, max_extension, extension, rasaero):
     
     # Use atmosphere in src to find speed of sound given altitude
     a = atmosphere.speed_sound(altitude)
@@ -26,7 +26,7 @@ def cd_interpolation(altitude, velocity, ang_of_att, extension, rasaero):
     csv_file = rasaero
 
     # Define protuberance percentage of full extension given current extension
-    protub_perc = extension/0.6
+    protub_perc = extension/max_extension
 
     # Define starting Cd
     Cd = 0
