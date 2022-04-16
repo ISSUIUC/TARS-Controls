@@ -68,7 +68,7 @@ initial_alpha = 0.0043818 #deg # TODO: Update
 l_rocket = 3.07 #m 
 nose_ang = 0.069189 #nosecone angle (rad) #TODO: Update
 flap_width = 0.0351 #m
-max_flap_length = .944 #in
+max_flap_length = .816 #in
 gamma = 1.4 # specific heat ratio
 
 #

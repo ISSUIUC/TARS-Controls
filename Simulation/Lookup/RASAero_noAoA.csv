@@ -1,4 +1,4 @@
-mach,alpha_deg,protuberance,cd_power_off,CD_Power_On,CA_Power_Off,CA_Power_On,CN_Total,CP_Total
+mach,alpha_deg,protuberance,CD_Power_Off,CD_Power_On,CA_Power_Off,CA_Power_On,CN_Total,CP_Total
 0.01,0,0,0.476,0.451,0.476,0.451,0,93.463
 0.01,0,0.12,0.51,0.486,0.51,0.486,0,93.463
 0.01,0,0.25,0.545,0.52,0.545,0.52,0,93.463

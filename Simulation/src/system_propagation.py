@@ -2,7 +2,7 @@ from platform import mac_ver
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
-from sympy import Matrix, false
+from sympy import Matrix, false, interpolate
 from mpl_toolkits import mplot3d
 import pandas as pd
 import time as timer
@@ -200,7 +200,9 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         else: # After Burnout
             curr_mass = constants.mf
             
-        Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u, before_launch, before_burnout)
+            
+        # Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,cd_file,sim_dict["CD"], u, before_launch, before_burnout)
+        Cd_total = interp.cd_interpolation(pos_f, vel_f, 0, l_max, u, cd_file, before_launch, before_burnout)
              
         # rk4 iteration 
         next_state, accel_f = rk4_step(np.array([pos_f, vel_f]), dt, rho, Cd_total, Sref_a, thrust, curr_mass, before_launch)

@@ -58,7 +58,8 @@ import src.propellant_mass as prop
 launch_arg = 0
 
 # RASAero File: Stays the same
-RASaero = pd.read_csv("Simulation/Lookup/RASAero_Intrepid_5800_mk6.csv")
+# RASaero = pd.read_csv("Simulation/Lookup/RASAero_Intrepid_5800_mk6.csv")
+RASaero = pd.read_csv("Simulation/Lookup/RASAero_noAoA_trimmed.csv")
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
 or_file = "Simulation/OpenRocket Simulations/Intrepid_mk6_April.csv"
@@ -93,8 +94,8 @@ thrust_csv = pd.read_csv(thrust_file)
 I, c_m, m = rocket.I_new(0,0)
 
 # Cd vs Mach Number Polyfit
-poly_nothrust = rasaero.drag_lookup_curve_fit_poly(0)
-poly_thrust = rasaero.drag_lookup_curve_fit_poly(1)
+poly_nothrust = rasaero.drag_lookup_curve_fit_poly(0, RASaero)
+poly_thrust = rasaero.drag_lookup_curve_fit_poly(1, RASaero)
 
 # Initial + Desired Values
 # Position, Velocity, Acceleration are all 0 at launch
@@ -104,7 +105,7 @@ des_apogee = conversion.ft_to_m(constants.apogee_goal) #meters
 # Time between sensor readings / KF updates
 s_dt = 0.03
 # Simulation step-size
-dt = 0.006
+dt = 0.01
 
 # Run Sim with and without control
 flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, thrust_csv, prop_mass_func)

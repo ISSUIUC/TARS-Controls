@@ -70,7 +70,7 @@ def drag_lookup_1dof(z,vel,rasaero,Cd_list, input, before_launch, before_burnout
     Cd = cd[index1] + input*39.3701*(cd[index2] - cd[index1])
     return Cd
 
-def drag_lookup_curve_fit_poly(with_thrust):
+def drag_lookup_curve_fit_poly(with_thrust, RASaero):
     mach = np.arange(.01, 2.49, .01)
     mach = np.round(mach, 2)
     cdlist = np.empty(0)
