@@ -43,9 +43,9 @@ def initialize(pos_f, vel_f, accel_f, time_step):
 
     # (Covariance [P] 6ms time step
 
-    P_k = np.array([[.018,0.009, 0.005],
-                    [0.009,0.009, 0.0045],
-                    [0.005, 0.0045, 10]])
+    P_k = np.array([[0.05790539, 0.02423485, 0.00386981],
+                    [0.02423485, 0.01895722, 0.00708961],
+                    [0.00386981, 0.00708961, 0.00856083]])
 
     # White Noise [Q]
     Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.00899)
@@ -56,8 +56,8 @@ def initialize(pos_f, vel_f, accel_f, time_step):
     # MUST BE SQUARE
     
 
-    R = np.array([[12.0,0],
-                  [0,1.4]])
+    R = np.array([[2.0,0],
+                  [0,.01]])
 
     kalman_dict = {
         "alt": [],
@@ -100,7 +100,6 @@ def update(pos_f, accel_f, Sref_a, rho):
     kalman_dict["vel"].append(x_k[1][0])
     kalman_dict["accel"].append(x_k[2][0])
     kalman_dict["time"].append(current_time)
-
 
     # F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
     # print(P_k)
