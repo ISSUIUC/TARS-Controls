@@ -13,7 +13,6 @@ I_rotational = 0.030245 #kg*m^2
 I_longitudinal = 15.841 #kg*m^2
 D = 0.1056132 #m
 
-
 April_apogee_goal = 14000  # ft
 IREC_apogee_goal = 30000   # ft
 
