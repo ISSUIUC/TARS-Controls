@@ -13,14 +13,9 @@ I_rotational = 0.030245 #kg*m^2
 I_longitudinal = 15.841 #kg*m^2
 D = 0.1056132 #m
 
-April_apogee_time = 32.023  # sec
-IREC_apogee_time = 50.041   # sec
 
 April_apogee_goal = 14000  # ft
 IREC_apogee_goal = 30000   # ft
-
-April_burnout_alt = 958.75 # m 
-IREC_burnout_alt = 1462.25 # m
 
 April_m = 19.0586
 IREC_m = 21.1066
