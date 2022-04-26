@@ -15,7 +15,7 @@ def alt_noise(alt_input, mach):
     pressure_range = 150    # Pa
     z = 1.645
     pressureRat = 1
-    # add pressure ratio due to supersonic flight (in progress, disabled for testing)
+    # add pressure ratio due to supersonic flight (may not be necessary based on hole locations for barometer)
     # if(mach >= 1):
     #     pressureRat = atmosphere.pressure_ratio(mach)
 

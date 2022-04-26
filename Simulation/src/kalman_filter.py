@@ -49,15 +49,17 @@ def initialize(pos_f, vel_f, accel_f, time_step):
 
     # White Noise [Q]
     Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.00899)
+    # Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.0190) (shockwave version)
 
     # Measurement Noise Function [R]
     # High-G Accel: 49 - 195 m-Gs accuracy
     # Low-G Accel: .25 m-G accuracy
     # MUST BE SQUARE
     
-
-    R = np.array([[2.0,0],
+    R = np.array([[2.,0],
                   [0,.01]])
+    # R = np.array([[1200.,0],
+    #               [0,.01]]) (shockwave version)
 
     kalman_dict = {
         "alt": [],
