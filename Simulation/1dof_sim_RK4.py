@@ -63,7 +63,6 @@ launch_arg = 0
 RASaero = pd.read_csv("Simulation/Lookup/RASAero_noAoA_trimmed.csv")
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
-or_file = "Simulation/OpenRocket Simulations/Intrepid_mk6_April.csv"
 thrust_file = "Simulation/Lookup/AeroTech_M2500T_Trimmed.csv"
 constants.apogee_time = constants.April_apogee_time
 constants.apogee_goal = constants.April_apogee_goal
@@ -76,7 +75,6 @@ prop_mass_func = prop.find_prop_mass_april
 
 # Change values if simulating IREC launch
 if (launch_arg):
-    or_file = "Simulation/OpenRocket Simulations/Intrepid_mk6_IREC.csv"
     thrust_file = "Simulation/Lookup/Cesaroni_20146N5800-P_Trimmed.csv"
     constants.apogee_time = constants.IREC_apogee_time
     constants.apogee_goal = constants.IREC_apogee_goal
@@ -87,7 +85,6 @@ if (launch_arg):
     constants.thrust_end = constants.thrust_end_IREC
     prop_mass_func = prop.find_prop_mass_irec
     
-ORK = pd.read_csv(or_file)
 thrust_csv = pd.read_csv(thrust_file)
 
 # Calculate moments of inertia and center of mass
