@@ -48,7 +48,9 @@ def initialize(pos_f, vel_f, accel_f, time_step):
                     [0.00386981, 0.00708961, 0.00856083]])
 
     # White Noise [Q]
-    Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.00899)
+    # Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.00899)
+    # Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=22.19)
+    Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=13.)
     # Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.0190) (shockwave version)
 
     # Measurement Noise Function [R]
@@ -104,6 +106,5 @@ def update(pos_f, accel_f, Sref_a, rho):
     kalman_dict["time"].append(current_time)
 
     # F[1][1] = 1 - (Sref_a*rho*0.58*x_k[0][1] * s_dt)
-    # print(P_k)
 def getStateEst():
     return x_k
