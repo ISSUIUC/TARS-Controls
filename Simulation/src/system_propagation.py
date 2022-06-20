@@ -243,11 +243,12 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         sim_dict["predict_alt"].append(predicted_apogee)
         
         # Control Code
-        if (control and not before_burnout):
+        if (control and not before_burnout and t > 15):
                 
             prev_u = u
             # u = kp*apogee_error + kI*e_sum + kd*dedt
-            u = kp*apogee_error
+            # u = kp*apogee_error
+            u = l_max
             u = u + np.sign((u - prev_u)/dt)*min(abs((u - prev_u)/dt), du_max)*dt
             
             # * Control Input Damping 
