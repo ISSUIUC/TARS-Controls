@@ -1,3 +1,24 @@
+# ______      _____ _             __ ______ ___________ 
+# | ___ \    /  ___(_)           /  ||  _  \  _  |  ___|
+# | |_/ /   _\ `--. _ _ __ ___   `| || | | | | | | |_   
+# |  __/ | | |`--. \ | '_ ` _ \   | || | | | | | |  _|  
+# | |  | |_| /\__/ / | | | | | | _| || |/ /\ \_/ / |    
+# \_|   \__, \____/|_|_| |_| |_| \___/___/  \___/\_|    
+#        __/ |                                          
+#       |___/               
+
+# A 1DOF RK-4 Based simulation that uses RASAero aerodynamic data and known motor thrust data to simulate motion of the rocket
+# with simulated sensor data as well as a implementation of the Extended Kalman Filter and active drag PID controller for the ISS
+# Spaceshot entry for the 2022 IREC competition. This simulation was used to quantify the effects of the airbrakes, test 
+# different system design methodlogies, and provide preliminary tuning for the EKF and controller prior to implementation in 
+# SILSIM and flight software.
+                                                     
+# 2021 - 2022 Active Controls Main Contributors #
+# Chief Engineers: Jeffery Zhou (2022) and Karnap Patel (2022)
+# Justin Herman (2022)
+# Parth Shrotri (2024)
+# Colin Kinsey (2024)
+
 from platform import mac_ver
 from turtle import pos
 import numpy as np
@@ -60,7 +81,7 @@ launch_arg = 1
 
 # RASAero File: Stays the same
 # RASaero = pd.read_csv("Simulation/Lookup/RASAero_Intrepid_5800_mk6.csv")
-RASaero = pd.read_csv("Simulation/Lookup/RASAero_noAoA_trimmed.csv")
+RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
 thrust_file = "Simulation/Lookup/AeroTech_M2500T_Trimmed.csv"
