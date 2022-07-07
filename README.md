@@ -1,5 +1,5 @@
 # TARS-CONTROLS
-Illinois Space Society's Large Rocketry Guidance, Navigation, and Controls Team simulation tools and tutorials repository
+Illinois Space Society's Large Rocketry Guidance, Navigation, and Controls Team simulation tools repository
 
 We test various control design methodologies here with python before implementing them in SILSIM and flight software.
 
