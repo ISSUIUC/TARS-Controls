@@ -243,7 +243,7 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         sim_dict["predict_alt"].append(predicted_apogee)
         
         # Control Code
-        if (control and not before_burnout and t > 5):
+        if (control and not before_burnout and t > 15):
                 
             prev_u = u
             # u = kp*apogee_error + kI*e_sum + kd*dedt
