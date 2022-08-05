@@ -77,7 +77,7 @@ import src.propellant_mass as prop
 #* ------------------------------ Simulation Code ----------------------------- #
 
 # Set to 1 for IREC launch, 0 for April Launch
-launch_arg = 1
+launch_arg = 0
 
 # RASAero File: Stays the same
 # RASaero = pd.read_csv("Simulation/Lookup/RASAero_Intrepid_5800_mk6.csv")
@@ -158,7 +158,7 @@ plt.ylabel("Altitude (m)", fontsize = 14)
 
 # fig,(alt_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True)
 
-# # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (Control)
+# # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
 # alt_nc.plot(sim_dict_nc["time_sim"], sim_dict_nc["predict_alt"], label="Predicted Apogee", linestyle="dashed", color="tab:green", linewidth = 3.5)
 # alt_nc.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 # alt_nc.plot(sim_dict_nc["time_sim"], sim_dict_nc["x_noise"],label="Noisy Altitude Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
@@ -167,13 +167,13 @@ plt.ylabel("Altitude (m)", fontsize = 14)
 # alt_nc.set(ylabel = "Altitude (m)")
 # alt_nc.legend()
 
-# # Real Velocity vs Kalman Filter Graph (Control)
+# # Real Velocity vs Kalman Filter Graph (No Control)
 # vel_nc.plot(sim_dict_nc["time_sim"], sim_dict_nc["vel"],label="Real Velocity",color="royalblue", linewidth = 3);  
 # vel_nc.plot(kalman_dict_nc["time"], kalman_dict_nc["vel"],label="Velocity Estimation",linestyle="--",color="tab:red")
 # vel_nc.set(ylabel = "Velocity (m/s)")
 # vel_nc.legend()
 
-# # Acceleration Measurements vs Real Acceleration vs Kalman Filter Graph (Control)
+# # Acceleration Measurements vs Real Acceleration vs Kalman Filter Graph (No Control)
 # accel_nc.plot(sim_dict_nc["time_sim"], sim_dict_nc["accel_noise"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
 # accel_nc.plot(sim_dict_nc["time_sim"], sim_dict_nc["accel"],label="Real Acceleration",color="royalblue", linewidth = 3);  
 # accel_nc.plot(kalman_dict_nc["time"], kalman_dict_nc["accel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
