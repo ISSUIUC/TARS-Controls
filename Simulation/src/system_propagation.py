@@ -109,7 +109,7 @@ def rk4_inner(initial_state, dt, cd_file, poly_nothrust, poly_thrust, time, thru
     
     return max(predicted_x_vals)
 
-def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apogee, thrust_csv, prop_mass_func, control=0):
+def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apogee, thrust_csv, prop_mass_func, delay, control=0):
     
     # Initialize dictionary to store values at all time steps
     sim_dict = {
@@ -163,7 +163,7 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
     # sim_dict["predict_alt"].append(38000) #!Fix
 
     # Simulate until apogee
-    while (curr_state[1] >= 0):
+    while (curr_state[1] >= 0 or t <= delay+1):
         
         # A-priori (before current state is reached)
         kalman.priori([u])
@@ -190,12 +190,12 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         thrust = 0
         
         # Set thrust and drag values based on time
-        if t < constants.thrust_start: #Before Launch
+        if t < constants.thrust_start+delay: #Before Launch
             before_launch = 1
             before_burnout = 1
-        elif t < constants.thrust_end: #During Thrust
-            curr_mass = constants.m0 - prop_mass_func(t)
-            thrust = interp.thrust_interp(t, thrust_csv)
+        elif t < constants.thrust_end+delay: #During Thrust
+            curr_mass = constants.m0 - prop_mass_func(t-delay)
+            thrust = interp.thrust_interp(t-delay, thrust_csv)
             before_burnout = 1
         else: # After Burnout
             curr_mass = constants.mf

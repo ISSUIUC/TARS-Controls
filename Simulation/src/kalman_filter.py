@@ -43,9 +43,9 @@ def initialize(pos_f, vel_f, accel_f, time_step):
 
     # (Covariance [P] 6ms time step
 
-    P_k = np.array([[0.05790539, 0.02423485, 0.00386981],
-                    [0.02423485, 0.01895722, 0.00708961],
-                    [0.00386981, 0.00708961, 0.00856083]])
+    P_k = np.array([[0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0]])
 
     # White Noise [Q]
     # Q = Q_continuous_white_noise(dim=3, dt=s_dt, spectral_density=.00899)
