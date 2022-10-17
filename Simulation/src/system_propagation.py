@@ -125,7 +125,10 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
     "predict_alt": [],
     "predict_update_alt": [],
     "flap_extension": [],
-    "timestep": []
+    "timestep": [],
+    "kalman_alt" : [],
+    "kalman_vel" : [],
+    "kalman_accel": []
     }
     
     start_time = int(round(timer.time()))
@@ -249,6 +252,9 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         kalmanPos = x_k[0][0]
         kalmanVel = x_k[1][0]
         kalmanAccel = x_k[2][0]
+        sim_dict["kalman_pos"].append(kalmanPos)
+        sim_dict["kalman_vel"].append(kalmanVel)
+        sim_dict["kalman_accel"].append(kalmanAccel)
         curr_state_est = np.array([kalmanPos, kalmanVel, kalmanAccel])
         predicted_apogee = rk4_inner(curr_state_est, inner_dt, cd_file, poly_nothrust, poly_thrust, t, thrust_csv, curr_mass, prop_mass_func)
         end = int(round(timer.time() * 1000)) - start
