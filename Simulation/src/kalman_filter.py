@@ -59,7 +59,7 @@ def initialize(pos_f, vel_f, accel_f, time_step):
     # MUST BE SQUARE
     
     R = np.array([[2.,0],
-                  [0,.01]])
+                  [0,.1]])
     # R = np.array([[1200.,0],
     #               [0,.01]]) (shockwave version)
 
@@ -71,8 +71,13 @@ def initialize(pos_f, vel_f, accel_f, time_step):
 
 
 # Set priori state (guess of next step)
-def priori(u):
-    global x_priori, P_priori
+def priori(timestep, spectral_density):
+    global x_priori, P_priori, F, Q
+    
+    F = np.array([[1.0, timestep, (timestep**2) / 2],
+                  [0.0, 1.0, timestep],
+                  [0.0, 0.0, 1.0]])
+    Q = Q_continuous_white_noise(dim=3, dt=timestep, spectral_density=spectral_density)
     
     # x_priori = (F @ x_k) + ((B @ u).T) #* For some reason doesnt work when B or u is = 0
     x_priori = F @ x_k

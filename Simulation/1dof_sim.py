@@ -1,19 +1,19 @@
 from platform import mac_ver
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy import linalg
-from sympy import Matrix, false
-from mpl_toolkits import mplot3d
+#import matplotlib.pyplot as plt
+#from scipy import linalg
+#from sympy import Matrix, false
+#from mpl_toolkits import mplot3d
 import pandas as pd
-from filterpy.common import Q_continuous_white_noise
+#from filterpy.common import Q_continuous_white_noise
 
 #* Import Helper Function Library
 import src.atmosphere as atmosphere
 import src.constants as constants
 import src.conversion as conversion
-import src.plot_controls as plot
+#import src.plot_controls as plot
 import src.rocket as rocket
-import src.rotation as rotation
+#import src.rotation as rotation
 import src.RASAero_lookup as rasaero
 import src.altimeter as altimeter
 import src.kalman_filter as kalman
@@ -55,12 +55,12 @@ import src.propellant_mass as prop
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
 #RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
-RASaero = pd.read_csv("Lookup/RASAero_noAoA.csv")
+RASaero = pd.read_csv("C:/Users/kdcch/Documents/Github/TARS-Controls/Simulation/Lookup/RASAero_noAoA.csv")
 
 # Import thrust curve csv
 #thrust_csv = pd.read_csv("Simulation/Lookup/AeroTech_M2500T_Trimmed.csv")
 # NOTE: if this csv is changed for a new motor, the burnout time in the if statements and mass constants will need to be changed
-thrust_csv = pd.read_csv("Lookup/AeroTech_M2500T_Trimmed.csv")
+thrust_csv = pd.read_csv("C:/Users/kdcch/Documents/Github/TARS-Controls/Simulation/Lookup/AeroTech_M2500T_Trimmed.csv")
 
 # Calculate moments of inertia and center of mass
 #TODO: Move this into the simulation when simulating moving flaps -> Ixx changes
@@ -121,7 +121,8 @@ l_min = 0 # can't have negative actuation
 l = 0
 u = np.array([l])
 for t in time:
-    
+    before_launch = True
+    after_burnout = False
     print("altitude:",pos_f)
     print("velocity:",vel_f)
 
@@ -141,10 +142,10 @@ for t in time:
     # Total drag coefficient of airframe 
     #Cd_total = rasaero.drag_lookup_1dof(pos_f,vel_f,RASaero,dic["CD"])
     # Cd_total = 0
-    Cd_total = interp.cd_interpolation(pos_f, vel_f, 0, 0, RASaero)
+    Cd_total = interp.cd_interpolation(pos_f, vel_f, 0, l_max, l, RASaero, before_launch, after_burnout)
 
     #Approximation - use the area of a circle for reference area
-    Sref_a = rocket.sref_approx(constants.D)
+    Sref_a = rocket.sref_approx(constants.D, l)
    
     if 0 <= t <= 0.019:
         thrust = 0
@@ -156,6 +157,7 @@ for t in time:
     # add rocket forces for when motor is live during 0.082 < t < 4.264 s (for April Launch)
     # for final launch, 0.019 < t < 3.594
     elif 0.019 < t <= 3.594:
+        before_launch = False
         #Calulate current mass of rocket at given time
         m_prop = prop.find_prop_mass_irec(t) # change function call to match which launch
         current_m = constants.m0 - m_prop
@@ -175,6 +177,7 @@ for t in time:
         F_a = -((rho* (vel_f**2) * Sref_a * Cd_total) / 2)
         accel_a = F_a/constants.mf # Acceleration due to Aerodynamic Forces
         accel_f = accel_a - constants.g # Net Acceleration from Aerodynamic Forces + Gravity
+        after_burnout = True
 
     #* End simulation if rocket reached apogee
     if (np.sign(vel_f) == -1):
@@ -193,7 +196,7 @@ for t in time:
 
     # Calculate new velocities and positions using current values
     pos_f = pos_f + (vel_f * dt) + (0.5 * (accel_f * (dt**2)))
-    pos_f_noisy = altimeter.alt_noise(pos_f)
+    pos_f_noisy = altimeter.alt_noise(pos_f, mach)
     vel_f = vel_f + accel_f*dt
     
     # A-posteriori update
@@ -219,7 +222,7 @@ for num in np.arange(0,len(dic["predict_alt"])):
 
 
 
-
+'''
 # Position Measurements vs Kalman Filter Graph
 plt.plot(dic["time_sim"], dic["x_noise"],label="Noisy Altitude Measurement",color="lightsteelblue",linestyle=":")
 plt.plot(dic["time_sim"], dic["x"],label="True Altitude",color="royalblue")
@@ -245,7 +248,7 @@ plt.ylabel("Acceleration ($m/s^2$)")
 plt.legend()
 plt.show()
 
-
+'''
 
 
 
