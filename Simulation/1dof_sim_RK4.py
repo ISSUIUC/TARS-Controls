@@ -204,14 +204,14 @@ alt_c.plot(sim_dict_c["time_sim"], sim_dict_c["predict_alt"], label="Predicted A
 alt_c.axhline(y = des_apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Desired Apogee");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 alt_c.plot(sim_dict_c["time_sim"], sim_dict_c["x_noise"],label="Noisy Altitude Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
 alt_c.plot(sim_dict_c["time_sim"], sim_dict_c["x"],label="Real Altitude",color="royalblue", linewidth = 3);  
-alt_c.plot(sim_dict_c["time"], sim_dict_c["kalman_alt"],label="Altitude Estimation",linestyle="--",color="tab:red")
+alt_c.plot(sim_dict_c["time_sim"], sim_dict_c["kalman_alt"],label="Altitude Estimation",linestyle="--",color="tab:red")
 alt_c.set(ylabel = "Altitude (m)")
 alt_c.axvline(x = delay, color = "tab:green", linestyle = "dotted", linewidth = 2.5, label="Launch");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 alt_c.legend()
 
 # Real Velocity vs Kalman Filter Graph (Control)
 vel_c.plot(sim_dict_c["time_sim"], sim_dict_c["vel"],label="Real Velocity",color="royalblue", linewidth = 3);  
-vel_c.plot(sim_dict_c["time"], sim_dict_c["kalman_vel"],label="Velocity Estimation",linestyle="--",color="tab:red")
+vel_c.plot(sim_dict_c["time_sim"], sim_dict_c["kalman_vel"],label="Velocity Estimation",linestyle="--",color="tab:red")
 vel_c.set(ylabel = "Velocity (m/s)")
 vel_c.axvline(x = delay, color = "tab:green", linestyle = "dotted", linewidth = 2.5, label="Launch");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 vel_c.legend()
@@ -219,7 +219,7 @@ vel_c.legend()
 # Acceleration Measurements vs Real Acceleration vs Kalman Filter Graph (Control)
 accel_c.plot(sim_dict_c["time_sim"], sim_dict_c["accel_noise"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":");
 accel_c.plot(sim_dict_c["time_sim"], sim_dict_c["accel"],label="Real Acceleration",color="royalblue", linewidth = 3);  
-accel_c.plot(sim_dict_c["time"], sim_dict_c["kalman_accel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
+accel_c.plot(sim_dict_c["time_sim"], sim_dict_c["kalman_accel"],label="Acceleration Estimation",linestyle="--",color="tab:red")
 accel_c.set(ylabel = "Acceleration (m/s^2)")
 accel_c.axvline(x = delay, color = "tab:green", linestyle = "dotted", linewidth = 2.5, label="Launch");plt.legend(fontsize = 14); plt.xlabel("Time (s)", fontsize = 14)
 accel_c.legend()

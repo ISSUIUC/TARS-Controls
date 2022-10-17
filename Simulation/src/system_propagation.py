@@ -252,7 +252,7 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         kalmanPos = x_k[0][0]
         kalmanVel = x_k[1][0]
         kalmanAccel = x_k[2][0]
-        sim_dict["kalman_pos"].append(kalmanPos)
+        sim_dict["kalman_alt"].append(kalmanPos)
         sim_dict["kalman_vel"].append(kalmanVel)
         sim_dict["kalman_accel"].append(kalmanAccel)
         curr_state_est = np.array([kalmanPos, kalmanVel, kalmanAccel])
