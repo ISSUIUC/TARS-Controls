@@ -153,7 +153,7 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
 
     #* Kalman Filter Initialization
     # Initialize states (x), measurement function (H), Covariance [P], White Noise [Q], Measurement Noise Function [R]
-    kalman.initialize(pos_f_noise, curr_state[1], accel_f_noise, 5 * s_dt)
+    kalman.initialize(pos_f_noise, curr_state[1], accel_f_noise, s_dt)
     
     # Define max and min values for flap actuation
     l_max = conversion.ft_to_m(constants.max_flap_length/12) # .944 inch actuation length
