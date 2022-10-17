@@ -72,8 +72,8 @@ def initialize(pos_f, vel_f, accel_f, time_step):
 
 # Set priori state (guess of next step)
 def priori(timestep, spectral_density):
-    global x_priori, P_priori, F, Q
-    
+    global x_priori, P_priori, F, Q, s_dt
+    s_dt = timestep
     F = np.array([[1.0, timestep, (timestep**2) / 2],
                   [0.0, 1.0, timestep],
                   [0.0, 0.0, 1.0]])
@@ -87,7 +87,7 @@ def priori(timestep, spectral_density):
 
 # Update State Guess
 def update(pos_f, accel_f, Sref_a, rho):
-    global K, x_k, P_k, F, current_time
+    global K, x_k, P_k, F, current_time, s_dt
     # Update Kalman Gain
     if (len(R) == 1):
         K = P_priori @ H.T * np.reciprocal(H @ P_priori @ H.T + R)

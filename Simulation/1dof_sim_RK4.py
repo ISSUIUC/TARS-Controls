@@ -126,7 +126,7 @@ des_apogee = conversion.ft_to_m(constants.apogee_goal) #meters
 # Time between sensor readings / KF updates
 s_dt = 0.03
 # Simulation step-size
-dt = 0.006
+dt = 0.01
 
 # Run Sim with and without control
 flight_time_nc, kalman_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, thrust_csv, prop_mass_func, delay)

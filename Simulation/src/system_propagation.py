@@ -170,6 +170,7 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
     # Get initial Apogee Prediction    
     # sim_dict["predict_alt"].append(38000) #!Fix
     time_elapsed = 0
+    random_mulitple_step = 1
     kf_counter = 0
     predicted_apogee = 0
     # Simulate until apogee
@@ -183,13 +184,11 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
             
         #     # A-priori (before current state is reached)
         #     kalman.priori(timestep, spectral_density)
-        if kf_counter == 5:
-            timestep = 5 * s_dt
-            rand_step = random.randrange(0, 50) * multiplier_to_millisecs
-            timestep += rand_step
-            kalman.priori(timestep, spectral_density)
-
         
+        
+        if (random_mulitple_step <= kf_counter):
+            kalman.priori(random_mulitple_step * s_dt, spectral_density)
+
         # grabbing the current states
         pos_f = curr_state[0]
         vel_f = curr_state[1]
@@ -286,12 +285,15 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
             kalman.update(pos_f_noise, accel_f, Sref_a, rho)
             time_elapsed = 0
         '''
-        if kf_counter == 5:
+        if (random_mulitple_step <= kf_counter):
             kalman.update(pos_f_noise, accel_f, Sref_a, rho)
             kf_counter = 0
+            random_mulitple_step = random.randint(1, 6)
+        else:
+            kf_counter += 1
+
         curr_state = np.array([next_state[0], next_state[1], accel_f])
         t += dt     
-        kf_counter += 1
         
     end_time = int(round(timer.time()))
     sim_time = end_time - start_time
