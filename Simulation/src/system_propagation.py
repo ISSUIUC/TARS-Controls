@@ -293,7 +293,7 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         '''
         if (random_mulitple_step <= kf_counter):
             kalman.update(pos_f_noise, accel_f, Sref_a, rho)
-            kf_counter = 0
+            kf_counter = 1 
             random_mulitple_step = random.randint(1, 6)
         else:
             kf_counter += 1
