@@ -133,6 +133,12 @@ flight_time_nc, sim_dict_nc, sim_time_nc, sim_dict_nc = rk4_sim(init_state, dt, 
 print("No Control Sim Finished")
 flight_time_c, sim_dict_c, sim_time_c, sim_dict_c = rk4_sim(init_state, dt, RASaero, poly_nothrust, poly_thrust, des_apogee, thrust_csv, prop_mass_func, delay,control=1)
 
+sim_dict_nc_dat = pd.DataFrame.from_dict(sim_dict_nc)
+sim_dict_c_dat = pd.DataFrame.from_dict(sim_dict_c)
+
+sim_dict_nc_dat.to_csv('no_control_data.csv', index=False)
+sim_dict_c_dat.to_csv('control_data.csv', index=False)  
+
 #Print Housekeeping Values
 # print("APOGEE (No Control) (ft):", conversion.m_to_ft(max(sim_dict_nc["x"])))
 # print("Flight Time (No Control)(s):", flight_time_nc)

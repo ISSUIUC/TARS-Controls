@@ -123,9 +123,7 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
     "Sref": [],
     "time_sim": [],
     "predict_alt": [],
-    "predict_update_alt": [],
     "flap_extension": [],
-    "timestep": [],
     "kalman_alt" : [],
     "kalman_vel" : [],
     "kalman_accel": []
