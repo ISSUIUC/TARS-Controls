@@ -2,6 +2,7 @@ import numpy as np
 import src.rotation as rotation
 
 # Rocket Properties
+m0 = 23.782
 m0_IREC = 18.824 # kg, for IREC, full mass before burnout
 m0_April = 23.782 # kg, for April, full mass before motor burn
 mf_IREC = 27.2155 #kg, for IREC launch, after burnout

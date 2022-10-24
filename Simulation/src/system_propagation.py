@@ -6,6 +6,7 @@ from sympy import Matrix, false, interpolate
 from mpl_toolkits import mplot3d
 import pandas as pd
 import time as timer
+import random
 
 #* Import Helper Function Library
 import src.atmosphere as atmosphere
@@ -78,7 +79,7 @@ def rk4_inner(initial_state, dt, cd_file, poly_nothrust, poly_thrust, time, thru
         
         # Density varies with altitude
         rho = atmosphere.density(pos_f)
-        mach = curr_state[1] / atmosphere.speed_sound(curr_state[0])
+        mach = vel_f / atmosphere.speed_sound(pos_f)
         
         # Initialize variables
         before_launch = 0
@@ -122,8 +123,10 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
     "Sref": [],
     "time_sim": [],
     "predict_alt": [],
-    "predict_update_alt": [],
-    "flap_extension": []
+    "flap_extension": [],
+    "kalman_alt" : [],
+    "kalman_vel" : [],
+    "kalman_accel": []
     }
     
     start_time = int(round(timer.time()))
@@ -132,6 +135,12 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
     curr_state = initial_state
     t = 0
     s_dt = dt #! Fix this (inner loop should be able to run at specified timestep)
+    
+    #mulitplier to millisec
+    multiplier_to_millisecs = .001
+    
+    #white noise spectral dens
+    spectral_density = 13.0
     
     #Error summation for integral
     e_sum = 0
@@ -161,13 +170,26 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
     
     # Get initial Apogee Prediction    
     # sim_dict["predict_alt"].append(38000) #!Fix
-
+    time_elapsed = 0
+    random_mulitple_step = 1
+    kf_counter = 0
+    predicted_apogee = 0
     # Simulate until apogee
     while (curr_state[1] >= 0 or t <= delay+1):
+        # Random timestep between 10-60 ms
+        # time_elapsed += s_dt
+        # if time_elapsed >= (s_dt * 10):
+        #     #timestep = random.randrange(6, 7)
+        #     timestep = 10
+        #     timestep *= multiplier_to_millisecs
+            
+        #     # A-priori (before current state is reached)
+        #     kalman.priori(timestep, spectral_density)
         
-        # A-priori (before current state is reached)
-        kalman.priori([u])
         
+        if (random_mulitple_step <= kf_counter):
+            kalman.priori(random_mulitple_step * s_dt, spectral_density)
+
         # grabbing the current states
         pos_f = curr_state[0]
         vel_f = curr_state[1]
@@ -228,6 +250,9 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         kalmanPos = x_k[0][0]
         kalmanVel = x_k[1][0]
         kalmanAccel = x_k[2][0]
+        sim_dict["kalman_alt"].append(kalmanPos)
+        sim_dict["kalman_vel"].append(kalmanVel)
+        sim_dict["kalman_accel"].append(kalmanAccel)
         curr_state_est = np.array([kalmanPos, kalmanVel, kalmanAccel])
         predicted_apogee = rk4_inner(curr_state_est, inner_dt, cd_file, poly_nothrust, poly_thrust, t, thrust_csv, curr_mass, prop_mass_func)
         end = int(round(timer.time() * 1000)) - start
@@ -259,7 +284,18 @@ def rk4_sim(initial_state, dt, cd_file, poly_nothrust, poly_thrust, desired_apog
         
         #TODO: Add check for only updating depending on s_dt
         # A-posteriori update (after current state is reached)
-        kalman.update(pos_f_noise, accel_f, Sref_a, rho)
+        '''
+        if time_elapsed >= (s_dt * 10):
+            kalman.update(pos_f_noise, accel_f, Sref_a, rho)
+            time_elapsed = 0
+        '''
+        if (random_mulitple_step <= kf_counter):
+            kalman.update(pos_f_noise, accel_f, Sref_a, rho)
+            kf_counter = 1 
+            random_mulitple_step = random.randint(1, 6)
+        else:
+            kf_counter += 1
+
         curr_state = np.array([next_state[0], next_state[1], accel_f])
         t += dt     
         
