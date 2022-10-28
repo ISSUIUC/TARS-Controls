@@ -4,9 +4,9 @@ import src.rotation as rotation
 # Rocket Properties
 m0 = 23.782
 m0_IREC = 18.824 # kg, for IREC, full mass before burnout
-m0_April = 23.782 # kg, for April, full mass before motor burn
+m0_April = 22.16 # kg, for April, full mass before motor burn
 mf_IREC = 27.2155 #kg, for IREC launch, after burnout
-mf_April = 19.0586 # kg, for April, after burnout
+mf_April = 17.5 # kg, for April, after burnout
 
 r_CP = 219/100 #m
 r_CG = 167.67/100 #m
@@ -14,7 +14,7 @@ I_rotational = 0.030245 #kg*m^2
 I_longitudinal = 15.841 #kg*m^2
 D = 0.1056132 #m
 
-April_apogee_goal = 14000  # ft
+April_apogee_goal = 13000  # ft
 IREC_apogee_goal = 30000   # ft
 
 April_m = 19.0586
@@ -63,7 +63,7 @@ initial_alpha = 0.0043818 #deg # TODO: Update
 l_rocket = 3.07 #m 
 nose_ang = 0.069189 #nosecone angle (rad) #TODO: Update
 flap_width = 0.0351 #m
-max_flap_length = .816 #in
+max_flap_length = 15.9999934 / 25.4 #in
 gamma = 1.4 # specific heat ratio
 
 #
