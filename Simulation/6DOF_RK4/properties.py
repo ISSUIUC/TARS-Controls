@@ -15,4 +15,11 @@ m_e = 5.9722*10**24
 # radius of earth
 r_e = 6.3781*10**6
 
-print(G*m_e/(r_e**2))
+# Temporary C_d constant
+C_d = ...
+
+# Motor Properties:
+impulse = 17_907 # Ns
+mass = 16.281 # Kg
+delay = 0 # s
+lookup_file = '../Lookup/Cesaroni_17907N2540-P_Trimmed.csv'

@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-
+import properties as pr
 class Motor():
-    def __init__(self, impulse, mass, delay, lookup_file: str):
+    def __init__(self, impulse=pr.impulse, mass=pr.mass, delay=pr.delay, lookup_file: str=pr.lookup_file):
         lookup = os.path.join(os.path.dirname(__file__), lookup_file)
         self.thrust_data = pd.read_csv(lookup)
         print(self.thrust_data["Thrust (N)"].dtype)
