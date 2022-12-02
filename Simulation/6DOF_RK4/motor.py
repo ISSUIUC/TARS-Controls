@@ -6,6 +6,7 @@ class Motor():
         self.thrust_data = pd.read_csv(lookup_file)
         print(self.thrust_data["Thrust (N)"].dtype)
         self.total_impulse = impulse
+        self.total_mass = mass
         self.current_mass = mass
         self.coast_time = delay
         self.alignment = np.array([0, 0])
@@ -32,10 +33,21 @@ class Motor():
     def get_alignment(self) -> np.ndarray:
         return self.alignment
         
-    # def get_mass() -> np.float64:
+    def get_mass(self, time: float) -> np.float64:
+        if time < self.thrust_data["Time (s)"].iloc[0]:
+            return self.total_mass
+        elif time >= self.thrust_data["Time (s)"].iloc[-1]:
+            self.current_mass = 0
+        else:
+            self.current_mass = self.lerp_(float(self.thrust_data["Time (s)"].iloc[0]),
+                                           float(self.thrust_data["Time (s)"].iloc[-1]),
+                                           self.total_mass,
+                                           0,
+                                           time)
+        return self.current_mass
         
-    # def set_coast_time(coast_time: np.float64) -> None:
-    #     coast_time = 
+    def set_coast_time(self, coast_time: np.float64) -> None:
+        self.coast_time = coast_time
 
 import os
 import matplotlib.pyplot as plt
@@ -45,7 +57,8 @@ if __name__ == '__main__':
     time = np.linspace(0, 10, 1000)
     # print(time)
     # print(motor.get_thrust(0))
-    thrust = np.array([motor.get_thrust(t) for t in time], dtype=np.float64)
+    # thrust = np.array([motor.get_thrust(t) for t in time], dtype=np.float64)
+    thrust = np.array([motor.get_mass(t) for t in time], dtype=np.float64)
     # print(thrust.shape)
     # print(time.shape)
     # print(thrust)
