@@ -3,7 +3,8 @@ import pandas as pd
 
 class Motor():
     def __init__(self, impulse, mass, delay, lookup_file: str):
-        self.thrust_data = pd.read_csv(lookup_file)
+        lookup = os.path.join(os.path.dirname(__file__), lookup_file)
+        self.thrust_data = pd.read_csv(lookup)
         print(self.thrust_data["Thrust (N)"].dtype)
         self.total_impulse = impulse
         self.current_mass = mass
@@ -41,7 +42,7 @@ import os
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    motor = Motor(69, 420, 21, os.path.join(os.path.dirname(__file__), '../Lookup/Cesaroni_17907N2540-P_Trimmed.csv'))
+    motor = Motor(69, 420, 21, '..\Lookup\Cesaroni_17907N2540-P_Trimmed.csv')
     time = np.linspace(0, 10, 1000)
     # print(time)
     # print(motor.get_thrust(0))
