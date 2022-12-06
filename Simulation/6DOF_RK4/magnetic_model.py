@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 '''
 input:
@@ -26,4 +27,7 @@ def magnet(r, theta, phi, days):
     a = 6371.2
     
     # Schmidt quasi-normalized coefficient (are good until January 1, 2025)
-    g = []
+    IGRF_lookup = pd.read_csv('/LookUp/IGRF13coeffs.csv')
+    IGRF_numpy = IGRF_lookup.to_numpy()
+    print(IGRF_numpy)
+    #g = []
