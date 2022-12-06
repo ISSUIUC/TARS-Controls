@@ -47,4 +47,3 @@ class Forces:
         # TODO: Change C_d to C_d from the side for wind
         return (wind_vector/wind_vector_mag) * 0.5*density*(wind_vector_mag**2)*prop.C_d*(prop.A_s)
 
-

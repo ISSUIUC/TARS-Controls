@@ -11,11 +11,20 @@ class Motor():
         self.current_mass = mass
         self.coast_time = delay
         self.alignment = np.array([0, 0])
-  
+        self.start_time = 0
+    
+    def ignite(self, start_time):
+        '''
+        Args:
+            start_timestamp: Time stamp of the launch
+        '''
+        self.start_time = start_time
+
     def lerp_(self, x1, x2, y1, y2, x):
         return y1 + ((y2 - y1) / (x2 - x1)) * (x - x1)
 
     def get_thrust(self, time: float):
+        time = time - self.start_time
         # given a CSV, find which two timesteps time is between and interpolate between the two timestamps to find the thrust
         if time > self.thrust_data["Time (s)"].iloc[-1] or time < self.thrust_data["Time (s)"].iloc[0]:
             return 0
