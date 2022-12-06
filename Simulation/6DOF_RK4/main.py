@@ -1,5 +1,12 @@
 import properties as prop
 import simulator as sim
+import numpy as np
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.pyplot as plt
+import numpy as np
 sim_dict = {
     "pos":[],
     "vel": [],
@@ -24,3 +31,8 @@ def simulator(x0, dt):
         sim_dict["vel"].append(x[1])
         sim_dict["accel"].append(x[2])
         sim_dict["time"].append(sim_dict["time"][-1]+dt)
+
+if __name__ == '__main__':
+    x0 = np.array([np.array([0,0,0]), np.array([0,0,0]), np.array([0,0,0])])
+    dt = 0.01
+    simulator(x0, dt)
