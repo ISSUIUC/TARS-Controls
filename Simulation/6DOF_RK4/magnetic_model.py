@@ -27,7 +27,7 @@ def magnet(r, theta, phi, days):
     
     # Schmidt quasi-normalized coefficient (are good until January 1, 2025)
     IGRF_lookup = pd.read_csv('Simulation/6DOF_RK4/LookUp/IGRF13coeffs.csv')
-    IGRF_dict = IGRF_lookup.set_index(['n','m']).T.to_dict('list')
+    IGRF_dict = IGRF_lookup.set_index(['n','m', 'g/h']).T.to_dict('list')
     print(IGRF_dict)
     
 
