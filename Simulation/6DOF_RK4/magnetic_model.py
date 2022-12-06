@@ -26,3 +26,4 @@ def magnet(r, theta, phi, days):
     a = 6371.2
     
     # Schmidt quasi-normalized coefficient (are good until January 1, 2025)
+    g = []
