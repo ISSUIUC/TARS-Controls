@@ -1,12 +1,12 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+import motor
 import properties as prop
 import simulator as sim
-import numpy as np
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.pyplot as plt
-import numpy as np
+
+motor = motor.Motor()
+
 sim_dict = {
     "pos":[],
     "vel": [],
@@ -20,17 +20,28 @@ def simulator(x0, dt):
     dt --> time step
     '''
     x = x0.copy()
-    while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
+    time_stamp = 0
+    idle_time = 60 # time in seconds before launch
+    while time_stamp*dt < idle_time:
+        time_stamp += 1
+    
+    motor.ignite(time_stamp*dt)
+    # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
+    while x[0][1] > 0:
         # Kalman Filter stuff goes here
         # flap_ext will be passed by kalman filter
+        prop.motor_mass = motor.get_mass()
 
-        x = sim.RK4(x, dt)
+        x = sim.RK4(x, dt, time_stamp)
 
         # Update Simulator Log
         sim_dict["pos"].append(x[0])
         sim_dict["vel"].append(x[1])
         sim_dict["accel"].append(x[2])
         sim_dict["time"].append(sim_dict["time"][-1]+dt)
+
+        time_stamp += 1
+
 
 if __name__ == '__main__':
     x0 = np.array([np.array([0,0,0]), np.array([0,0,0]), np.array([0,0,0])])
