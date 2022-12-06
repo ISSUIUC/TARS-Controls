@@ -11,7 +11,6 @@ days - decimal days since Jan 1, 2000
 output:
 B vector with radial, theta, and phi directions
 '''
-
 def magnet(r, theta, phi, days):
     # To avoid singularities check for poles
     if (theta > -.00000001 and theta > .00000001):
@@ -27,7 +26,9 @@ def magnet(r, theta, phi, days):
     a = 6371.2
     
     # Schmidt quasi-normalized coefficient (are good until January 1, 2025)
-    IGRF_lookup = pd.read_csv('/LookUp/IGRF13coeffs.csv')
-    IGRF_numpy = IGRF_lookup.to_numpy()
-    print(IGRF_numpy)
-    #g = []
+    IGRF_lookup = pd.read_csv('Simulation/6DOF_RK4/LookUp/IGRF13coeffs.csv')
+    IGRF_dict = IGRF_lookup.set_index(['n','m']).T.to_dict('list')
+    print(IGRF_dict)
+    
+
+magnet(0,0,0,0)
