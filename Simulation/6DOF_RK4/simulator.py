@@ -22,7 +22,8 @@ def RK4(y0, dt, time_stamp, flap_ext=0):
     '''
     current_time = time_stamp*dt 
 
-    k1_v = forces.get_force(y0[0], y0[1], flap_ext)/prop.mass
+    # k1_v = forces.get_force(y0[0], y0[1], flap_ext)/prop.mass
+    k1_v = forces.get_force(y0[0], y0[1], flap_ext)/prop.rocket_total_mass
     k2_v = step_v(y0[0], y0[1] + (dt/2)*k1_v, dt/2, current_time, flap_ext)
     k3_v = step_v(y0[0], y0[1] + (dt/2)*k2_v, dt/2, current_time, flap_ext)
     k4_v = step_v(y0[0], y0[1] + dt*k3_v, dt, current_time, flap_ext)

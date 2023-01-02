@@ -11,7 +11,7 @@ sim_dict = {
     "pos":[],
     "vel": [],
     "accel": [],
-    "time": [0]
+    "time": []
     }
 
 def simulator(x0, dt):
@@ -25,12 +25,17 @@ def simulator(x0, dt):
     while time_stamp*dt < idle_time:
         time_stamp += 1
     
+    print("Ignition")
+
     motor.ignite(time_stamp*dt)
-    # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
-    while x[0][1] > 0:
+    # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
+    start = True
+    while x[0][1] > 0 or start:
+        if start:
+            start = False
         # Kalman Filter stuff goes here
         # flap_ext will be passed by kalman filter
-        prop.motor_mass = motor.get_mass()
+        prop.motor_mass = motor.get_mass(time_stamp*dt)
 
         x = sim.RK4(x, dt, time_stamp)
 
@@ -38,7 +43,7 @@ def simulator(x0, dt):
         sim_dict["pos"].append(x[0])
         sim_dict["vel"].append(x[1])
         sim_dict["accel"].append(x[2])
-        sim_dict["time"].append(sim_dict["time"][-1]+dt)
+        sim_dict["time"].append(sim_dict["time"][-1]+dt if len(sim_dict["time"]) > 0 else 0)
 
         time_stamp += 1
 
@@ -47,3 +52,8 @@ if __name__ == '__main__':
     x0 = np.array([np.array([0,0,0]), np.array([0,0,0]), np.array([0,0,0])])
     dt = 0.01
     simulator(x0, dt)
+    # plot entries in sim_dict
+    print(sim_dict["pos"])
+    print(sim_dict["time"])
+    # plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
+    # plt.show()
