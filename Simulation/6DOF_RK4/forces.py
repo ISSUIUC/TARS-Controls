@@ -21,12 +21,12 @@ class Forces:
     def __init__(self):
         pass
 
-    def get_force(self, x_state, flap_ext, tStamp) -> np.ndarray:
+    def get_force(self, x_state, flap_ext, time_stamp) -> np.ndarray:
         # TODO: Add random disturbances
         # print("State: ", x_state)
-        force = self.motor.get_thrust(tStamp) + self.aerodynamic_drag_force(x_state, flap_ext)\
-        + self.gravitational_force(x_state[0,0], tStamp) + self.wind_force(x_state[0,0], tStamp)
-        # print(self.motor.get_thrust(tStamp))
+        force = self.motor.get_thrust(time_stamp) + self.aerodynamic_drag_force(x_state, flap_ext)\
+        + self.gravitational_force(x_state[0,0], time_stamp) + self.wind_force(x_state[0,0], time_stamp)
+        # print(self.motor.get_thrust(time_stamp))
         return force
 
     def get_Cd(self, flap_ext) -> float:
@@ -42,13 +42,13 @@ class Forces:
         density = self.atm.get_density(z)
         return -vct.norm(vel) * 0.5*density*(v_mag**2)*self.get_Cd(flap_ext)*(prop.A)
     
-    def gravitational_force(self, altitude, tStamp) -> np.ndarray:
+    def gravitational_force(self, altitude, time_stamp) -> np.ndarray:
         # F = GMm/r^2
-        total_mass = prop.rocket_dry_mass + self.motor.get_mass(tStamp) #Adding dry mass + motor mass
+        total_mass = prop.rocket_dry_mass + self.motor.get_mass(time_stamp) #Adding dry mass + motor mass
         return -np.array([(prop.G*prop.m_e*total_mass)/((prop.r_e+altitude)**2), 0, 0])
     
-    def wind_force(self, altitude, tStamp) -> np.ndarray:
-        wind_vector = self.atm.get_wind_vector(tStamp)
+    def wind_force(self, altitude, time_stamp) -> np.ndarray:
+        wind_vector = self.atm.get_wind_vector(time_stamp)
         density = self.atm.get_density(altitude)
         # wind_vector_mag = wind_vector.norm()
         wind_vector_mag = np.linalg.norm(wind_vector)
