@@ -24,16 +24,19 @@ class Forces:
     def get_force(self, x_state, flap_ext, tStamp) -> np.ndarray:
         # TODO: Add random disturbances
         # print("State: ", x_state)
-        return self.motor.get_thrust(tStamp) + self.aerodynamic_drag_force(x_state, flap_ext)\
+        force = self.motor.get_thrust(tStamp) + self.aerodynamic_drag_force(x_state, flap_ext)\
         + self.gravitational_force(x_state[0,0], tStamp) + self.wind_force(x_state[0,0], tStamp)
+        # print(self.motor.get_thrust(tStamp))
+        return force
 
     def get_Cd(self, flap_ext) -> float:
         # TODO: account for area change of flaps in C_d calculation
         return prop.C_d
     
     def aerodynamic_drag_force(self, x_state, flap_ext) -> np.ndarray:
-        print("State_A: ", x_state)
-        z = x_state[0,0]
+        # print("State_A: ", x_state)
+        z = x_state.copy()[0,0]
+        # print(z)
         vel = x_state[1].copy()
         v_mag = np.linalg.norm(vel)
         density = self.atm.get_density(z)
@@ -50,8 +53,6 @@ class Forces:
         # wind_vector_mag = wind_vector.norm()
         wind_vector_mag = np.linalg.norm(wind_vector)
         # TODO: Change C_d to C_d from the side for wind
-        wind_norm = np.zeros((1,3))
-        if (wind_vector_mag != 0):
-            wind_norm = wind_vector/wind_vector_mag
+        wind_norm = vct.norm(wind_vector)
         return wind_norm * 0.5*density*(wind_vector_mag**2)*prop.C_d*(prop.A_s)
 

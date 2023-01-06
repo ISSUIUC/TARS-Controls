@@ -59,20 +59,26 @@ class Motor():
         time: Time stamp of the current state
     """
     def get_thrust(self, time: float):
+        # if (time < 7/.01):
+        #     return np.array([2500.,0.,0.])
+        # else:
+        #     return np.array([0.,0.,0.])
         # shift time to reflect the time since ignition
-        time = time - self.start_time
+        time = (time - self.start_time)*.01
+        temp = 0
         # only linearly interpolate if within the bounds of the thrust curve
         if time > self.thrust_data["Time (s)"].iloc[-1] or time < self.thrust_data["Time (s)"].iloc[0]:
-            return 0
+            temp = 0
         # find two points on the thrust curve that bound the current time and linearly interpolate
         for i in range(len(self.thrust_data)-1):
             if float(self.thrust_data["Time (s)"].iloc[i]) == time:
-                return float(self.thrust_data["Thrust (N)"].iloc[i])
+                temp = float(self.thrust_data["Thrust (N)"].iloc[i])
             if float(self.thrust_data["Time (s)"].iloc[i]) < time and time < float(self.thrust_data["Time (s)"][i+1]):
-                return self.lerp_(float(self.thrust_data["Time (s)"].iloc[i]), 
+                temp = self.lerp_(float(self.thrust_data["Time (s)"].iloc[i]), 
                                   float(self.thrust_data["Time (s)"].iloc[i+1]), 
                                   float(self.thrust_data["Thrust (N)"].iloc[i]), 
                                   float(self.thrust_data["Thrust (N)"].iloc[i+1]), time) #* np.cos(self.alignment)
+        return np.array([temp,0,0])
 
 
     """

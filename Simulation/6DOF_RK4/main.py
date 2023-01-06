@@ -21,7 +21,7 @@ def simulator(x0, dt):
     '''
     x = x0.copy()
     time_stamp = 0
-    idle_time = 60 # time in seconds before launch
+    idle_time = 0 # time in seconds before launch
     while time_stamp*dt < idle_time:
         time_stamp += 1
     
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     dt = 0.01
     simulator(x0, dt)
     # plot entries in sim_dict
-    # print(sim_dict["pos"])
+    print(np.array(sim_dict["vel"])[:,0])
     # print(sim_dict["time"])
     plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
     plt.show()

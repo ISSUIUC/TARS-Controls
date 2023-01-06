@@ -23,21 +23,21 @@ def RK4(y0, dt, time_stamp, flap_ext=0):
     # current_time = time_stamp*dt 
 
     # k1_v = forces.get_force(y0[0], y0[1], flap_ext)/prop.mass
-    k1_v = forces.get_force(np.array([y0[:,0], y0[:,1]]), flap_ext, time_stamp)/prop.rocket_total_mass
+    k1_v = (forces.get_force(np.array([y0[:,0], y0[:,1]]), flap_ext, time_stamp)/prop.rocket_total_mass)[0]
     k2_v = step_v(y0[:,0], y0[:,1] + (dt/2)*k1_v, dt/2, time_stamp, flap_ext)
     k3_v = step_v(y0[:,0], y0[:,1] + (dt/2)*k2_v, dt/2, time_stamp, flap_ext)
     k4_v = step_v(y0[:,0], y0[:,1] + dt*k3_v, dt, time_stamp, flap_ext)
 
-    v = y0[:,1] + (1/6)*(k1_v+2*k2_v+2*k3_v+k4_v)*dt
+    v = (y0[:,1] + (1/6)*(k1_v+2*k2_v+2*k3_v+k4_v)*dt)
 
-    k1_p = v
+    k1_p = v.copy()
     k2_p = step_p(y0[:,0], y0[:,0] + (dt/2)*k1_v, dt/2)
     k3_p = step_p(y0[:,0], y0[:,0] + (dt/2)*k2_p, dt/2)
     k4_p = step_p(y0[:,0], y0[:,0] + dt*k3_p, dt)
 
-    p = y0[:,0] + (1/6)*(k1_p+2*k2_p+2*k3_p+k4_p)*dt
-    a = forces.get_force(np.array([p, v[0]]), flap_ext, time_stamp)/prop.rocket_total_mass 
+    p = (y0[:,0] + (1/6)*(k1_p+2*k2_p+2*k3_p+k4_p)*dt)
 
+    a = (forces.get_force(np.array([p, v]), flap_ext, time_stamp)/prop.rocket_total_mass)
     return np.array([p, v, a])
 
 def step_p(y0, y1, dt):
@@ -54,8 +54,7 @@ def step_v(pos, vel, dt, time_stamp, flap_ext):
     y0 --> initial velocity
     dt --> time step
     '''
-    # print(vel[0])
-    return forces.get_force(np.array([pos, vel[0]]), flap_ext, time_stamp)/prop.rocket_total_mass # return slope (acceleration) 
+    return forces.get_force(np.array([pos, vel]), flap_ext, time_stamp)/prop.rocket_total_mass # return slope (acceleration) 
 
 
 
