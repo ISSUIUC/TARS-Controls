@@ -23,7 +23,7 @@ def simulator(x0, dt):
     time_stamp = 0
     idle_time = 0 # time in seconds before launch
     while time_stamp*dt < idle_time:
-        time_stamp += 1
+        time_stamp += dt
     
     print("Ignition")
 
@@ -35,7 +35,7 @@ def simulator(x0, dt):
             start = False
         # Kalman Filter stuff goes here
         # flap_ext will be passed by kalman filter
-        prop.motor_mass = motor.get_mass(time_stamp*dt)
+        prop.motor_mass = motor.get_mass(time_stamp)
 
         x = sim.RK4(x, dt, time_stamp)
 
@@ -45,7 +45,7 @@ def simulator(x0, dt):
         sim_dict["accel"].append(x[2])
         sim_dict["time"].append(sim_dict["time"][-1]+dt if len(sim_dict["time"]) > 0 else 0)
 
-        time_stamp += 1
+        time_stamp += dt
 
 
 if __name__ == '__main__':
