@@ -1,4 +1,5 @@
 import numpy as np
+import util.vectors as vct
 
 class Atmosphere:
     def __init__(self, wind_direction_variance_mean = 0.0, 
@@ -362,8 +363,8 @@ class Atmosphere:
             current_wind_direction = self.nominal_wind_direction_ + self.direction_variance_vect_
         else:
             current_wind_direction = self.nominal_wind_direction_
-            
-        current_wind_direction_ = current_wind_direction_ / np.linalg.norm(current_wind_direction_)
+        
+        current_wind_direction_ = vct.norm(current_wind_direction_)
         
         if self.enable_magnitude_variance_:
             if (tStamp - self.last_magnitude_variance_update_) >= self.magnitude_variance_update_rate_ :

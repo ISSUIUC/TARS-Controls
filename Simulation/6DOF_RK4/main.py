@@ -49,11 +49,11 @@ def simulator(x0, dt):
 
 
 if __name__ == '__main__':
-    x0 = np.array([np.array([0,0,0]), np.array([0,0,0]), np.array([0,0,0])])
+    x0 = np.zeros((3,6))
     dt = 0.01
     simulator(x0, dt)
     # plot entries in sim_dict
-    print(sim_dict["pos"])
-    print(sim_dict["time"])
-    # plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
-    # plt.show()
+    # print(sim_dict["pos"])
+    # print(sim_dict["time"])
+    plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
+    plt.show()
