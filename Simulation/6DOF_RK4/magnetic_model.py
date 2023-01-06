@@ -82,4 +82,12 @@ def magnet(r, theta, phi, days):
                 Bp = Bp + ((a/r)**(n + 2)) * (m*(-g[n, m]*np.cos(m*phi) + h[n,m]*np.sin(m*phi)*P2))
     return Br, -Bt, -Bp / np.sin(theta)
 
-print(magnet(500000, 33, 130, 200))
+def sphere_to_cartesian(Br, Bt, Bp):
+    Bx = -Bt
+    By = Bp
+    Bz = -Br
+    return Bx, By, Bz
+
+new_york = magnet(6371.2, 40.712776, -74.005974, 1101) # New York's Magnetic field
+X, Y, Z = sphere_to_cartesian(new_york[0], new_york[1], new_york[2])
+print(np.sqrt(X**2 + Y**2 + Z**2))
