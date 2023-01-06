@@ -58,13 +58,14 @@ class Motor():
     Args:
         time: Time stamp of the current state
     """
-    def get_thrust(self, time: float):
+    def get_thrust(self, time_stamp: float):
         # if (time_stamp < 7/.01):
         #     return np.array([2500.,0.,0.])
         # else:
         #     return np.array([0.,0.,0.])
         # shift time_stamp to reflect the time_stamp since ignition
-        time_stamp = (time_stamp - self.start_time)*.01
+        # time_stamp = (time_stamp - self.start_time)*.01
+        time_stamp = time_stamp - self.start_time
         temp = 0
         # only linearly interpolate if within the bounds of the thrust curve
         if time_stamp > self.thrust_data["Time (s)"].iloc[-1] or time_stamp < self.thrust_data["Time (s)"].iloc[0]:
@@ -107,7 +108,7 @@ class Motor():
     def get_mass(self, time_stamp: float) -> np.float64:
         # shift time_stamp to reflect the time since ignition
         time_stamp = time_stamp - self.start_time
-        if time < self.thrust_data["Time (s)"].iloc[0]:
+        if time_stamp < self.thrust_data["Time (s)"].iloc[0]:
             return self.total_mass
         elif time_stamp >= self.thrust_data["Time (s)"].iloc[-1]:
             self.current_mass = 0
