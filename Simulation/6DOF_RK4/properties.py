@@ -1,11 +1,12 @@
 import math
-
+import numpy as np
 # Gravitational const
 G = 6.6743*10**(-11)
 # mass of earth
 m_e = 5.9722*10**24
 # radius of earth
 r_e = 6.3781*10**6
+cm = np.array([1, 0, 0])
 
 # Temporary C_d constant 
 #C_D's nuts in yo mouf
