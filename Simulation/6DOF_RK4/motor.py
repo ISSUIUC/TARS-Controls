@@ -26,6 +26,7 @@ class Motor():
         self.coast_time = delay
         self.alignment = np.array([0, 0])
         self.start_time = 0
+        self.cur_line = 0
 
 
     """
@@ -79,7 +80,15 @@ class Motor():
                                   float(self.thrust_data["Time (s)"].iloc[i+1]), 
                                   float(self.thrust_data["Thrust (N)"].iloc[i]), 
                                   float(self.thrust_data["Thrust (N)"].iloc[i+1]), time_stamp) #* np.cos(self.alignment)
-        return np.array([temp,0,0])
+        self.set_alignment()
+        theta = np.radians(self.alignment[0])
+        phi = np.radians(self.alignment[1])
+        # down is positive x, phi is 0 in ideal conditions
+        vector = np.array([temp * np.cos(phi), temp * np.sin(phi)
+                          * np.sin(theta), -1 * temp * np.cos(phi) * np.sin(theta)])
+        
+        return vector
+        # return temp
 
 
     """
@@ -88,8 +97,11 @@ class Motor():
     Args:
         alignment: 3D vector representing the alignment of the motor
     """
-    def set_alignment(self, alignment: np.ndarray) -> None:
-        self.alignment = alignment
+    def set_alignment(self) -> None:
+        # read current alignment from csv file
+        if self.cur_line < len(self.thrust_data):
+            self.alignment = np.array([float(self.thrust_data["Theta"].iloc[self.cur_line]), float(self.thrust_data["Phi"].iloc[self.cur_line])])
+            self.cur_line += 1
 
 
     """
