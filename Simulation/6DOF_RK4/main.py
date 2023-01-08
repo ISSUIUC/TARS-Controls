@@ -53,7 +53,7 @@ if __name__ == '__main__':
     dt = 0.01
     simulator(x0, dt)
     # plot entries in sim_dict
-    print(np.array(sim_dict["vel"])[:,0])
+    print(np.array(sim_dict["pos"])[:,0])
     # print(sim_dict["time"])
     plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
     plt.show()

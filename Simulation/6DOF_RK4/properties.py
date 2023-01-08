@@ -15,7 +15,8 @@ C_d = 0.5
 impulse = 17_907 # Ns
 motor_mass = 16.281 # Kg
 delay = 0 # s
-lookup_file = '../Lookup/Cesaroni_17907N2540-P_Trimmed.csv'
+# lookup_file = '../Lookup/Cesaroni_17907N2540-P_Trimmed.csv'
+lookup_file = '../Lookup/cesaroni_n5800.csv'
 
 # rocket mass w/out motor
 rocket_dry_mass = 23.782
