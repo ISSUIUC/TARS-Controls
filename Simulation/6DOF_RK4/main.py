@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import motor
 import properties as prop
 import simulator as sim
+import plotSIM as plotter
 
 motor = motor.Motor()
 
@@ -40,9 +41,9 @@ def simulator(x0, dt):
         x = sim.RK4(x, dt, time_stamp)
 
         # Update Simulator Log
-        sim_dict["pos"].append(x[0])
-        sim_dict["vel"].append(x[1])
-        sim_dict["accel"].append(x[2])
+        sim_dict["pos"].append(x[:,0][0])
+        sim_dict["vel"].append(x[:,1][0])
+        sim_dict["accel"].append(x[:,2][0])
         sim_dict["time"].append(sim_dict["time"][-1]+dt if len(sim_dict["time"]) > 0 else 0)
 
         time_stamp += dt
@@ -53,7 +54,8 @@ if __name__ == '__main__':
     dt = 0.01
     simulator(x0, dt)
     # plot entries in sim_dict
-    print(np.array(sim_dict["pos"])[:,0])
-    # print(sim_dict["time"])
-    plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
-    plt.show()
+    # print(np.array(sim_dict["pos"])[:,0])
+    # # print(sim_dict["time"])
+    # plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
+    # plt.show()
+    plotter.plotter(sim_dict=sim_dict)
