@@ -24,10 +24,14 @@ class Forces:
     def get_force(self, x_state, flap_ext, time_stamp) -> np.ndarray:
         # TODO: Add random disturbances
         # print("State: ", x_state)
-        force = self.motor.get_thrust(time_stamp) + self.aerodynamic_drag_force(x_state, flap_ext)\
-        + self.gravitational_force(x_state[0,0], time_stamp) + self.wind_force(x_state[0,0], time_stamp)
+        thrust = self.motor.get_thrust(time_stamp)
+        drag = self.aerodynamic_drag_force(x_state, flap_ext)
+        grav = self.gravitational_force(x_state[0,0], time_stamp)
+        wind = self.wind_force(x_state[0,0], time_stamp)
         # print(self.motor.get_thrust(time_stamp))
-        return force
+        force = thrust + drag + wind + grav
+        moment = np.cross(-prop.cm, force)
+        return np.array([force, moment])
 
     def get_Cd(self, flap_ext) -> float:
         # TODO: account for area change of flaps in C_d calculation
