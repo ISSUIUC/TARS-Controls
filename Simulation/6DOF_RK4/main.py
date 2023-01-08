@@ -23,7 +23,7 @@ def simulator(x0, dt):
     x = x0.copy()
     time_stamp = 0
     idle_time = 0 # time in seconds before launch
-    while time_stamp*dt < idle_time:
+    while time_stamp < idle_time:
         time_stamp += dt
     
     print("Ignition")
