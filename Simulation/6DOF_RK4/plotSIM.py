@@ -14,7 +14,7 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
     # plt.legend(fontsize = 14) 
     plt.xlabel("Time (s)", fontsize = 14)
-    alt_nc.plot(sim_dict["time"], sim_dict["pos"], label="Altitude", color="tab:red", linewidth = 3)
+    alt_nc.plot(sim_dict["time"], sim_dict["pos"], label="Altitude", color="tab:red", linewidth = 2)
     # alt_nc.axhline(y = apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Apogee")
     # alt_nc.plot(sim_dict_noisy["time"], sim_dict_noisy["altitude"],label="Noisy Altitude Reading",color="lightsteelblue", linewidth = 3, linestyle=":")
     # alt_nc.plot(sim_dict_kalman["time"], sim_dict_kalman["altitude"],label="Kalman Filter State",linestyle="--",color="tab:red")
@@ -27,7 +27,7 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
     alt_nc.legend()
 
     # Real Velocity vs Kalman Filter Graph (No Control)
-    vel_nc.plot(sim_dict["time"], sim_dict["vel"],label="Velocity",color="royalblue", linewidth = 3);  
+    vel_nc.plot(sim_dict["time"], sim_dict["vel"],label="Velocity",color="royalblue", linewidth = 2);  
     # vel_nc.plot(sim_dict_kalman["time"], sim_dict_kalman["velocity"],label="Kalman Filter State",linestyle="--",color="tab:red")
     # vel_nc.set(ylabel = "Velocity (m/s)")
     # vel_nc.axvline(x = const.sim_start_delay, color = "tab:green", linestyle = "dotted", linewidth = 2.5, label="Boost")
@@ -35,7 +35,7 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
     vel_nc.legend()
 
     # Acceleration Measurements vs Real Acceleration vs Kalman Filter Graph (No Control)
-    accel_nc.plot(sim_dict["time"], sim_dict["accel"],label="Acceleration",color="tab:green", linewidth = 3);  
+    accel_nc.plot(sim_dict["time"], sim_dict["accel"],label="Acceleration",color="tab:green", linewidth = 2);  
     # accel_nc.plot(sim_dict_noisy["time"], sim_dict_noisy["acceleration"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":")
     # accel_nc.plot(sim_dict_kalman["time"], sim_dict_kalman["acceleration"],label="Kalman Filter State",linestyle="--",color="tab:red")
     # accel_nc.set(ylabel = "Acceleration (m/s^2)")

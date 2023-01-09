@@ -59,7 +59,7 @@ class Motor():
     Args:
         time: Time stamp of the current state
     """
-    def get_thrust(self, time_stamp: float):
+    def get_thrust(self, time_stamp: float) -> np.ndarray:
         # if (time_stamp < 7/.01):
         #     return np.array([2500.,0.,0.])
         # else:

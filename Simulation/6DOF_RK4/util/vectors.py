@@ -1,6 +1,6 @@
 import numpy as np
 
-def norm(x):
+def norm(x) -> np.ndarray:
     norm = np.linalg.norm(x)
     if (norm != 0):
         return x.copy()/norm

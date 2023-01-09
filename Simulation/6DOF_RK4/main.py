@@ -15,10 +15,17 @@ sim_dict = {
     "time": []
     }
 
-def simulator(x0, dt):
+def simulator(x0, dt) -> None:
     '''
-    x0 --> initial state
-    dt --> time step
+    Method which handles running the simulation and logging sim data to dict
+
+    Args:
+        x0 (np.array): state vector initialized to 0s [3x6]
+           [x: [pos, vel, accel, ang_pos, ang_vel, ang_accel],
+            y: [pos, vel, accel, ang_pos, ang_vel, ang_accel],
+            z: [pos, vel, accel, ang_pos, ang_vel, ang_accel]]
+        dt (float): time step between each iteration in simulation
+    
     '''
     x = x0.copy()
     time_stamp = 0

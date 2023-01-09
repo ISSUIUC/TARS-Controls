@@ -6,23 +6,22 @@ import properties as prop
 
 forces = forces.Forces()
 
-def RK4(y0, dt, time_stamp, flap_ext=0):
-    ''' 
-    RK4 Method for Propogating Velocity
-
-    y0 --> current state vector [3x6] [pos, vel, accel, ang_pos, ang_vel, ang_accel]
-
-    x: [pos, vel, accel, ang_pos, ang_vel, ang_accel]
-    y: [pos, vel, accel, ang_pos, ang_vel, ang_accel]
-    z: [pos, vel, accel, ang_pos, ang_vel, ang_accel]
-
-    dt --> time step
-    flap_ext --> current flap extension config
-
+def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
     '''
-    # current_time = time_stamp*dt 
+    Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
 
-    # k1_v = forces.get_force(y0[0], y0[1], flap_ext)/prop.mass
+    Args:
+        y0 (np.array): current state vector [3x6]
+           [x: [pos, vel, accel, ang_pos, ang_vel, ang_accel],
+            y: [pos, vel, accel, ang_pos, ang_vel, ang_accel],
+            z: [pos, vel, accel, ang_pos, ang_vel, ang_accel]]
+        dt (float): time step between each iteration in simulation
+        time_stamp (float): current time stamp of rocket in simulation
+    
+    Returns:
+        (np.array): state vector of rocket in x-axis [1x3]
+    '''
+
     k1_v = (forces.get_force(np.array([y0[:,0], y0[:,1]]), flap_ext, time_stamp)[0]/prop.rocket_total_mass)[0]
     k2_v = step_v(y0[:,0], y0[:,1] + (dt/2)*k1_v, dt/2, time_stamp, flap_ext)
     k3_v = step_v(y0[:,0], y0[:,1] + (dt/2)*k2_v, dt/2, time_stamp, flap_ext)
@@ -40,20 +39,36 @@ def RK4(y0, dt, time_stamp, flap_ext=0):
     a = (forces.get_force(np.array([p, v]), flap_ext, time_stamp)[0]/prop.rocket_total_mass)
     return np.array([p, v, a])
 
-def step_p(y0, y1, dt):
+def step_p(y0, y1, dt) -> np.ndarray:
     '''
-    y0 --> initial position
-    y1 --> propogated position
-    dt --> time step
+    Calculates rate of change of position over given delta time for state propogation
+
+    Args:
+        y0 (np.array): current state vector [3x6]
+        y1 (np.array): propogated state vector [3x6]
+        dt (float): time step between iteration of RK4 (shorter than simulation dt)
+    
+    Returns:
+        (np.array): rate of change of position (velocity) in form of state vector
     '''
+
     return (y1-y0)/dt # return slope (velocity)
 
-def step_v(pos, vel, dt, time_stamp, flap_ext):
+def step_v(pos, vel, dt, time_stamp, flap_ext) -> np.ndarray:
     '''
-    pos --> current position
-    y0 --> initial velocity
-    dt --> time step
+    Calculates slope of v over given delta t for state propogation
+
+    Args:
+        pos (np.array): current posiiton state vector [3x1]
+        vel (np.array): current velocity state vector [3x1]
+        dt (float): time step between iteration of RK4 (shorter than simulation dt)
+        flap_ext (float): current flap extention config
+        time_stamp (float): current time stamp of rocket in simulation
+    
+    Returns:
+        (np.array): rate of change of velocity (acceleration) in form of state vector
     '''
+
     return forces.get_force(np.array([pos, vel]), flap_ext, time_stamp)[0]/prop.rocket_total_mass # return slope (acceleration) 
 
 
