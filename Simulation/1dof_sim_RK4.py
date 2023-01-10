@@ -90,7 +90,7 @@ delay = 20
 RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
-thrust_file = "Simulation/Lookup/AeroTech_M2500T_Trimmed.csv"
+thrust_file = "Simulation/Lookup/cesaroni_n5800.csv"
 constants.apogee_goal = constants.April_apogee_goal
 constants.m0 = constants.m0_April
 constants.mf = constants.mf_April

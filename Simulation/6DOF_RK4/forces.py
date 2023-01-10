@@ -26,7 +26,7 @@ class Forces:
         Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
 
         Args:
-            x_state (np.array): State Vector (6x3)
+            x_state (np.array): State Vector [6x3]
             flap_ext (float): current flap extention config
             time_stamp (float): current time stamp of rocket in simulation
         
@@ -66,11 +66,11 @@ class Forces:
         Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
         Args:
-            x_state (np.array): State Vector (3x6)
+            x_state (np.array): State Vector [6x3]
             flap_ext (float): current flap extention config
         
         Returns:
-            (np.array): vector of aerodynamic forces in each axis (1x3)
+            (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
         z = x_state.copy()[0,0]
         vel = x_state[1].copy()
@@ -91,7 +91,7 @@ class Forces:
             time_stamp (float): current time stamp of rocket in simulation
         
         Returns:
-            (np.array): vector of gravitational forces on each axis (1x3)
+            (np.array): vector of gravitational forces on each axis [1x3]
         '''
         total_mass = prop.rocket_dry_mass + self.motor.get_mass(time_stamp) #Adding dry mass + motor mass
         # return np.array([-9.81*total_mass, 0, 0])
@@ -106,7 +106,7 @@ class Forces:
             time_stamp (float): current time stamp of rocket in simulation
         
         Returns:
-            (np.array): vector of wind forces on each axis (1x3)
+            (np.array): vector of wind forces on each axis [1x3]
         '''
         wind_vector = self.atm.get_wind_vector(time_stamp)
         density = self.atm.get_density(altitude)

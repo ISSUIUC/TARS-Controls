@@ -11,10 +11,15 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
     Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
 
     Args:
-        y0 (np.array): current state vector [3x6]
-           [x: [pos, vel, accel, ang_pos, ang_vel, ang_accel],
-            y: [pos, vel, accel, ang_pos, ang_vel, ang_accel],
-            z: [pos, vel, accel, ang_pos, ang_vel, ang_accel]]
+        y0 (np.array): current state vector [6x3]
+             x:         y:         z:
+           [[pos,       pos,       pos],
+            [vel,       vel,       vel],
+            [accel,     accel,     accel],
+            [ang_pos,   ang_pos,   ang_pos],
+            [ang_vel,   ang_vel,   ang_vel],
+            [ang_accel, ang_accel, ang_accel]]
+
         dt (float): time step between each iteration in simulation
         time_stamp (float): current time stamp of rocket in simulation
     
@@ -48,8 +53,8 @@ def step_p(y0, y1, dt):
     Calculates rate of change of position over given delta time for state propogation
 
     Args:
-        y0 (np.array): current state vector [3x6]
-        y1 (np.array): propogated state vector [3x6]
+        y0 (np.array): current state vector [6x3]
+        y1 (np.array): propogated state vector [6x3]
         dt (float): time step between iteration of RK4 (shorter than simulation dt)
     
     Returns:
@@ -63,8 +68,8 @@ def step_v(pos, vel, ang_pos, ang_vel, dt, time_stamp, flap_ext):
     Calculates slope of v over given delta t for state propogation
 
     Args:
-        pos (np.array): current posiiton state vector [3x1]
-        vel (np.array): current velocity state vector [3x1]
+        pos (np.array): current posiiton state vector [1x3]
+        vel (np.array): current velocity state vector [1x3]
         dt (float): time step between iteration of RK4 (shorter than simulation dt)
         flap_ext (float): current flap extention config
         time_stamp (float): current time stamp of rocket in simulation
