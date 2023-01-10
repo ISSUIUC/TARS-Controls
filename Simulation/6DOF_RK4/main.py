@@ -49,7 +49,7 @@ def simulator(x0, dt) -> None:
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
-        x = sim.RK4(x, dt, time_stamp)
+        x = sim.newtonProp(x, dt, time_stamp)
 
         # Update Simulator Log
         sim_dict["pos"].append(x[0])

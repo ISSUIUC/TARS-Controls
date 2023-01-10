@@ -13,9 +13,8 @@ def newtonProp(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
 
     moment = temp[1]
     alpha = moment
-    
-    p = y0[0] + y0[1]*dt + 0.5*a*dt**2
     v = y0[1] + a*dt
+    p = y0[0] + v*dt + 0.5*a*dt**2
     return np.array([p, v, a, y0[3], y0[4], alpha])
 
 def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
