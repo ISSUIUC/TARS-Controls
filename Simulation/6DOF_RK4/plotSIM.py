@@ -1,7 +1,8 @@
-from turtle import color
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
+import properties as prop
 
 def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0, coast_start=0, sim_runtime=0):
 
@@ -50,3 +51,21 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
     # error_nc.legend()
 
     plt.show()
+
+if __name__ == "__main__":
+    sim_dict = {}
+    file_data = pd.read_csv(prop.output_file)
+    sim_dict["time"] = file_data["time"].values
+    # print(sim_dict["time"].values)
+    # sim_dict["pos"] = np.array(
+    #     list(zip(file_data["pos_x"].values, file_data["pos_y"].values, file_data["pos_z"].values)))
+    # print(sim_dict["pos"])
+    # sim_dict["vel"] = np.array(
+    #     list(zip(file_data["vel_x"].values, file_data["vel_y"].values, file_data["vel_z"].values)))
+    # sim_dict["accel"] = np.array(
+    #     list(zip(file_data["accel_x"].values, file_data["accel_y"].values, file_data["accel_z"].values)))
+
+    for attr in ["pos", "vel", "accel"]:
+        sim_dict[attr] = np.array(
+            list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+    plotter(sim_dict=sim_dict)

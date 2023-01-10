@@ -65,9 +65,25 @@ if __name__ == '__main__':
     dt = 0.01
     simulator(x0, dt)
     # plot entries in sim_dict
-    print(np.array(sim_dict["pos"]))
+    # print(np.array(sim_dict["pos"]))
     # # print(sim_dict["time"])
     # plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
     # plt.plot(sim_dict["time"], np.array(sim_dict["vel"])[:,0])
     # plt.show()
-    plotter.plotter(sim_dict=sim_dict)
+    # plotter.plotter(sim_dict=sim_dict)
+
+    print("Writing to file...")
+
+    record = []
+    for point in range(len(sim_dict["time"])):
+        cur_point = []
+        cur_point.append(str(sim_dict["time"][point]))
+        cur_point += list(map(str, sim_dict["pos"][point]))
+        cur_point += list(map(str, sim_dict["vel"][point]))
+        cur_point += list(map(str, sim_dict["accel"][point]))
+        record.append(cur_point)
+    
+    with open(prop.output_file, 'w') as f:
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z\n")
+        for point in record:
+            f.write(f"{','.join(point)}\n")

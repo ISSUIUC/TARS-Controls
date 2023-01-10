@@ -33,3 +33,6 @@ l = 3
 A = math.pi*r_r**2
 # side profile area
 A_s = r_r*l
+
+# simulation output file
+output_file = 'simulated_6dof.csv'
