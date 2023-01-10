@@ -6,6 +6,18 @@ import properties as prop
 
 forces = forces.Forces()
 
+### TEST PURPOSES ###
+def newtonProp(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
+    temp = (forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))
+    a = temp[0]/prop.rocket_total_mass
+
+    moment = temp[1]
+    alpha = moment
+    
+    p = y0[0] + y0[1]*dt + 0.5*a*dt**2
+    v = y0[1] + a*dt
+    return np.array([p, v, a, y0[3], y0[4], alpha])
+
 def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
     '''
     Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
