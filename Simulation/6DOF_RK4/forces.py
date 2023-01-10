@@ -117,7 +117,7 @@ class Forces:
 
     def aerodynamic_moment(self, x_state, time_stamp, density):
         aerodyn_moment = np.zeros(3)
-        normal_force_mag = (1/2) * prop.C_N_total * self.wind_force(x_state[0], time_stamp)**2 * density * prop.A_s
+        normal_force_mag = (1/2) * prop.C_N_total * self.wind_force(x_state[0,0], time_stamp)**2 * density * prop.A_s
         vel = x_state[1]
         wind_vel = np.linalg.norm(self.atm.get_wind_vector(time_stamp))
         rel_vel = vel - wind_vel
