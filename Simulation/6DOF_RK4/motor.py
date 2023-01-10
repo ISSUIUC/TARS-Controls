@@ -130,6 +130,7 @@ class Motor():
                                            self.total_mass,
                                            0,
                                            time_stamp)
+        pr.rocket_total_mass = pr.rocket_dry_mass + self.current_mass
         return self.current_mass
 
 
@@ -144,7 +145,7 @@ class Motor():
 
 
 if __name__ == '__main__':
-    motor = Motor(69, 420, 21, '../Lookup/Cesaroni_17907N2540-P_Trimmed.csv')
+    motor = Motor(69, 420, 21, '../Lookup/cesaroni_n5800 copy.csv')
     time = np.linspace(0, 10, 1000)
     # print(time)
     # print(motor.get_thrust(0))

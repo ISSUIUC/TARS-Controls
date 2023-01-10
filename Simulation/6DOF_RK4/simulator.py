@@ -28,7 +28,7 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
     '''
 
     # k1_v = forces.get_force(y0[0], y0[1], flap_ext)/prop.mass
-    k1_v = (forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp)[0]/prop.rocket_total_mass)
+    k1_v = y0[2].copy()
     k2_v = step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)
     k3_v = step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)
     k4_v = step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext)
@@ -42,8 +42,10 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
 
     p = (y0[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
     # a = F/m
-    a = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp)[0]/prop.rocket_total_mass)
-    moment = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp)[1]/prop.rocket_total_mass)
+    temp = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp))
+    a = temp[0]/prop.rocket_total_mass
+    # print(a)
+    moment = temp[1]
     alpha = moment
     # print(p)
     return np.array([p, v, a, y0[3], y0[4], alpha])

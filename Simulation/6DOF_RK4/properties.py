@@ -26,13 +26,13 @@ rocket_dry_mass = 23.782
 # rocket mass with motor
 rocket_total_mass = rocket_dry_mass + motor_mass
 # radius of rocket
-r_r = 0.0254
+r_r = 0.0508
 # length of rocket
 l = 3
 # area w/out flaps
 A = math.pi*r_r**2
 # side profile area
-A_s = r_r*l
+A_s = 2*r_r*l
 
 # simulation output file
 output_file = 'simulated_6dof.csv'

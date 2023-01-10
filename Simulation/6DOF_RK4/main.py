@@ -62,7 +62,7 @@ def simulator(x0, dt) -> None:
 
 if __name__ == '__main__':
     x0 = np.zeros((6,3))
-    dt = 0.01
+    dt = 0.05
     simulator(x0, dt)
     # plot entries in sim_dict
     # print(np.array(sim_dict["pos"]))
