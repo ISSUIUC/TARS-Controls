@@ -6,7 +6,7 @@ import properties as prop
 
 def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0, coast_start=0, sim_runtime=0):
 
-    plt.style.use('Solarize_Light2')
+    # plt.style.use('Solarize_Light2')
 
 
     fig,(alt_nc,vel_nc,accel_nc) = plt.subplots(3,1,figsize=(15,10), sharex=False)

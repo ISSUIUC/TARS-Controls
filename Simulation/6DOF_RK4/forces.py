@@ -76,7 +76,7 @@ class Forces:
         vel = x_state[1].copy()
         v_mag = np.linalg.norm(vel)
         density = self.atm.get_density(z)
-        return 0.5*np.array([vel[0]**2 * prop.C_d*density*prop.A, 
+        return -0.5*np.array([vel[0]**2 * prop.C_d*density*prop.A, 
                             vel[1]**2 *prop.C_d_s*density*prop.A_s, 
                             vel[2]**2 *prop.C_d_s*density*prop.A_s])
     
