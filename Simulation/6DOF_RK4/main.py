@@ -38,7 +38,7 @@ def simulator(x0, dt) -> None:
     motor.ignite(time_stamp*dt)
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
-    while x[0][1] > 0 or start:
+    while x[1,0] > 0 or start:
         if start:
             start = False
         # Kalman Filter stuff goes here
@@ -48,21 +48,22 @@ def simulator(x0, dt) -> None:
         x = sim.RK4(x, dt, time_stamp)
 
         # Update Simulator Log
-        sim_dict["pos"].append(x[:,0][0])
-        sim_dict["vel"].append(x[:,1][0])
-        sim_dict["accel"].append(x[:,2][0])
+        sim_dict["pos"].append(x[0])
+        sim_dict["vel"].append(x[1])
+        sim_dict["accel"].append(x[2])
         sim_dict["time"].append(sim_dict["time"][-1]+dt if len(sim_dict["time"]) > 0 else 0)
 
         time_stamp += dt
 
 
 if __name__ == '__main__':
-    x0 = np.zeros((3,6))
+    x0 = np.zeros((6,3))
     dt = 0.01
     simulator(x0, dt)
     # plot entries in sim_dict
-    # print(np.array(sim_dict["pos"])[:,0])
+    print(np.array(sim_dict["pos"]))
     # # print(sim_dict["time"])
     # plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
+    # plt.plot(sim_dict["time"], np.array(sim_dict["vel"])[:,0])
     # plt.show()
     plotter.plotter(sim_dict=sim_dict)

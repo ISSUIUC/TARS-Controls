@@ -19,27 +19,31 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
         time_stamp (float): current time stamp of rocket in simulation
     
     Returns:
-        (np.array): state vector of rocket in x-axis [1x3]
+        (np.array): state vector of rocket in x-axis [6x3]
     '''
 
-    k1_v = (forces.get_force(np.array([y0[:,0], y0[:,1]]), flap_ext, time_stamp)[0]/prop.rocket_total_mass)[0]
-    k2_v = step_v(y0[:,0], y0[:,1] + (dt/2)*k1_v, dt/2, time_stamp, flap_ext)
-    k3_v = step_v(y0[:,0], y0[:,1] + (dt/2)*k2_v, dt/2, time_stamp, flap_ext)
-    k4_v = step_v(y0[:,0], y0[:,1] + dt*k3_v, dt, time_stamp, flap_ext)
+    # k1_v = forces.get_force(y0[0], y0[1], flap_ext)/prop.mass
+    k1_v = (forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp)[0]/prop.rocket_total_mass)
+    k2_v = step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)
+    k3_v = step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)
+    k4_v = step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext)
 
-    v = (y0[:,1] + (1/6)*(k1_v+2*k2_v+2*k3_v+k4_v)*dt)
+    v = (y0[1] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*dt)
 
-    k1_p = v.copy()
-    k2_p = step_p(y0[:,0], y0[:,0] + (dt/2)*k1_v, dt/2)
-    k3_p = step_p(y0[:,0], y0[:,0] + (dt/2)*k2_p, dt/2)
-    k4_p = step_p(y0[:,0], y0[:,0] + dt*k3_p, dt)
+    k1_p = y0[1].copy()
+    k2_p = step_p(y0[0], y0[0] + (dt/2)*k1_p, dt/2)
+    k3_p = step_p(y0[0], y0[0] + (dt/2)*k2_p, dt/2)
+    k4_p = step_p(y0[0], y0[0] + dt*k3_p, dt)
 
-    p = (y0[:,0] + (1/6)*(k1_p+2*k2_p+2*k3_p+k4_p)*dt)
+    p = (y0[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
+    # a = F/m
+    a = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp)[0]/prop.rocket_total_mass)
+    moment = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp)[1]/prop.rocket_total_mass)
+    alpha = moment
+    # print(p)
+    return np.array([p, v, a, y0[3], y0[4], alpha])
 
-    a = (forces.get_force(np.array([p, v]), flap_ext, time_stamp)[0]/prop.rocket_total_mass)
-    return np.array([p, v, a])
-
-def step_p(y0, y1, dt) -> np.ndarray:
+def step_p(y0, y1, dt):
     '''
     Calculates rate of change of position over given delta time for state propogation
 
@@ -54,7 +58,7 @@ def step_p(y0, y1, dt) -> np.ndarray:
 
     return (y1-y0)/dt # return slope (velocity)
 
-def step_v(pos, vel, dt, time_stamp, flap_ext) -> np.ndarray:
+def step_v(pos, vel, ang_pos, ang_vel, dt, time_stamp, flap_ext):
     '''
     Calculates slope of v over given delta t for state propogation
 
@@ -68,8 +72,7 @@ def step_v(pos, vel, dt, time_stamp, flap_ext) -> np.ndarray:
     Returns:
         (np.array): rate of change of velocity (acceleration) in form of state vector
     '''
-
-    return forces.get_force(np.array([pos, vel]), flap_ext, time_stamp)[0]/prop.rocket_total_mass # return slope (acceleration) 
+    return forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp)[0]/prop.rocket_total_mass # return slope (acceleration) 
 
 
 
