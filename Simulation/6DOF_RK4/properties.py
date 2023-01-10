@@ -34,5 +34,16 @@ A = math.pi*r_r**2
 # side profile area
 A_s = 2*r_r*l
 
+# Moment of Inertia
+I = np.diag([(1/2) * rocket_total_mass * r_r**2, 
+             (rocket_total_mass/12) * (l**2 + 3*r_r**2), 
+             (rocket_total_mass/12) * (l**2 + 3*r_r**2)])
+
+# Total Normal force
+C_N_total = 9
+# Total Axial force
+C_A_total = 3
+
+
 # simulation output file
 output_file = 'simulated_6dof.csv'

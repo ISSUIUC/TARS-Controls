@@ -116,8 +116,12 @@ class Forces:
         return wind_norm * 0.5*density*(wind_vector_mag**2)*prop.C_d*(prop.A_s)
 
     def aerodynamic_moment(self, x_state, time_stamp, density):
-        # Temp values
+        aerodyn_moment = np.zeros(3)
+        normal_force_mag = (1/2) * prop.C_N_total * self.wind_force(x_state[0], time_stamp)**2 * density * prop.A_s
         vel = x_state[1]
+        wind_vel = np.linalg.norm(self.atm.get_wind_vector(time_stamp))
+        rel_vel = vel - wind_vel
+        #normal_force = np.array([])
         mcy = x_state[3,1]
         mcz = x_state[3,2]
         return 0.5*np.array([0, 
