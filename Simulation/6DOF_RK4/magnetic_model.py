@@ -17,7 +17,7 @@ phi - longitude in degrees (East) from Greenwich
 days - decimal days since Jan 1, 2020
 
 output:
-B vector with radial, theta, and phi directions in nT
+B vector in x, y, and z directions respectively in nT
 '''
 def magnet(r, theta, phi, days):
     # To avoid singularities check for poles
@@ -82,10 +82,10 @@ def magnet(r, theta, phi, days):
                 Bt = Bt + ((a/r)**(n + 2)) * ((g[n, m]*np.cos(m*phi) + h[n,m]*np.sin(m*phi))*dP_curr)
                 Bp = Bp + ((a/r)**(n + 2)) * (m*(-g[n, m]*np.sin(m*phi) + h[n,m]*np.cos(m*phi))*P_curr)
     
-    return Br, -Bt, -Bp / np.sin(theta)
+    return sphere_to_cartesian(Br, -Bt, -Bp / np.sin(theta))
 
 '''
-Used to convert output of magnet() function to cartesian coordinates
+Used to convert spherical magnetic field to cartesian coordinates
 
 Inputs: B vector with radial, theta, and phi directions
 Outputs: (all directions by convention)
