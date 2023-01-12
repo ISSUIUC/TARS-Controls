@@ -17,7 +17,7 @@ phi - longitude in degrees (East) from Greenwich
 days - decimal days since Jan 1, 2000
 
 output:
-B vector with radial, theta, and phi directions
+B vector with radial, theta, and phi directions in nT
 '''
 def magnet(r, theta, phi, days):
     # To avoid singularities check for poles
