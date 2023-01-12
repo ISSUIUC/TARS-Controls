@@ -14,7 +14,7 @@ input:
 r - Geocentric radius
 theta - lattitude in degrees (North) from equator
 phi - longitude in degrees (East) from Greenwich
-days - decimal days since Jan 1, 2000
+days - decimal days since Jan 1, 2020
 
 output:
 B vector with radial, theta, and phi directions in nT
