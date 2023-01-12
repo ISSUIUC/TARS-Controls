@@ -66,19 +66,19 @@ def magnet(r, theta, phi, days):
                     
                 elif n == 1:
                     P_curr = np.cos(theta)*P10
-                    dP_curr = dP10 * np.cos(theta) - P10 * np.sin(theta)*P10
+                    dP_curr = dP10 * np.cos(theta) - np.sin(theta)*P10
                     P20, dP20 = P10, dP10
                     P10, dP10 = P_curr, dP_curr
                     
                 else:
-                    K = ((n - 1)**2 - m**2) / ((2 * n - 1) * (2 * n - 3))
+                    K = ((n - 1)**2 - m**2) / ((2*n - 1) * (2*n - 3))
                     P_curr = P10 * np.cos(theta) - K * P20
                     dP_curr = dP10 * np.cos(theta) - P10 * np.sin(theta) - K * dP20
                     P20, dP20 = P10, dP10
                     P10, dP10 = P_curr, dP_curr
                 
                 # Calculate Magnetic field values
-                Br = Br + (a/r)**(n+2) * (n+1)*((g[n,m]*np.cos(m*phi) + h[n, m]*np.sin(m*phi)) * P_curr)
+                Br = Br + ((a/r)**(n+2)) * (n+1)*((g[n,m]*np.cos(m*phi) + h[n, m]*np.sin(m*phi)) * P_curr)
                 Bt = Bt + ((a/r)**(n + 2)) * ((g[n, m]*np.cos(m*phi) + h[n,m]*np.sin(m*phi))*dP_curr)
                 Bp = Bp + ((a/r)**(n + 2)) * (m*(-g[n, m]*np.sin(m*phi) + h[n,m]*np.cos(m*phi))*P_curr)
     
