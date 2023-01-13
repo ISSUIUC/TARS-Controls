@@ -78,7 +78,7 @@ def magnet(r, theta, phi, days):
                     P10, dP10 = P_curr, dP_curr
                 
                 # Calculate Magnetic field values
-                Br = Br + ((a/r)**(n+2)) * (n+1)*((g[n,m]*np.cos(m*phi) + h[n, m]*np.sin(m*phi)) * P_curr)
+                Br = Br + ((a/r)**(n + 2)) * (n+1) * ((g[n,m]*np.cos(m*phi) + h[n, m]*np.sin(m*phi)) * P_curr)
                 Bt = Bt + ((a/r)**(n + 2)) * ((g[n, m]*np.cos(m*phi) + h[n,m]*np.sin(m*phi))*dP_curr)
                 Bp = Bp + ((a/r)**(n + 2)) * (m*(-g[n, m]*np.sin(m*phi) + h[n,m]*np.cos(m*phi))*P_curr)
     
@@ -148,13 +148,13 @@ def quasi_normalize(file_lookup_path):
     hS = np.zeros((size_int, 4))
     
     count = 0
-    for n in range(max_M_N + 1):
+    for n in range(1, max_M_N + 1):
         for m in range(n + 1):
             if m > 1:
                 S[n, m] = S[n, m - 1]*((n - m + 1)/(n + m)) ** 0.5
             elif m > 0:
                 S[n, m] = S[n, m - 1]*(2 * (n - m + 1)/(n + m)) ** 0.5
-            elif n == 0:
+            elif n == 1:
                 S[n, 0] = 1
             else:
                 S[n, 0] = S[n - 1, 0]*(2*n-1)/n
@@ -163,3 +163,19 @@ def quasi_normalize(file_lookup_path):
             
             count += 1
     return gS, hS, max_M_N
+
+#########################   TESTING   #####################################
+
+print("These are the cases run:")
+print(f"magnet(6371.2, 0, 0, 0) - {magnet(6371.2, 0, 0, 0)}")
+print(f"magnet(6371.2, 0, 0, 1108) - {magnet(6371.2, 0, 0, 1108)}")
+print(f"magnet(6420, 0, 0, 0) - {magnet(6420, 0, 0, 0)}")
+
+'''
+Test cases:
+
+magnet(6371.2, 0, 0, 1108) = (27516, -1994, -16084)
+magnet(6371.2, 0, 0, 0) = (27540, -2242, -16012)
+magnet(6420, 0, 0, 0) = (26865, -2208, -15392)
+
+'''
