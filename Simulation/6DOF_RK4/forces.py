@@ -10,6 +10,8 @@ import atmosphere
 import properties as prop
 import numpy as np
 import util.vectors as vct
+import pandas as pd
+import os
 
 # Define Objects
 
@@ -17,6 +19,9 @@ class Forces:
     # Define class objects
     atm = atmosphere.Atmosphere()
     motor = motor.Motor()
+
+    rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
+    rasaero = pd.read_csv(rasaero_file_location)
 
     def __init__(self):
         pass
@@ -39,7 +44,8 @@ class Forces:
         density = self.atm.get_density(z)
         alt = x_state[0,0]
         thrust = self.motor.get_thrust(time_stamp)
-        drag = self.aerodynamic_drag_force(x_state, flap_ext)
+        wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
+        drag = self.aerodynamic_drag_force(x_state, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
         wind = self.wind_force(alt, time_stamp)
         # print(self.motor.get_thrust(time_stamp))
@@ -48,7 +54,7 @@ class Forces:
         moment = np.cross(-prop.cm, force) + self.aerodynamic_moment(x_state, time_stamp, density)
         return np.array([force, moment])
 
-    def get_Cd(self, flap_ext) -> float:
+    def get_Cd(self, x_state, wind_vector, rasaero, before_burnout, flap_ext) -> float:
         # TODO: account for area change of flaps in C_d calculation
         '''
         References lookup table to find C_d based on flap extension
@@ -59,9 +65,54 @@ class Forces:
         Returns:
             (float): coefficient of drag based on current config of flaps
         '''
-        return prop.C_d
+        alt = x_state[0,0]
+        vel = x_state[1]
+        mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
+        
+        incident_velocity = vct.norm(vel + wind_vector)
+        orientation = vct.norm(x_state[3])
+        alpha = np.arccos(np.dot(incident_velocity, orientation))
+
+        # Define mach number for csv lookup, rounded to hundreds place
+        mach = round(mach_number, 2)
+        
+        # round AoA to closest integer
+        ang_of_att = round(alpha)
+
+        #Define blank upper and lower Cds
+        Cd_low = 0
+        Cd_up = 0
+
+        # define csv file to search through
+        #csv_file = csv.reader(open('RASAero.csv', 'r'))
+        csv_file = rasaero
+
+        # Define protuberance percentage of full extension given current extension
+        protub_perc = flap_ext/prop.max_ext_length
+
+        # Define starting Cd
+        Cd = 0
+        
+        cd_vals = csv_file["CD Power-Off"]
+        if (before_burnout):
+            cd_vals = csv_file["CD Power-On"]
+        
+        # Find indices where the mach values match up
+        mach_indices = np.where(csv_file['Mach Number'] == mach)[0]    
+        if len(mach_indices) == 0:
+            return Cd
+            
+        # Interpolate to find Cd value
+        for idx in range(mach_indices[0], mach_indices[-1] + 1):
+            if (ang_of_att == csv_file['Alpha (deg)'][idx] and csv_file['Protuberance (%)'][idx] <= protub_perc <= csv_file['Protuberance (%)'][idx+1]):
+                
+                Cd_low = cd_vals[idx]
+                Cd_up = cd_vals[idx+1]
+
+                Cd = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cd_low, Cd_up])    
+        return Cd
     
-    def aerodynamic_drag_force(self, x_state, flap_ext) -> np.ndarray:
+    def aerodynamic_drag_force(self, x_state, wind_vector, rasaero, before_burnout, flap_ext) -> np.ndarray:
         '''
         Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
@@ -76,9 +127,10 @@ class Forces:
         vel = x_state[1].copy()
         v_mag = np.linalg.norm(vel)
         density = self.atm.get_density(z)
-        return -0.5*np.array([vel[0]**2 * prop.C_d*density*prop.A, 
-                            vel[1]**2 *prop.C_d_s*density*prop.A_s, 
-                            vel[2]**2 *prop.C_d_s*density*prop.A_s])
+        C_d = self.get_Cd(x_state, wind_vector, rasaero, before_burnout, flap_ext)
+        return -0.5*np.array([vel[0]**2 * C_d*density*prop.A, 
+                            vel[1]**2 * prop.C_d*density*prop.A_s, 
+                            vel[2]**2 * prop.C_d_s*density*prop.A_s])
     
     def gravitational_force(self, altitude, time_stamp) -> np.ndarray:
         '''

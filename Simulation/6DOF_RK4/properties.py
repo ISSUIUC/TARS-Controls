@@ -9,6 +9,9 @@ r_e = 6.3781*10**6
 cm = np.array([1., 0., 0.])
 cp = np.array([.4, 0., 0.])
 
+# RASAero Look Up
+rasaero_lookup_file = '../6DOF_RK4/LookUp/RASAero.csv'
+
 # Temporary C_d constant 
 C_d = 0.5
 # Side Profile
@@ -19,7 +22,7 @@ impulse = 17_907 # Ns
 motor_mass = 16.281 # Kg
 delay = 0 # s
 # lookup_file = '../Lookup/Cesaroni_17907N2540-P_Trimmed.csv'
-motor_lookup_file = '../6DOF_RK4/LookUp/cesaroni_n5800.csv'
+motor_lookup_file = '../6DOF_RK4/LookUp/m2500.csv'
 
 # rocket mass w/out motor
 rocket_dry_mass = 23.782
@@ -33,6 +36,8 @@ l = 3
 A = math.pi*r_r**2
 # side profile area
 A_s = 2*r_r*l
+# flap max estension length (m)
+max_ext_length = .0178
 
 # Moment of Inertia
 I = np.diag([(1/2) * rocket_total_mass * r_r**2, 
