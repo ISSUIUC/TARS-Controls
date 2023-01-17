@@ -35,9 +35,12 @@ A = math.pi*r_r**2
 A_s = 2*r_r*l
 
 # Moment of Inertia
-I = np.diag([(1/2) * rocket_total_mass * r_r**2, 
-             (rocket_total_mass/12) * (l**2 + 3*r_r**2), 
-             (rocket_total_mass/12) * (l**2 + 3*r_r**2)])
+I = lambda total_mass : np.diag([(1/2) * total_mass * r_r**2, 
+             (total_mass/12) * (l**2 + 3*r_r**2), 
+             (total_mass/12) * (l**2 + 3*r_r**2)])
+I_inv = lambda total_mass : np.diag([1/((1/2) * total_mass * r_r**2), 
+             1/((total_mass/12) * (l**2 + 3*r_r**2)), 
+             1/((total_mass/12) * (l**2 + 3*r_r**2))])
 
 # Total Normal force
 C_N_total = 9

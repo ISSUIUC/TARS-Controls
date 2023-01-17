@@ -1,6 +1,12 @@
 import numpy as np
 
 def norm(x) -> np.ndarray:
+    '''
+    args
+    nd vector
+
+    returns normalized vector or 0 vector if magnitude is 0
+    '''
     norm = np.linalg.norm(x)
     if (norm != 0):
         return x.copy()/norm
