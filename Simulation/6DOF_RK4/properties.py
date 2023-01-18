@@ -17,15 +17,26 @@ C_d = 0.5
 # Side Profile
 C_d_s = 1.2
 
-# Motor Properties:
-impulse = 17_907 # Ns
-motor_mass = 16.281 # Kg
+# Motor Properties M2500:
+impulse = 9671.0 # Ns
+motor_mass = 8.064 # Kg
 delay = 0 # s
-# lookup_file = '../Lookup/Cesaroni_17907N2540-P_Trimmed.csv'
 motor_lookup_file = '../6DOF_RK4/LookUp/m2500.csv'
 
+# # Motor Properties N5800:
+# impulse = 20145.7 # Ns
+# motor_mass = 14.826 # Kg
+# delay = 0 # s
+# motor_lookup_file = '../6DOF_RK4/LookUp/n5800.csv'
+
+# # Motor Properties N2540:
+# impulse = 17907 # Ns
+# motor_mass = 10.700 # Kg
+# delay = 0 # s
+# motor_lookup_file = '../6DOF_RK4/LookUp/n2540.csv'
+
 # rocket mass w/out motor
-rocket_dry_mass = 23.782
+rocket_dry_mass = 20.2699
 # rocket mass with motor
 rocket_total_mass = rocket_dry_mass + motor_mass
 # radius of rocket
