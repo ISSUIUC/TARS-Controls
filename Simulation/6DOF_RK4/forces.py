@@ -40,18 +40,17 @@ class Forces:
         '''
         # TODO: Add random disturbances
         # print("State: ", x_state)
-        z = x_state.copy()[0,0]
-        density = self.atm.get_density(z)
-        alt = x_state[0,0]
+        alt = x_state.copy()[0,0]
+        density = self.atm.get_density(alt)
         thrust = self.motor.get_thrust(time_stamp)
         wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
-        drag = self.aerodynamic_drag_force(x_state, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
+        drag = self.aerodynamic_force(x_state, density, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
-        wind = self.wind_force(alt, time_stamp)
+        wind = self.wind_force(density, time_stamp)
         # print(self.motor.get_thrust(time_stamp))
         force = thrust + drag + vct.world_to_body(*x_state[2],wind) + vct.world_to_body(*x_state[2],grav)
         # print(grav)
-        moment = np.cross(-prop.cm, force) + self.aerodynamic_moment(x_state, time_stamp, density)
+        moment = np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag)
         return np.array([force, moment])
 
     def get_Ca(self, x_state, wind_vector, rasaero, before_burnout, flap_ext) -> float:
@@ -166,7 +165,7 @@ class Forces:
                 Cn = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cn_low, Cn_up])    
         return Cn
 
-    def aerodynamic_drag_force(self, x_state, wind_vector, rasaero, before_burnout, flap_ext) -> np.ndarray:
+    def aerodynamic_force(self, x_state, density, wind_vector, rasaero, before_burnout, flap_ext) -> np.ndarray:
         '''
         Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
@@ -177,9 +176,7 @@ class Forces:
         Returns:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
-        z = x_state.copy()[0,0]
         vel = vct.world_to_body(*x_state[3].copy(), x_state[1].copy())
-        density = self.atm.get_density(z)
         C_a = self.get_Ca(x_state, wind_vector, rasaero, before_burnout, flap_ext)
         C_n = self.get_Cn(x_state, wind_vector, rasaero, flap_ext)
 
@@ -208,7 +205,7 @@ class Forces:
         # return np.array([-9.81*total_mass, 0, 0])
         return -np.array([(prop.G*prop.m_e*total_mass)/((prop.r_e+altitude)**2), 0, 0])
     
-    def wind_force(self, altitude, time_stamp) -> np.ndarray:
+    def wind_force(self, density, time_stamp) -> np.ndarray:
         '''
         Calculates wind force acting on rocket based on determined wind and altitude
 
@@ -220,21 +217,11 @@ class Forces:
             (np.array): vector of wind forces on each axis [1x3]
         '''
         wind_vector = self.atm.get_wind_vector(time_stamp)
-        density = self.atm.get_density(altitude)
         wind_vector_mag = np.linalg.norm(wind_vector)
         # TODO: Change C_d to C_d from the side for wind
         wind_norm = vct.norm(wind_vector)
         return wind_norm * 0.5*density*(wind_vector_mag**2)*prop.C_d*(prop.A_s)
 
-    def aerodynamic_moment(self, x_state, time_stamp, density):
-        aerodyn_moment = np.zeros(3)
-        normal_force_mag = (1/2) * prop.C_N_total * self.wind_force(x_state[0,0], time_stamp)**2 * density * prop.A_s
-        vel = x_state[1]
-        wind_vel = np.linalg.norm(self.atm.get_wind_vector(time_stamp))
-        rel_vel = vel - wind_vel
-        #normal_force = np.array([])
-        mcy = x_state[3,1]
-        mcz = x_state[3,2]
-        return 0.5*np.array([0, 
-                            mcy*vel[0]**2 *density*prop.A_s, 
-                            mcz*vel[0]**2 *density*prop.A_s])
+    def aerodynamic_moment(self, aerodynamic_force):
+        aerodynamic_moment = np.cross(prop.cm - prop.cp, aerodynamic_force)
+        return aerodynamic_moment
