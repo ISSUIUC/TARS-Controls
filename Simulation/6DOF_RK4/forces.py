@@ -46,9 +46,8 @@ class Forces:
         wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
         drag = self.aerodynamic_force(x_state, density, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
-        wind = self.wind_force(density, time_stamp)
         # print(self.motor.get_thrust(time_stamp))
-        force = thrust + drag + vct.world_to_body(*x_state[2],wind) + vct.world_to_body(*x_state[2],grav)
+        force = thrust + drag + vct.world_to_body(*x_state[2],grav)
         # print(grav)
         moment = np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag)
         return np.array([force, moment])
@@ -176,7 +175,7 @@ class Forces:
         Returns:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
-        vel = vct.world_to_body(*x_state[3].copy(), x_state[1].copy())
+        vel = vct.world_to_body(*x_state[3].copy(), x_state[1].copy() + wind_vector.copy())
         C_a = self.get_Ca(x_state, wind_vector, rasaero, before_burnout, flap_ext)
         C_n = self.get_Cn(x_state, wind_vector, rasaero, flap_ext)
 
@@ -204,23 +203,6 @@ class Forces:
         total_mass = prop.rocket_dry_mass + self.motor.get_mass(time_stamp) #Adding dry mass + motor mass
         # return np.array([-9.81*total_mass, 0, 0])
         return -np.array([(prop.G*prop.m_e*total_mass)/((prop.r_e+altitude)**2), 0, 0])
-    
-    def wind_force(self, density, time_stamp) -> np.ndarray:
-        '''
-        Calculates wind force acting on rocket based on determined wind and altitude
-
-        Args:
-            altitude (float): current altitude of rocket
-            time_stamp (float): current time stamp of rocket in simulation
-        
-        Returns:
-            (np.array): vector of wind forces on each axis [1x3]
-        '''
-        wind_vector = self.atm.get_wind_vector(time_stamp)
-        wind_vector_mag = np.linalg.norm(wind_vector)
-        # TODO: Change C_d to C_d from the side for wind
-        wind_norm = vct.norm(wind_vector)
-        return wind_norm * 0.5*density*(wind_vector_mag**2)*prop.C_d*(prop.A_s)
 
     def aerodynamic_moment(self, aerodynamic_force):
         aerodynamic_moment = np.cross(prop.cm - prop.cp, aerodynamic_force)
