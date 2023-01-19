@@ -179,7 +179,6 @@ class Forces:
         '''
         z = x_state.copy()[0,0]
         vel = vct.world_to_body(*x_state[3].copy(), x_state[1].copy())
-        print(vel)
         density = self.atm.get_density(z)
         C_a = self.get_Ca(x_state, wind_vector, rasaero, before_burnout, flap_ext)
         C_n = self.get_Cn(x_state, wind_vector, rasaero, flap_ext)
@@ -188,8 +187,6 @@ class Forces:
 
         C_n_y = C_n * np.cos(roll_aero) #TODO: Check with other values
         C_n_z = C_n * np.sin(roll_aero) #TODO: Check with other values
-        C_n_y = 10
-        C_n_z = 10
         return -0.5*np.array([vel[0]**2 * C_a*density*prop.A, 
                             vel[1]**2 * C_n_y*density*prop.A_s, 
                             vel[2]**2 * C_n_z*density*prop.A_s])
