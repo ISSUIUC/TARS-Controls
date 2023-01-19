@@ -90,7 +90,7 @@ delay = 20
 RASaero = pd.read_csv("Simulation/Lookup/RASAero.csv")
 
 # Importing RasAero Package for Coeffiecient of Drag Lookup
-thrust_file = "Simulation/Lookup/AeroTech_M2500T_Trimmed.csv"
+thrust_file = "Simulation/Lookup/cesaroni_n5800.csv"
 constants.apogee_goal = constants.April_apogee_goal
 constants.m0 = constants.m0_April
 constants.mf = constants.mf_April
@@ -100,7 +100,7 @@ prop_mass_func = prop.find_prop_mass_april
 
 # Change values if simulating IREC launch
 if (launch_arg):
-    thrust_file = "Simulation/Lookup/Cesaroni_20146N5800-P_Trimmed.csv"
+    thrust_file = "6DOF_RK4/Lookup/cesaroni_n5800.csv"
     constants.apogee_goal = constants.IREC_apogee_goal
     constants.m0 = constants.m0_IREC
     constants.mf = constants.mf_IREC

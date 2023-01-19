@@ -2,21 +2,22 @@ import numpy as np
 
 
 def sphr2cart(Br, Bt, Bp):
-    # Converts magnetic field from spherical coordinates to cartesian coordinates
+    '''
+    Converts magnetic field from spherical coordinates to cartesian coordinates
 
-    # Inputs:
-    # Br - Magnetic Field in radial direction
-    # Bt - Magnetic Field in theta direction
-    # Bp - Magnetic Field in phi direction
+    Variables:
+        e (float): episilon (term used to account for the oblateness of the Earth)
 
-    # Outputs:
-    # Bx - Magnetic Field in "North" direction
-    # By - Magnetic Field in "East" direction
-    # Bz - Magnetic Field in down direction
+    Args:
+        Br (float): Magnetic Field in radial direction
+        Bt (float): Magnetic Field in theta direction
+        Bp (float): Magnetic Field in phi direction
 
-    # Variables
-    # e - episilon (term used to account for the oblateness of the Earth)
-
+    Returns:
+        Bx (float): Magnetic Field in "North" direction
+        By (float): Magnetic Field in "East" direction
+        Bz (float): Magnetic Field in down direction
+    '''
     e = 0*np.pi/180
     Bx = -Bt*np.cos(e) + Br*np.sin(e)
     By = Bp
@@ -25,19 +26,21 @@ def sphr2cart(Br, Bt, Bp):
 
 
 def sphr2geocart(Br, Bt, Bp, lst, lat):
-    # Converts magnetic field from spherical coordinates to geocentric inertial cartesian coordinates
+    '''
+    Converts magnetic field from spherical coordinates to geocentric inertial cartesian coordinates
 
-    # Inputs:
-    # Br - Magnetic Field in radial direction
-    # Bt - Magnetic Field in theta direction
-    # Bp - Magnetic Field in phi direction
-    # LST - Local Sidereel Time (in degrees)
-    # lat - Latitude (in degrees) (positive is north)
+    Args:
+        Br (float): Magnetic Field in radial direction
+        Bt (float): Magnetic Field in theta direction
+        Bp (float): Magnetic Field in phi direction
+        LST (float): Local Sidereel Time (in degrees)
+        lat (float): Latitude (in degrees) (positive is north)
 
-    # Outputs:
-    # Bx - Magnetic Field in "North" direction
-    # By - Magnetic Field in "East" direction
-    # Bz - Magnetic Field in down direction
+    Returns:
+        Bx (float): Magnetic Field in "North" direction
+        By (float): Magnetic Field in "East" direction
+        Bz (float): Magnetic Field in down direction
+    '''
 
     # Convert Degrees to Radians
     lst = lst * np.pi / 180

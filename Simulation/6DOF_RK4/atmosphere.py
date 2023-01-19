@@ -1,4 +1,5 @@
 import numpy as np
+import util.vectors as vct
 
 class Atmosphere:
     def __init__(self, wind_direction_variance_mean = 0.0, 
@@ -33,7 +34,7 @@ class Atmosphere:
         self.direction_variance_vect_ = np.array([0.0, 0.0, 0.0])
         self.magnitude_variance_val_ = 0.0
         
-    def get_geometric_to_geopotential(altitude)->float:
+    def get_geometric_to_geopotential(self, altitude)->float:
         r = 6371000.0 # Radius of Earth
         return (r*altitude)/(r+altitude)
     
@@ -349,6 +350,7 @@ class Atmosphere:
         dir_alpha = 0.9997
         mag_alpha = 0.99
         generated_direction_variance = np.zeros(3)
+        current_wind_direction_ = np.zeros(3)
         if self.enable_direction_variance_:
             if((tStamp - self.last_direction_variance_update_) >= self.direction_variance_update_rate_):
                 generated_direction_variance = np.random.normal(self.nominal_wind_direction_, 3)
@@ -361,8 +363,8 @@ class Atmosphere:
             current_wind_direction = self.nominal_wind_direction_ + self.direction_variance_vect_
         else:
             current_wind_direction = self.nominal_wind_direction_
-            
-        current_wind_direction_ = current_wind_direction_ / np.linalg.norm(current_wind_direction_)
+        
+        current_wind_direction_ = vct.norm(current_wind_direction_)
         
         if self.enable_magnitude_variance_:
             if (tStamp - self.last_magnitude_variance_update_) >= self.magnitude_variance_update_rate_ :
