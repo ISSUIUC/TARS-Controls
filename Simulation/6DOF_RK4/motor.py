@@ -85,7 +85,7 @@ class Motor():
         phi = np.radians(self.alignment[1])
         # down is positive x, phi is 0 in ideal conditions
         vector = np.array([temp * np.cos(phi), temp * np.sin(phi)
-                          * np.sin(theta), -1 * temp * np.sin(phi) * np.cos(theta)])
+                          * np.sin(theta), temp * np.sin(phi) * np.cos(theta)])
         
         return vector
         # return temp
