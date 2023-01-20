@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 import forces
+import util.vectors as vct
 import properties as prop
 
 forces = forces.Forces()
@@ -52,15 +53,13 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
     k4_p = step_p(y0[0], y0[0] + dt*k3_p, dt)
 
     p = (y0[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
-    # a = F/m
+
     temp = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp))
 
     a = temp[0]/prop.rocket_total_mass
-    # print(a)
-    moment = temp[1]
-    alpha = moment
-    # print(p)
-    return np.array([p, v, a, y0[3], y0[4], alpha])
+
+    ang_p, ang_v, ang_a = angular_rk4(y0, dt, time_stamp, prop.I_inv(prop.rocket_total_mass), flap_ext)
+    return np.array([p, v, a, ang_p, ang_v, ang_a])
 
 def step_p(y0, y1, dt):
     '''
@@ -93,14 +92,14 @@ def step_v(pos, vel, ang_pos, ang_vel, dt, time_stamp, flap_ext):
     '''
     return forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp) # return slope times mass/inertia 
 
-def angular_rk4(y0, dt, time_stamp, flap_ext=0):
-    k1_v = y0[4].copy()
-    k2_v = prop.I_inv*step_v(y0[0], y0[1], y0[3], y0[4] + (dt/2)*k1_v, dt/2, time_stamp, flap_ext)[1]
-    k3_v = prop.I_inv*step_v(y0[0], y0[1], y0[3], y0[4] + (dt/2)*k2_v, dt/2, time_stamp, flap_ext)[1]
-    k4_v = prop.I_inv*step_v(y0[0], y0[1], y0[3], y0[4] + dt*k3_v, dt, time_stamp, flap_ext)[1]
+def angular_rk4(y0, dt, time_stamp, I_inv, flap_ext=0):
+    k1_v = y0[5].copy()
+    k2_v = I_inv@step_v(y0[0], y0[1], y0[3], y0[4] + (dt/2)*k1_v, dt/2, time_stamp, flap_ext)[1]
+    k3_v = I_inv@step_v(y0[0], y0[1], y0[3], y0[4] + (dt/2)*k2_v, dt/2, time_stamp, flap_ext)[1]
+    k4_v = I_inv@step_v(y0[0], y0[1], y0[3], y0[4] + dt*k3_v, dt, time_stamp, flap_ext)[1]
 
-    v = (y0[4] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*dt)
-    v_e = body_to_euler(v)
+    v = vct.body_to_world(*y0[3], (y0[4] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*dt))
+    # v_e = body_to_euler(v)
 
     k1_p = y0[3].copy()
     k2_p = step_p(y0[3], y0[3] + (dt/2)*k1_p, dt/2)
@@ -108,9 +107,9 @@ def angular_rk4(y0, dt, time_stamp, flap_ext=0):
     k4_p = step_p(y0[3], y0[3] + dt*k3_p, dt)
 
     p = (y0[3] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
-    # a = F/m
-    temp = (forces.get_force(np.array([p, v_e, y0[3], y0[4]]), flap_ext, time_stamp))
-    return (v,p,temp[1])
+    temp = (forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))
+    a = vct.body_to_world(*y0[3], I_inv @ temp[1])
+    print(p)
 
 def body_to_euler(v):
     return v
