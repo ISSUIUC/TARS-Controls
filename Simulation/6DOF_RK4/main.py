@@ -12,6 +12,9 @@ sim_dict = {
     "pos":[],
     "vel": [],
     "accel": [],
+    "ang_pos":[],
+    "ang_vel": [],
+    "ang_accel": [],
     "time": []
     }
 
@@ -55,6 +58,9 @@ def simulator(x0, dt) -> None:
         sim_dict["pos"].append(x[0])
         sim_dict["vel"].append(x[1])
         sim_dict["accel"].append(x[2])
+        sim_dict["ang_pos"].append(x[3])
+        sim_dict["ang_vel"].append(x[4])
+        sim_dict["ang_accel"].append(x[5])
         sim_dict["time"].append(sim_dict["time"][-1]+dt if len(sim_dict["time"]) > 0 else 0)
 
         time_stamp += dt
@@ -82,9 +88,12 @@ if __name__ == '__main__':
         cur_point += list(map(str, sim_dict["pos"][point]))
         cur_point += list(map(str, sim_dict["vel"][point]))
         cur_point += list(map(str, sim_dict["accel"][point]))
+        cur_point += list(map(str, sim_dict["ang_pos"][point]))
+        cur_point += list(map(str, sim_dict["ang_vel"][point]))
+        cur_point += list(map(str, sim_dict["ang_accel"][point]))
         record.append(cur_point)
     
     with open(prop.output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z\n")
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
