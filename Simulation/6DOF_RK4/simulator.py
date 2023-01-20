@@ -109,7 +109,7 @@ def angular_rk4(y0, dt, time_stamp, I_inv, flap_ext=0):
     p = (y0[3] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
     temp = (forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))
     a = vct.body_to_world(*y0[3], I_inv @ temp[1])
-    print(p)
+    return (p,v,a)
 
 def body_to_euler(v):
     return v
