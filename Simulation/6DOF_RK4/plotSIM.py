@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
 import properties as prop
 
@@ -86,7 +87,8 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
 
 if __name__ == "__main__":
     sim_dict = {}
-    file_data = pd.read_csv(prop.output_file)
+    output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
+    file_data = pd.read_csv(output_file)
     sim_dict["time"] = file_data["time"].values
     # print(sim_dict["time"].values)
     # sim_dict["pos"] = np.array(

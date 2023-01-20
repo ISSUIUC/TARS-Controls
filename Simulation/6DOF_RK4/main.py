@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 import motor
 import properties as prop
@@ -93,7 +94,8 @@ if __name__ == '__main__':
         cur_point += list(map(str, sim_dict["ang_accel"][point]))
         record.append(cur_point)
     
-    with open(prop.output_file, 'w') as f:
+    output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
+    with open(output_file, 'w') as f:
         f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")

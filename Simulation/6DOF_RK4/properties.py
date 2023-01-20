@@ -65,4 +65,4 @@ C_A_total = 3
 
 
 # simulation output file
-output_file = 'simulated_6dof.csv'
+output_file = '../6DOF_RK4/Output/simulated_6dof.csv'
