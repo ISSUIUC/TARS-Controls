@@ -101,7 +101,7 @@ def angular_rk4(y0, dt, time_stamp, I_inv, flap_ext=0):
     v = vct.body_to_world(*y0[3], (y0[4] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*dt))
     # v_e = body_to_euler(v)
 
-    k1_p = y0[3].copy()
+    k1_p = y0[4].copy()
     k2_p = step_p(y0[3], y0[3] + (dt/2)*k1_p, dt/2)
     k3_p = step_p(y0[3], y0[3] + (dt/2)*k2_p, dt/2)
     k4_p = step_p(y0[3], y0[3] + dt*k3_p, dt)
