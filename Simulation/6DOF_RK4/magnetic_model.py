@@ -166,16 +166,12 @@ def quasi_normalize(file_lookup_path):
 
 #########################   TESTING   #####################################
 
-print("These are the cases run:")
-print(f"magnet(6371.2, 0, 0, 0) - {magnet(6371.2, 0, 0, 0)}")
-print(f"magnet(6371.2, 0, 0, 1108) - {magnet(6371.2, 0, 0, 1108)}")
-print(f"magnet(6420, 0, 0, 0) - {magnet(6420, 0, 0, 0)}")
+# Illinois
+print("Illinois ")
+ill_real = (20141, -1197, 48222)
+ill_magnet = magnet(6371.2, 40.05, -88.236, 1116)
+ill_real = ill_real / np.linalg.norm(ill_real)
+ill_magnet = ill_magnet / np.linalg.norm(ill_magnet)
+print(ill_real - ill_magnet)
+#
 
-'''
-Test cases:
-
-magnet(6371.2, 0, 0, 1108) = (27516, -1994, -16084)
-magnet(6371.2, 0, 0, 0) = (27540, -2242, -16012)
-magnet(6420, 0, 0, 0) = (26865, -2208, -15392)
-
-'''
