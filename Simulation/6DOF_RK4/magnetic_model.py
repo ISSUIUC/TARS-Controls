@@ -163,15 +163,3 @@ def quasi_normalize(file_lookup_path):
             
             count += 1
     return gS, hS, max_M_N
-
-#########################   TESTING   #####################################
-
-# Illinois
-print("Illinois ")
-ill_real = (20141, -1197, 48222)
-ill_magnet = magnet(6371.2, 40.05, -88.236, 1116)
-ill_real = ill_real / np.linalg.norm(ill_real)
-ill_magnet = ill_magnet / np.linalg.norm(ill_magnet)
-print(ill_real - ill_magnet)
-#
-
