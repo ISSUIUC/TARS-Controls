@@ -32,7 +32,7 @@ class Forces:
 
         Args:
             x_state (np.array): State Vector [6x3]
-            flap_ext (float): current flap extention config
+            flap_ext (float): current flap extention config (0 - 0.0178 meters, inclusive)
             time_stamp (float): current time stamp of rocket in simulation
         
         Returns:
