@@ -47,9 +47,8 @@ class Forces:
         drag = self.aerodynamic_force(x_state, density, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
-        # print(thrust,vct.body_to_world(*x_state[2],thrust))
-        moment = np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag)
-        return np.array([force, [0,0,0]])
+        moment = vct.body_to_world(*x_state[2], np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag))
+        return np.array([force, moment])
 
     def get_Ca(self, x_state, wind_vector, rasaero, before_burnout, flap_ext) -> float:
         # TODO: account for area change of flaps in C_a calculation
@@ -204,5 +203,5 @@ class Forces:
         return -np.array([(prop.G*prop.m_e*total_mass)/((prop.r_e+altitude)**2), 0, 0])
 
     def aerodynamic_moment(self, aerodynamic_force):
-        aerodynamic_moment = np.cross(prop.cm - prop.cp, aerodynamic_force)
+        aerodynamic_moment = np.cross(prop.cp - prop.cm, aerodynamic_force)
         return aerodynamic_moment
