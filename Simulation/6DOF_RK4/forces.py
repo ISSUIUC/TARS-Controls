@@ -31,8 +31,8 @@ class Forces:
         Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
 
         Args:
-            x_state (np.array): State Vector [6x3]
-            flap_ext (float): current flap extention config (0 - 0.0178 meters, inclusive)
+            x_state (np.array): State Vector [4x3]
+            flap_ext (float): current flap extention config
             time_stamp (float): current time stamp of rocket in simulation
         
         Returns:
@@ -46,11 +46,10 @@ class Forces:
         wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
         drag = self.aerodynamic_force(x_state, density, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
-        # print(self.motor.get_thrust(time_stamp))
-        force = thrust + drag + vct.world_to_body(*x_state[2],grav)
-        # print(grav)
+        force = vct.body_to_world(*x_state[2],thrust + drag) + grav
+        # print(thrust,vct.body_to_world(*x_state[2],thrust))
         moment = np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag)
-        return np.array([force, moment])
+        return np.array([force, [0,0,0]])
 
     def get_Ca(self, x_state, wind_vector, rasaero, before_burnout, flap_ext) -> float:
         # TODO: account for area change of flaps in C_a calculation
@@ -67,8 +66,8 @@ class Forces:
         vel = x_state[1]
         mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
         
-        incident_velocity = vct.norm(vel + wind_vector)
-        orientation = vct.world_to_body(*x_state[3], np.array([1,0,0]))
+        incident_velocity = vct.world_to_body(*x_state[2], vct.norm(vel + wind_vector))
+        orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))
         alpha = np.arccos(np.dot(incident_velocity, orientation))
         # Define mach number for csv lookup, rounded to hundreds place
         mach = round(mach_number, 2)
@@ -124,8 +123,8 @@ class Forces:
         vel = x_state[1]
         mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
         
-        incident_velocity = vct.norm(vel + wind_vector)
-        orientation = vct.world_to_body(*x_state[3], np.array([1,0,0]))
+        incident_velocity = vct.world_to_body(*x_state[2], vct.norm(vel + wind_vector))
+        orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))
         alpha = np.arccos(np.dot(incident_velocity, orientation))
         # Define mach number for csv lookup, rounded to hundreds place
         mach = round(mach_number, 2)
@@ -169,13 +168,13 @@ class Forces:
         Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
         Args:
-            x_state (np.array): State Vector [6x3]
+            x_state (np.array): State Vector [4x3]
             flap_ext (float): current flap extention config
         
         Returns:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
-        vel = vct.world_to_body(*x_state[3].copy(), x_state[1].copy() + wind_vector.copy())
+        vel = vct.world_to_body(*x_state[2].copy(), x_state[1].copy() - wind_vector.copy())
         C_a = self.get_Ca(x_state, wind_vector, rasaero, before_burnout, flap_ext)
         C_n = self.get_Cn(x_state, wind_vector, rasaero, flap_ext)
 
@@ -183,9 +182,9 @@ class Forces:
 
         C_n_y = C_n * np.cos(roll_aero) #TODO: Check with other values
         C_n_z = C_n * np.sin(roll_aero) #TODO: Check with other values
-        return -0.5*np.array([vel[0]**2 * C_a*density*prop.A, 
-                            vel[1]**2 * C_n_y*density*prop.A_s, 
-                            vel[2]**2 * C_n_z*density*prop.A_s])
+        return -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*prop.A, 
+                            np.sign(vel[1])*vel[1]**2 * C_n_y*density*prop.A_s, 
+                            np.sign(vel[2])*vel[2]**2 * C_n_z*density*prop.A_s])
     
     def gravitational_force(self, altitude, time_stamp) -> np.ndarray:
         '''

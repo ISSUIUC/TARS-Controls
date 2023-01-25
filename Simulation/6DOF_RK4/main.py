@@ -53,8 +53,6 @@ def simulator(x0, dt) -> None:
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
-        x = sim.RK4(x, dt, time_stamp)
-
         # Update Simulator Log
         sim_dict["pos"].append(x[0])
         sim_dict["vel"].append(x[1])
@@ -64,13 +62,14 @@ def simulator(x0, dt) -> None:
         sim_dict["ang_accel"].append(x[5])
         sim_dict["time"].append(sim_dict["time"][-1]+dt if len(sim_dict["time"]) > 0 else 0)
 
+        x = sim.RK4(x, dt, time_stamp)
         time_stamp += dt
 
 
 if __name__ == '__main__':
     x0 = np.zeros((6,3))
-    x0[3] = [0, .01, 0]
-    dt = 0.01
+    x0[3] = [0, .1, 0]
+    dt = 0.1
     simulator(x0, dt)
     # plot entries in sim_dict
     # print(np.array(sim_dict["pos"]))

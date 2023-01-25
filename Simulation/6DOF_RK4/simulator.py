@@ -55,7 +55,7 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
     p = (y0[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
 
     temp = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp))
-
+    # print(time_stamp, y0[3], temp[0], temp[1])
     a = temp[0]/prop.rocket_total_mass
 
     ang_p, ang_v, ang_a = angular_rk4(y0, dt, time_stamp, prop.I_inv(prop.rocket_total_mass), flap_ext)
@@ -98,7 +98,7 @@ def angular_rk4(y0, dt, time_stamp, I_inv, flap_ext=0):
     k3_v = I_inv@step_v(y0[0], y0[1], y0[3], y0[4] + (dt/2)*k2_v, dt/2, time_stamp, flap_ext)[1]
     k4_v = I_inv@step_v(y0[0], y0[1], y0[3], y0[4] + dt*k3_v, dt, time_stamp, flap_ext)[1]
 
-    v = vct.body_to_world(*y0[3], (y0[4] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*dt))
+    v = (y0[4] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*dt)
     # v_e = body_to_euler(v)
 
     k1_p = y0[4].copy()
@@ -108,7 +108,7 @@ def angular_rk4(y0, dt, time_stamp, I_inv, flap_ext=0):
 
     p = (y0[3] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
     temp = (forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))
-    a = vct.body_to_world(*y0[3], I_inv @ temp[1])
+    a = I_inv @ temp[1]
     return (p,v,a)
 
 def body_to_euler(v):
