@@ -82,9 +82,10 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
     ang_accel_nc.set_ylabel("Acceleration (rad\s^2)");   
     ang_accel_nc.legend()
 
-    alpha_nc.plot(sim_dict["time"], np.degrees(sim_dict["alpha"]),label="Alpha",color="tab:red", linewidth = 2);   
+    alpha_nc.plot(sim_dict["time"], np.degrees(sim_dict["alpha"]),label="Alpha",color="tab:green", linewidth = 2);    
+    alpha_nc.axhline(15 ,label="Alpha Limit",color="tab:red",linewidth = 2);  
     alpha_nc.set_ylabel("Angle of Attack (degrees)");   
-    ang_accel_nc.legend()
+    alpha_nc.legend()
     plt.tight_layout()
     plt.show()
 
