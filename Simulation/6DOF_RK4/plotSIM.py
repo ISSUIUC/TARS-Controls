@@ -61,7 +61,7 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
     # error_nc.axvline(x = coast_start, color = "tab:blue", linestyle = "dotted", linewidth = 2.5, label="Coast")
     # error_nc.legend()
 
-    fig_angular,(ang_pos_nc, ang_vel_nc, ang_accel_nc) = plt.subplots(3,1,figsize=(15,10), sharex=False)
+    fig_angular,(ang_pos_nc, ang_vel_nc, ang_accel_nc, alpha_nc) = plt.subplots(4,1,figsize=(15,10), sharex=False)
     fig_angular.suptitle("PYSIM 6DOF ANGULAR PLOT", color='#F5B14C', fontsize = 25)
 
     ang_pos_nc.plot(sim_dict["time"], sim_dict["ang_pos"][:,0], label="Roll", color="tab:red", linewidth = 2)
@@ -82,6 +82,9 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
     ang_accel_nc.set_ylabel("Acceleration (rad\s^2)");   
     ang_accel_nc.legend()
 
+    alpha_nc.plot(sim_dict["time"], np.degrees(sim_dict["alpha"]),label="Alpha",color="tab:red", linewidth = 2);   
+    alpha_nc.set_ylabel("Angle of Attack (degrees)");   
+    ang_accel_nc.legend()
     plt.tight_layout()
     plt.show()
 
@@ -102,4 +105,5 @@ if __name__ == "__main__":
     for attr in ["pos", "vel", "accel", "ang_pos", "ang_vel", "ang_accel"]:
         sim_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+    sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
     plotter(sim_dict=sim_dict)

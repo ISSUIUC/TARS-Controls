@@ -44,13 +44,14 @@ class Forces:
         density = self.atm.get_density(alt)
         thrust = self.motor.get_thrust(time_stamp)
         wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
-        drag = self.aerodynamic_force(x_state, density, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
+        alpha = self.get_alpha(x_state, wind_vector)
+        drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag))
-        return np.array([force, moment])
+        return np.array([force, moment]), alpha
 
-    def get_Ca(self, x_state, wind_vector, rasaero, before_burnout, flap_ext) -> float:
+    def get_Ca_Cn(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:
         # TODO: account for area change of flaps in C_a calculation
         '''
         References lookup table to find C_a based on flap extension
@@ -64,23 +65,19 @@ class Forces:
         alt = x_state[0,0]
         vel = x_state[1]
         mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
-        
-        incident_velocity = vct.world_to_body(*x_state[2], vct.norm(vel + wind_vector))
-        orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))
-        alpha = np.arccos(np.dot(incident_velocity, orientation))
+
         # Define mach number for csv lookup, rounded to hundreds place
         mach = round(mach_number, 2)
-        
-        # round AoA to closest integer
-        if(np.linalg.norm(incident_velocity) == 0):
-            alpha = 0
-        ang_of_att = round(np.degrees(alpha))
 
-        #Define blank upper and lower Cds
+        #Define blank upper and lower Cas
         Ca_low = 0
         Ca_up = 0
 
-        # define csv file to search through
+        #Define blank upper and lower Cns
+        Cn_low = 0
+        Cn_up = 0
+
+        # define csv file to search throughs
         #csv_file = csv.reader(open('RASAero.csv', 'r'))
         csv_file = rasaero
 
@@ -89,84 +86,35 @@ class Forces:
 
         # Define starting Ca
         Ca = 0
+        # Define starting Cn
+        Cn = 0
         
         ca_vals = csv_file["CA Power-Off"]
         if (before_burnout):
             ca_vals = csv_file["CA Power-On"]
-        
-        # Find indices where the mach values match up
-        mach_indices = np.where(csv_file['Mach Number'] == mach)[0]    
-        if len(mach_indices) == 0:
-            return Ca
-            
-        # Interpolate to find Cn value
-        for idx in range(mach_indices[0], mach_indices[-1] + 1):
-            if (ang_of_att == csv_file['Alpha (deg)'][idx] and csv_file['Protuberance (%)'][idx] <= protub_perc <= csv_file['Protuberance (%)'][idx+1]):
-                
-                Ca_low = ca_vals[idx]
-                Ca_up = ca_vals[idx+1]
-
-                Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])    
-        return Ca
-    
-    def get_Cn(self, x_state, wind_vector, rasaero, flap_ext) -> float:
-        # TODO: account for area change of flaps in C_n calculation
-        '''
-        References lookup table to find C_n based on flap extension
-
-        Args:
-            flap_ext (float): current flap extention config
-        
-        Returns:
-            (float): coefficient of drag based on current config of flaps
-        '''
-        alt = x_state[0,0]
-        vel = x_state[1]
-        mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
-        
-        incident_velocity = vct.world_to_body(*x_state[2], vct.norm(vel + wind_vector))
-        orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))
-        alpha = np.arccos(np.dot(incident_velocity, orientation))
-        # Define mach number for csv lookup, rounded to hundreds place
-        mach = round(mach_number, 2)
-        
-        # round AoA to closest integer
-        if(np.linalg.norm(incident_velocity) == 0):
-            alpha = 0
-        
-        ang_of_att = round(np.degrees(alpha))
-        #Define blank upper and lower Cds
-        Cn_low = 0
-        Cn_up = 0
-
-        # define csv file to search through
-        #csv_file = csv.reader(open('RASAero.csv', 'r'))
-        csv_file = rasaero
-
-        # Define protuberance percentage of full extension given current extension
-        protub_perc = flap_ext/prop.max_ext_length
-
-        # Define starting Cn
-        Cn = 0
         
         cn_vals = csv_file["CN Total"]
         
         # Find indices where the mach values match up
         mach_indices = np.where(csv_file['Mach Number'] == mach)[0]    
         if len(mach_indices) == 0:
-            return Cn
-            
+            return [0,0]
+
         # Interpolate to find Cn value
         for idx in range(mach_indices[0], mach_indices[-1] + 1):
-            if (ang_of_att == csv_file['Alpha (deg)'][idx] and csv_file['Protuberance (%)'][idx] <= protub_perc <= csv_file['Protuberance (%)'][idx+1]):
+            if (round(np.degrees(alpha)) == csv_file['Alpha (deg)'][idx] and csv_file['Protuberance (%)'][idx] <= protub_perc <= csv_file['Protuberance (%)'][idx+1]):
                 
+                Ca_low = ca_vals[idx]
+                Ca_up = ca_vals[idx+1]
+
                 Cn_low = cn_vals[idx]
                 Cn_up = cn_vals[idx+1]
 
-                Cn = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cn_low, Cn_up])    
-        return Cn
+                Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])  
+                Cn = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cn_low, Cn_up])  
+        return [Ca,Cn]
 
-    def aerodynamic_force(self, x_state, density, wind_vector, rasaero, before_burnout, flap_ext) -> np.ndarray:
+    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext) -> np.ndarray:
         '''
         Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
@@ -178,8 +126,7 @@ class Forces:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
         vel = vct.world_to_body(*x_state[2].copy(), x_state[1].copy() - wind_vector.copy())
-        C_a = self.get_Ca(x_state, wind_vector, rasaero, before_burnout, flap_ext)
-        C_n = self.get_Cn(x_state, wind_vector, rasaero, flap_ext)
+        C_a,C_n = self.get_Ca_Cn(x_state, alpha, rasaero, before_burnout, flap_ext)
 
         roll_aero = np.arctan2(x_state[1,2], x_state[1,1])
 
@@ -207,6 +154,14 @@ class Forces:
         # return np.array([-9.81*total_mass, 0, 0])
         return -np.array([(prop.G*prop.m_e*total_mass)/((prop.r_e+altitude)**2), 0, 0])
 
-    def aerodynamic_moment(self, aerodynamic_force):
+    def aerodynamic_moment(self, aerodynamic_force) -> np.ndarray:
         aerodynamic_moment = np.cross(prop.cp - prop.cm, aerodynamic_force)
         return aerodynamic_moment
+        
+    def get_alpha(self, x_state, wind_vector) -> float:
+        incident_velocity = vct.world_to_body(*x_state[2], vct.norm(x_state[1] + wind_vector))
+        orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))
+        alpha = np.arccos(np.dot(incident_velocity, orientation))
+        if(np.linalg.norm(incident_velocity) == 0):
+            alpha = 0
+        return alpha

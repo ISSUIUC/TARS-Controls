@@ -54,12 +54,12 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
 
     p = (y0[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
 
-    temp = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp))
+    temp,alpha = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp))
     # print(time_stamp, y0[3], temp[0], temp[1])
     a = temp[0]/prop.rocket_total_mass
 
     ang_p, ang_v, ang_a = angular_rk4(y0, dt, time_stamp, prop.I_inv(prop.rocket_total_mass), flap_ext)
-    return np.array([p, v, a, ang_p, ang_v, ang_a])
+    return np.array([p, v, a, ang_p, ang_v, ang_a]), alpha
 
 def step_p(y0, y1, dt):
     '''
@@ -90,7 +90,7 @@ def step_v(pos, vel, ang_pos, ang_vel, dt, time_stamp, flap_ext):
     Returns:
         (np.array): rate of change of velocity (acceleration) in form of state vector
     '''
-    return forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp) # return slope times mass/inertia 
+    return forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp)[0] # return slope times mass/inertia 
 
 def angular_rk4(y0, dt, time_stamp, I_inv, flap_ext=0):
     k1_v = y0[5].copy()
@@ -106,7 +106,7 @@ def angular_rk4(y0, dt, time_stamp, I_inv, flap_ext=0):
     k4_p = step_p(y0[3], y0[3] + dt*k3_p, dt)
 
     p = (y0[3] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
-    temp = (forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))
+    temp = (forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))[0]
     a = I_inv @ temp[1]
     return (p,v,a)
 
