@@ -46,7 +46,7 @@ def simulator(x0, dt) -> None:
     motor.ignite(time_stamp*dt)
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
-    while x[1,0] > 0 or start:
+    while x[1,0] >= 0 or start:
         if start:
             start = False
         # Kalman Filter stuff goes here

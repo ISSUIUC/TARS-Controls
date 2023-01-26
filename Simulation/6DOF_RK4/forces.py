@@ -47,7 +47,6 @@ class Forces:
         drag = self.aerodynamic_force(x_state, density, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
-        # print(x_state[1], vct.body_to_world(*x_state[2],drag))
         moment = vct.body_to_world(*x_state[2], np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag))
         return np.array([force, moment])
 
