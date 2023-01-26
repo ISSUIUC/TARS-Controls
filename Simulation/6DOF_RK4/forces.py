@@ -47,6 +47,7 @@ class Forces:
         drag = self.aerodynamic_force(x_state, density, wind_vector, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
+        # print(x_state[1], vct.body_to_world(*x_state[2],drag))
         moment = vct.body_to_world(*x_state[2], np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag))
         return np.array([force, moment])
 
@@ -72,6 +73,8 @@ class Forces:
         mach = round(mach_number, 2)
         
         # round AoA to closest integer
+        if(np.linalg.norm(incident_velocity) == 0):
+            alpha = 0
         ang_of_att = round(np.degrees(alpha))
 
         #Define blank upper and lower Cds
@@ -129,8 +132,10 @@ class Forces:
         mach = round(mach_number, 2)
         
         # round AoA to closest integer
+        if(np.linalg.norm(incident_velocity) == 0):
+            alpha = 0
+        
         ang_of_att = round(np.degrees(alpha))
-
         #Define blank upper and lower Cds
         Cn_low = 0
         Cn_up = 0
@@ -179,11 +184,12 @@ class Forces:
 
         roll_aero = np.arctan2(x_state[1,2], x_state[1,1])
 
-        C_n_y = C_n * np.cos(roll_aero) #TODO: Check with other values
-        C_n_z = C_n * np.sin(roll_aero) #TODO: Check with other values
-        return -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*prop.A, 
-                            np.sign(vel[1])*vel[1]**2 * C_n_y*density*prop.A_s, 
-                            np.sign(vel[2])*vel[2]**2 * C_n_z*density*prop.A_s])
+        C_n_y = np.abs(C_n * np.cos(roll_aero)) #TODO: Check with other values
+        C_n_z = np.abs(C_n * np.sin(roll_aero)) #TODO: Check with other values
+        aero_force = -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*prop.A, 
+                                    np.sign(vel[1])*vel[1]**2 * C_n_y*density*prop.A_s, 
+                                    np.sign(vel[2])*vel[2]**2 * C_n_z*density*prop.A_s])
+        return aero_force
     
     def gravitational_force(self, altitude, time_stamp) -> np.ndarray:
         '''
