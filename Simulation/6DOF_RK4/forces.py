@@ -144,9 +144,7 @@ class Forces:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
         vel = vct.world_to_body(*x_state[2].copy(), x_state[1].copy() - wind_vector.copy())
-        # C_a,C_n,prop.cp = self.get_Ca_Cn_Cp(x_state, alpha, rasaero, before_burnout, flap_ext)
-        C_a,C_n = self.get_Ca_Cn_Cp(x_state, alpha, rasaero, before_burnout, flap_ext)[0:2]
-        print (prop.cp)
+        C_a,C_n,prop.cp = self.get_Ca_Cn_Cp(x_state, alpha, rasaero, before_burnout, flap_ext)
         roll_aero = np.arctan2(x_state[1,2], x_state[1,1])
 
         C_n_y = np.abs(C_n * np.cos(roll_aero)) #TODO: Check with other values
