@@ -9,18 +9,21 @@ r_e = 6.3781*10**6
 cm = np.array([1., 0., 0.])
 cp = np.array([.6, 0., 0.])
 
+cm_rocket = np.array([1., 0., 0.])
+cm_motor = np.array([1., 0., 0.])
+
 # RASAero Look Up
 rasaero_lookup_file = '../6DOF_RK4/LookUp/RASAero.csv'
 
-# Temporary C_d constant 
+# Temporary C_d constant
 C_d = 0.5
 # Side Profile
 C_d_s = 1.2
 
 # Motor Properties M2500:
-impulse = 9671.0 # Ns
-motor_mass = 8.064 # Kg
-delay = 0 # s
+impulse = 9671.0  # Ns
+motor_mass = 8.064  # Kg
+delay = 0  # s
 motor_lookup_file = '../6DOF_RK4/LookUp/m2500.csv'
 
 # # Motor Properties N5800:
@@ -51,12 +54,17 @@ A_s = 2*r_r*l
 max_ext_length = .0178
 
 # Moment of Inertia
-I = lambda total_mass : np.diag([(1/2) * total_mass * r_r**2, 
-             (total_mass/12) * (l**2 + 3*r_r**2), 
-             (total_mass/12) * (l**2 + 3*r_r**2)])
-I_inv = lambda total_mass : np.diag([1/((1/2) * total_mass * r_r**2), 
-             1/((total_mass/12) * (l**2 + 3*r_r**2)), 
-             1/((total_mass/12) * (l**2 + 3*r_r**2))])
+
+
+def I(total_mass): return np.diag([(1/2) * total_mass * r_r**2,
+                                   (total_mass/12) * (l**2 + 3*r_r**2),
+                                   (total_mass/12) * (l**2 + 3*r_r**2)])
+
+
+def I_inv(total_mass): return np.diag([1/((1/2) * total_mass * r_r**2),
+                                       1/((total_mass/12) * (l**2 + 3*r_r**2)),
+                                       1/((total_mass/12) * (l**2 + 3*r_r**2))])
+
 
 # Total Normal force
 C_N_total = 9
