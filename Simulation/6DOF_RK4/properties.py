@@ -7,7 +7,9 @@ m_e = 5.9722*10**24
 # radius of earth
 r_e = 6.3781*10**6
 cm = np.array([1., 0., 0.])
-cp = np.array([.6, 0., 0.])
+# cp = np.array([.6, 0., 0.])
+cp = np.array([1.06356, 0., 0.])
+
 
 # RASAero Look Up
 rasaero_lookup_file = '../6DOF_RK4/LookUp/RASAero.csv'
