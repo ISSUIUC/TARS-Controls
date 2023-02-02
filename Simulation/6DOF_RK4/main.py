@@ -6,6 +6,7 @@ import motor
 import properties as prop
 import simulator as sim
 import plotSIM as plotter
+import sensors
 import time
 
 motor = motor.Motor()
@@ -20,6 +21,19 @@ sim_dict = {
     "alpha": [],
     "time": []
     }
+
+sensor_dict ={
+    "baro_alt":[],
+    "accel_x": [],
+    "accel_y": [],
+    "accel_z":[],
+    "bno_ang_pos_x":[],
+    "bno_ang_pos_y":[],
+    "bno_ang_pos_z":[],
+    "gyro_x":[],
+    "gyro_y": [],
+    "gyro_z": []
+}
 
 def simulator(x0, dt) -> None:
     '''
@@ -52,7 +66,26 @@ def simulator(x0, dt) -> None:
     while x[1,0] >= 0 or start:
         if start:
             start = False
+            
+        # Get sensor data
+        baro_alt = sensors.get_barometer_data(x)
+        accel_x, accel_y ,accel_z = sensors.get_accelerometer_data(x)
+        gyro_x, gyro_y, gyro_z = sensors.get_gyro_data(x)
+        bno_ang_pos_x, bno_ang_pos_y, bno_ang_pos_z = sensors.get_bno_orientation(x)
+        
+        # Append to sensor_dict
+        sensor_dict["baro_alt"].append(baro_alt)
+        sensor_dict["accel_x"].append(accel_x)
+        sensor_dict["accel_y"].append(accel_y)
+        sensor_dict["accel_z"].append(accel_z)
+        sensor_dict["bno_ang_pos_x"].append(bno_ang_pos_x)
+        sensor_dict["bno_ang_pos_y"].append(bno_ang_pos_y)
+        sensor_dict["bno_ang_pos_z"].append(bno_ang_pos_z)
+        sensor_dict["gyro_x"].append(gyro_x)
+        sensor_dict["gyro_y"].append(gyro_y)
+        sensor_dict["gyro_z"].append(gyro_z)
         # Kalman Filter stuff goes here
+        
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
@@ -74,8 +107,8 @@ def simulator(x0, dt) -> None:
 
 if __name__ == '__main__':
     x0 = np.zeros((6,3))
-    x0[3] = [0, .1, 0]
-    x0[1] = [60,0,0]
+    x0[3] = [0, .05, 0]
+    x0[1] = [0,0,0]
     dt = 0.01
     simulator(x0, dt)
     # plot entries in sim_dict
