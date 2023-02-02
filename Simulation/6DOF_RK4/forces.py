@@ -18,8 +18,8 @@ import os
 class Forces:
     # Define class objects
     atm = atmosphere.Atmosphere()
+    
     motor = motor.Motor()
-
     rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
     rasaero = pd.read_csv(rasaero_file_location)
 
