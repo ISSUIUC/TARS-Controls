@@ -71,6 +71,9 @@ class KalmanFilter:
             for state in ["alt","vel","accel"]:
                 self.kalman_dict[dim][state].append(self.x_k[i][0])
                 i += 1
+
+    def get_state(self):
+        return self.x_k
         
         
         
