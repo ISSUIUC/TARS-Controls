@@ -32,9 +32,9 @@ def get_barometer_data(x_state):
     
 def get_bno_orientation(x_state):
     true_orietnation = x_state[3]
-    
-    bno_reading = np.array([random.gauss(true_orietnation[0], prop.Bno_error), 
-                             random.gauss(true_orietnation[1], prop.Bno_error), 
-                             random.gauss(true_orietnation[2], prop.Bno_error)])
+    bno_error = prop.Bno_error * np.pi / 180
+    bno_reading = np.array([random.gauss(true_orietnation[0], bno_error), 
+                             random.gauss(true_orietnation[1], bno_error), 
+                             random.gauss(true_orietnation[2], bno_error)])
     return bno_reading
     
