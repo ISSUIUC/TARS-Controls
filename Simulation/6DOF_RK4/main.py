@@ -6,6 +6,7 @@ import motor
 import properties as prop
 import simulator as sim
 import plotSIM as plotter
+import time
 
 motor = motor.Motor()
 
@@ -47,6 +48,7 @@ def simulator(x0, dt) -> None:
     motor.ignite(time_stamp*dt)
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
+    t_start = time.time()
     while x[1,0] >= 0 or start:
         if start:
             start = False
@@ -66,11 +68,14 @@ def simulator(x0, dt) -> None:
         x,alpha = sim.RK4(x, dt, time_stamp)
         sim_dict["alpha"].append(alpha)
         time_stamp += dt
+    t_end = time.time() - t_start
+    print("Time: ", t_end)
 
 
 if __name__ == '__main__':
     x0 = np.zeros((6,3))
-    x0[3] = [0, 0, .1]
+    x0[3] = [0, .1, 0]
+    x0[1] = [60,0,0]
     dt = 0.01
     simulator(x0, dt)
     # plot entries in sim_dict
