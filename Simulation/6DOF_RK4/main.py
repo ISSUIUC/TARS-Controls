@@ -24,15 +24,15 @@ sim_dict = {
 
 sensor_dict ={
     "baro_alt":[],
-    "accel_x": [],
-    "accel_y": [],
-    "accel_z":[],
-    "bno_ang_pos_x":[],
-    "bno_ang_pos_y":[],
-    "bno_ang_pos_z":[],
-    "gyro_x":[],
-    "gyro_y": [],
-    "gyro_z": []
+    "imu_accel_x": [],
+    "imu_accel_y": [],
+    "imu_accel_z":[],
+    "imu_ang_pos_x":[],
+    "imu_ang_pos_y":[],
+    "imu_ang_pos_z":[],
+    "imu_gyro_x":[],
+    "imu_gyro_y": [],
+    "imu_gyro_z": []
 }
 
 def simulator(x0, dt) -> None:
@@ -75,15 +75,15 @@ def simulator(x0, dt) -> None:
         
         # Append to sensor_dict
         sensor_dict["baro_alt"].append(baro_alt)
-        sensor_dict["accel_x"].append(accel_x)
-        sensor_dict["accel_y"].append(accel_y)
-        sensor_dict["accel_z"].append(accel_z)
-        sensor_dict["bno_ang_pos_x"].append(bno_ang_pos_x)
-        sensor_dict["bno_ang_pos_y"].append(bno_ang_pos_y)
-        sensor_dict["bno_ang_pos_z"].append(bno_ang_pos_z)
-        sensor_dict["gyro_x"].append(gyro_x)
-        sensor_dict["gyro_y"].append(gyro_y)
-        sensor_dict["gyro_z"].append(gyro_z)
+        sensor_dict["imu_accel_x"].append(accel_x)
+        sensor_dict["imu_accel_y"].append(accel_y)
+        sensor_dict["imu_accel_z"].append(accel_z)
+        sensor_dict["imu_ang_pos_x"].append(bno_ang_pos_x)
+        sensor_dict["imu_ang_pos_y"].append(bno_ang_pos_y)
+        sensor_dict["imu_ang_pos_z"].append(bno_ang_pos_z)
+        sensor_dict["imu_gyro_x"].append(gyro_x)
+        sensor_dict["imu_gyro_y"].append(gyro_y)
+        sensor_dict["imu_gyro_z"].append(gyro_z)
         # Kalman Filter stuff goes here
         
         # flap_ext will be passed by kalman filter
@@ -132,10 +132,20 @@ if __name__ == '__main__':
         cur_point += list(map(str, sim_dict["ang_vel"][point]))
         cur_point += list(map(str, sim_dict["ang_accel"][point]))
         cur_point += map(str, list([sim_dict["alpha"][point]]))
+        cur_point += map(str, list([sensor_dict["baro_alt"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_accel_x"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_accel_y"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_accel_z"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_ang_pos_x"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_ang_pos_y"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_ang_pos_z"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_gyro_x"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
         record.append(cur_point)
     
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha\n")
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
