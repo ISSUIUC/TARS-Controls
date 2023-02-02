@@ -97,126 +97,22 @@ class Atmosphere:
         
         return temperature
         
-    def get_pressure(self, altitude)->float:
-        '''
-        Pressure getter function based on altitude
-        
-        Args:
-            altitude (float): Altitude above sea level, in meters
-            
-        Returns:
-            pressure (float): Pressure at altitude
-        '''
-        altitude_h = self.get_geometric_to_geopotential(altitude) / 1000.0
-        altitude_z = altitude / 1000.0
-        if (altitude_h < 11) :
-            pressure = 101325.0 * pow((288.15 / (288.15 - 6.5 * altitude_h)),
-                                  (34.1632 / -6.5))
-        
+    def get_pressure(self, altitude):
+        # temperature under standard condition (15 degrees C at sealevel) kelvin
+        P_0 = 101325
 
-        elif (altitude_h < 20) :
-            pressure = 22632.06 * np.exp(-34.1632 * (altitude_h - 11) / 216.65)
-        
+        # pressure under standard condition in (Pa)
+        T_0 = 288.16 
 
-        elif (altitude_h < 32) :
-            pressure = 5474.889 * pow((216.65 / (216.65 + (altitude_h - 20))), 34.1632)
-        
+        # Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
+        b = 0.0065
 
-        elif (altitude_h < 47) :
-            pressure = 868.0187 * pow((228.65 / (228.65 + 2.8 * (altitude_h - 32))),
-                                    (34.1632 / 2.8))
-        
+        # gravitational constant 
+        g = 9.81
 
-        elif (altitude_h < 51) :
-            pressure = 110.9063 * np.exp(-34.1632 * (altitude_h - 47) / 270.65)
-        
+        R = 287.05
 
-        elif (altitude_h < 71) :
-            pressure = 66.93887 * pow((270.65 / (270.65 - 2.8 * (altitude_h - 51))),
-                                    (34.1632 / -2.8))
-        
-
-        elif (altitude_h < 84.852) :
-            pressure = 3.956420 * pow((214.65 / (214.65 - 2 * (altitude_h - 71))),
-                                    (34.1632 / -2))
-        
-
-        elif (altitude_h < 91) :
-            pressure = np.exp(0.000000 * pow(altitude_h, 4) +
-                        2.159582E-06 * pow(altitude_h, 3) +
-                        -4.836957E-04 * pow(altitude_h, 2) +
-                        -0.1425192 * altitude_h + 13.47530)
-        
-
-        elif (altitude_z < 100) :
-            pressure = np.exp(0.000000 * pow(altitude_z, 4) +
-                        3.304895E-05 * pow(altitude_z, 3) +
-                        -0.009062730 * pow(altitude_z, 2) +
-                        0.6516698 * altitude_z + -11.03037)
-        
-
-        elif (altitude_z < 110) :
-            pressure = np.exp(0.000000 * pow(altitude_z, 4) +
-                        6.693926E-05 * pow(altitude_z, 3) +
-                        -0.01945388 * pow(altitude_z, 2) +
-                        1.719080 * altitude_z + -47.75030)
-        
-
-        elif (altitude_z < 120) :
-            pressure = np.exp(0.000000 * pow(altitude_z, 4) +
-                        -6.539316E-05 * pow(altitude_z, 3) +
-                        0.02485568 * pow(altitude_z, 2) +
-                        -3.223620 * altitude_z + 135.9355)
-        
-
-        elif (altitude_z < 150) :
-            pressure = np.exp(2.283506E-07 * pow(altitude_z, 4) +
-                        -1.343221E-04 * pow(altitude_z, 3) +
-                        0.02999016 * pow(altitude_z, 2) +
-                        -3.055446 * altitude_z + 113.5764)
-        
-
-        elif (altitude_z < 200) :
-            pressure = np.exp(1.209434E-08 * pow(altitude_z, 4) +
-                        -9.692458E-06 * pow(altitude_z, 3) +
-                        0.003002041 * pow(altitude_z, 2) +
-                        -0.4523015 * altitude_z + 19.19151)
-        
-
-        elif (altitude_z < 300) :
-            pressure = np.exp(8.113942E-10 * pow(altitude_z, 4) +
-                        -9.822568E-07 * pow(altitude_z, 3) +
-                        4.687616E-04 * pow(altitude_z, 2) +
-                        -0.1231710 * altitude_z + 3.067409)
-        
-
-        elif (altitude_z < 500) :
-            pressure = np.exp(9.814674E-11 * pow(altitude_z, 4) +
-                        -1.654439E-07 * pow(altitude_z, 3) +
-                        1.148115E-04 * pow(altitude_z, 2) +
-                        -0.05431334 * altitude_z + -2.011365)
-        
-
-        elif (altitude_z < 750) :
-            pressure = np.exp(-7.835161E-11 * pow(altitude_z, 4) +
-                        1.964589E-07 * pow(altitude_z, 3) +
-                        -1.657213E-04 * pow(altitude_z, 2) +
-                        0.04305869 * altitude_z + -14.77132)
-        
-
-        elif (altitude_z < 1000) :
-            pressure = np.exp(2.813255E-11 * pow(altitude_z, 4) +
-                        -1.120689E-07 * pow(altitude_z, 3) +
-                        1.695568E-04 * pow(altitude_z, 2) +
-                        -0.1188941 * altitude_z + 14.56718)
-        
-
-        else :
-            print("Exceeding calculatable altitude!")
-            pressure = -1.0
-        
-        # 86k to 1000k formula not sure yet
-        return pressure
+        return P_0 * ((T_0 +(altitude)*b)/T_0)**(-g/(b*R))
     
     def get_density(self, altitude)->float:
         '''
@@ -307,6 +203,34 @@ class Atmosphere:
         
 
         return density
+    
+    def get_altitude(self, pressure):
+        '''
+        Returns altitude at a given pressure using the international barometric formula
+        
+        Args:
+        Pressure Pascals
+        
+        Returns:
+        Altitude from sea level in meters
+        
+        '''
+        # temperature under standard condition (15 degrees C at sealevel) kelvin
+        P_0 = 101325
+
+        # pressure under standard condition in (Pa)
+        T_0 = 288.16 
+
+        # Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
+        b = 0.0065
+
+        # gravitational constant 
+        g = 9.81
+
+        R = 287.05
+
+        pressureRatio = pressure/P_0
+        return -(T_0*((pressureRatio)**(b*R/(g)) - 1) * (pressureRatio)**(-b*R/(g)))/b
     
     def get_speed_of_sound(self, altitude)->float:
         gamma = 1.4 # Heat capacity ratio of air
