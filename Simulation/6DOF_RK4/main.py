@@ -6,6 +6,7 @@ import motor
 import properties as prop
 import simulator as sim
 import plotSIM as plotter
+import sensors
 
 motor = motor.Motor()
 
@@ -19,6 +20,19 @@ sim_dict = {
     "alpha": [],
     "time": []
     }
+
+sensor_dict ={
+    "baro_alt":[],
+    "accel_x": [],
+    "accel_y": [],
+    "accel_z":[],
+    "bno_ang_pos_x":[],
+    "bno_ang_pos_y":[],
+    "bno_ang_pos_z":[],
+    "gyro_x":[],
+    "gyro_y": [],
+    "gyro_z": []
+}
 
 def simulator(x0, dt) -> None:
     '''
@@ -51,6 +65,7 @@ def simulator(x0, dt) -> None:
         if start:
             start = False
         # Kalman Filter stuff goes here
+        
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
