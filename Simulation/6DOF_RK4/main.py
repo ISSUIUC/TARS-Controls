@@ -108,12 +108,11 @@ def simulator(x0, dt) -> None:
         sensor_dict["imu_gyro_z"].append(gyro_z)
         
         # Kalman Filter stuff goes here
-        
+        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
         
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
-        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
 
         # Update Simulator Log
         sim_dict["pos"].append(x[0])
@@ -169,10 +168,20 @@ if __name__ == '__main__':
         cur_point += map(str, list([sensor_dict["imu_gyro_x"][point]]))
         cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
         cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
+        cur_point += str(kalman_dict["x"]["pos"][point])
+        cur_point += str(kalman_dict["x"]["vel"][point])
+        cur_point += str(kalman_dict["x"]["accel"][point])
+        cur_point += str(kalman_dict["y"]["pos"][point])
+        cur_point += str(kalman_dict["y"]["vel"][point])
+        cur_point += str(kalman_dict["y"]["accel"][point])
+        cur_point += str(kalman_dict["z"]["pos"][point])
+        cur_point += str(kalman_dict["z"]["vel"][point])
+        cur_point += str(kalman_dict["z"]["accel"][point])
+
         record.append(cur_point)
     
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z\n")
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_x_pos,kalman_x_vel,kalman_x_accel,kalman_y_pos,kalman_y_vel,kalman_y_accel,kalman_z_pos,kalman_z_vel,kalman_z_accel\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
