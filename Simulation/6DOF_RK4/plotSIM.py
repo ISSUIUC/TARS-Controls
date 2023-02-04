@@ -92,9 +92,11 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
 
 if __name__ == "__main__":
     sim_dict = {}
+    sensor_dict = {}
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     file_data = pd.read_csv(output_file)
     sim_dict["time"] = file_data["time"].values
+    sensor_dict["time"] = file_data["time"].values
     # print(sim_dict["time"].values)
     # sim_dict["pos"] = np.array(
     #     list(zip(file_data["pos_x"].values, file_data["pos_y"].values, file_data["pos_z"].values)))
@@ -108,4 +110,14 @@ if __name__ == "__main__":
         sim_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
     sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
+    sensor_dict["imu_accel_x"] = np.array(list(zip(file_data["imu_accel_x"].values)))
+    sensor_dict["imu_accel_y"] = np.array(list(zip(file_data["imu_accel_y"].values)))
+    sensor_dict["imu_accel_z"] = np.array(list(zip(file_data["imu_accel_z"].values)))
+    sensor_dict["imu_ang_pos_x"] = np.array(list(zip(file_data["imu_ang_pos_x"].values)))
+    sensor_dict["imu_ang_pos_y"] = np.array(list(zip(file_data["imu_ang_pos_y"].values)))
+    sensor_dict["imu_ang_pos_z"] = np.array(list(zip(file_data["imu_ang_pos_z"].values)))
+    sensor_dict["imu_gyro_x"] = np.array(list(zip(file_data["imu_gyro_x"].values)))
+    sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
+    sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
+    
     plotter(sim_dict=sim_dict)
