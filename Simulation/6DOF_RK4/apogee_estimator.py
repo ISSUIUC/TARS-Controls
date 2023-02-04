@@ -17,29 +17,38 @@ class Apogee:
     rasaero = pd.read_csv(rasaero_file_location)
 
     def __init__(self, state, dt):
+        '''
+        self.state:
+        
+        x-axis:
+        [[pos],
+         [vel],
+         [acc]]
+        '''
         self.state = state[:3][0].copy()
         self.dt = dt
         self.flap_ext = 0.
+    
+    def set_params(self, state):
+        self.state = state[:3][0].copy()
 
-
-    def RK4(self, time_stamp):
+    def RK4(self):
         k1_v = self.state[2]
-        k2_v = self.step_v(self.state[0], self.state[1] + (self.dt/2)*k1_v, self.dt/2, time_stamp, self.flap_ext)[0]/prop.rocket_dry_mass
-        k3_v = self.step_v(self.state[0], self.state[1] + (self.dt/2)*k2_v, self.dt/2, time_stamp, self.flap_ext)[0]/prop.rocket_dry_mass
-        k4_v = self.step_v(self.state[0], self.state[1] + self.dt*k3_v, self.dt, time_stamp, self.flap_ext)[0]/prop.rocket_dry_mass
+        k2_v = self.step_v(self.state[1] + k1_v*(self.dt/2))
+        k3_v = self.step_v(self.state[1] + k2_v*(self.dt/2))
+        k4_v = self.step_v(self.state[1] + k3_v*(self.dt))
+
         v = (self.state[1] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*self.dt)
     
-        k1_p = self.state[1].copy()
-
-        k2_p = self.step_p(self.state[0], self.state[0] + (self.dt/2)*k1_p, self.dt/2)
-        k3_p = self.step_p(self.state[0], self.state[0] + (self.dt/2)*k2_p, self.dt/2)
-        k4_p = self.step_p(self.state[0], self.state[0] + self.dt*k3_p, self.dt)
+        k1_p = self.state[1]
+        k2_p = self.step_p(self.state[0] + k1_p*(self.dt/2))
+        k3_p = self.step_p(self.state[0] + k2_p*(self.dt/2))
+        k4_p = self.step_p(self.state[0] + k3_p*(self.dt))
 
         p = (self.state[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*self.dt)
 
-        temp = (self.get_force(time_stamp))
+        a = self.get_accel()
 
-        a = temp[0]/prop.rocket_dry_mass
         self.state = np.array([p,v,a])
     
     def step_p(self, y0, y1, dt):
@@ -58,22 +67,16 @@ class Apogee:
         '''
         alt = self.state[0]
         vel = self.state[1]
-        mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
         
-        # incident_velocity = vct.norm(vel + wind_vector)
-        # orientation = vct.world_to_body(*x_state[3], np.array([1,0,0]))
-        # alpha = np.arccos(np.dot(incident_velocity, orientation))
         # Define mach number for csv lookup, rounded to hundreds place
+        mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
         mach = round(mach_number, 2)
         
-        # round AoA to closest integer
-
         #Define blank upper and lower Cds
         Ca_low = 0
         Ca_up = 0
 
         # define csv file to search through
-        #csv_file = csv.reader(open('RASAero.csv', 'r'))
         csv_file = self.rasaero
 
         # Define protuberance percentage of full extension given current extension
@@ -100,14 +103,9 @@ class Apogee:
         return Ca
 
 
-    def get_force(self, time_stamp) -> np.ndarray:
+    def get_accel(self) -> np.ndarray:
         '''
         Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
-
-        Args:
-            x_state (np.array): State Vector [6x3]
-            flap_ext (float): current flap extention config
-            time_stamp (float): current time stamp of rocket in simulation
         
         Returns:
             (np.array): 2D array of forces and moments --> ([Fx, Fy, Fz], [Mx, My, Mz])
@@ -117,13 +115,10 @@ class Apogee:
         C_a = self.get_Ca()
         alt = self.state[0]
         density = self.atm.get_density(alt)
-        thrust = self.motor.get_thrust(time_stamp)
         drag = -0.5*(self.state[1]**2 * C_a*density*prop.A)
-        grav = self.gravitational_force(alt, time_stamp)
-        # print(self.motor.get_thrust(time_stamp))
-        force = thrust + drag + grav
-        # print(grav)
-        return force
+        grav = self.gravitational_force(alt)
+        force =  drag + grav
+        return force/prop.rocket_dry_mass
 
     def gravitational_force(self, altitude) -> np.ndarray:
         '''
@@ -133,27 +128,30 @@ class Apogee:
 
         Args:
             altitude (float): current altitude of rocket
-            time_stamp (float): current time stamp of rocket in simulation
         
         Returns:
             (np.array): vector of gravitational forces on each axis [1x3]
         '''
         return -(prop.G*prop.m_e*prop.rocket_dry_mass)/((prop.r_e+altitude)**2)
 
-    def step_v(self,time_stamp):
+    def step_v(self):
         
         '''
         Calculates slope of v over given delta t for state propogation
-
-        Args:
-            pos (np.array): current posiiton state vector [1x3]
-            vel (np.array): current velocity state vector [1x3]
-            dt (float): time step between iteration of RK4 (shorter than simulation dt)
-            flap_ext (float): current flap extention config
-            time_stamp (float): current time stamp of rocket in simulation
         
         Returns:
             (np.array): rate of change of velocity (acceleration) in form of state vector
         '''
-        return self.get_force(time_stamp)    
+        return self.get_accel()    
+    
+    def predict_apogee(self, current_state):
+        self.set_params(current_state.copy())
+        while (self.state[1] > 0):
+            self.RK4()
+
+        return self.state[0]
+
+
+if __name__=='__main__':
+    data = pd.read_csv("flight_computer_20221029.csv")
     
