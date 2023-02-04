@@ -6,11 +6,9 @@ G = 6.6743*10**(-11)
 m_e = 5.9722*10**24
 # radius of earth
 r_e = 6.3781*10**6
-cm = np.array([3., 0., 0.])
-cp = np.array([1.06356, 0., 0.])
-
-cm_rocket = np.array([3., 0., 0.])
-cm_motor = np.array([1., 0., 0.])
+# Center of mass of entire body
+cm = np.array([3.34-2.31, 0., 0.])
+cp = np.array([3.34-2.71, 0., 0.])
 
 # RASAero Look Up
 rasaero_lookup_file = '../6DOF_RK4/LookUp/RASAero.csv'
@@ -21,6 +19,11 @@ C_d = 0.5
 C_d_s = 1.2
 
 # Motor Properties M2500:
+# Center of mass of rocket without motor
+cm_rocket = np.array([3.34-1.86, 0., 0.])
+# Center of mass of the motor
+cm_motor = np.array([0.3755, 0., 0.])
+
 impulse = 9671.0  # Ns
 motor_mass = 8.064  # Kg
 delay = 0  # s
@@ -39,13 +42,13 @@ motor_lookup_file = '../6DOF_RK4/LookUp/m2500.csv'
 # motor_lookup_file = '../6DOF_RK4/LookUp/n2540.csv'
 
 # rocket mass w/out motor
-rocket_dry_mass = 20.2699
+rocket_dry_mass = 14.691
 # rocket mass with motor
 rocket_total_mass = rocket_dry_mass + motor_mass
 # radius of rocket
 r_r = 0.0508
 # length of rocket
-l = 3
+l = 3.34
 # area w/out flaps
 A = math.pi*r_r**2
 # side profile area
