@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+import ekf
 import motor
 import properties as prop
 import simulator as sim
@@ -20,6 +21,25 @@ sim_dict = {
     "time": []
     }
 
+kalman_dict = {
+    "x": {
+        "alt": [],
+        "vel": [],
+        "accel": []
+    },
+    "y": {
+        "alt": [],
+        "vel": [],
+        "accel": []
+    },
+    "z": {
+        "alt": [],
+        "vel": [],
+        "accel": []
+    },
+    "time": []
+}
+
 def simulator(x0, dt) -> None:
     '''
     Method which handles running the simulation and logging sim data to dict
@@ -37,6 +57,8 @@ def simulator(x0, dt) -> None:
     
     '''
     x = x0.copy()
+    kalman_filter = ekf.KalmanFilter(
+        dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
     idle_time = 0 # time in seconds before launch
     while time_stamp < idle_time:
@@ -53,6 +75,8 @@ def simulator(x0, dt) -> None:
         # Kalman Filter stuff goes here
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
+        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.update()
 
         # Update Simulator Log
         sim_dict["pos"].append(x[0])
@@ -73,6 +97,7 @@ if __name__ == '__main__':
     x0[3] = [0, 0, .1]
     dt = 0.01
     simulator(x0, dt)
+
     # plot entries in sim_dict
     # print(np.array(sim_dict["pos"]))
     # # print(sim_dict["time"])
