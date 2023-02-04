@@ -106,12 +106,14 @@ def simulator(x0, dt) -> None:
         sensor_dict["imu_gyro_x"].append(gyro_x)
         sensor_dict["imu_gyro_y"].append(gyro_y)
         sensor_dict["imu_gyro_z"].append(gyro_z)
+        
         # Kalman Filter stuff goes here
+        
         
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update()
+        kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
 
         # Update Simulator Log
         sim_dict["pos"].append(x[0])

@@ -39,11 +39,10 @@ class KalmanFilter:
         self.x_k = np.array([pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z]).T
 
         for i in range(3):
-            self.F[3*i:3*i+2, 3*i:3*i+2] = [[1.0, dt, (dt**2) / 2],
+            self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
                                     [0.0, 1.0, dt],
                                     [0.0, 0.0, 1.0]]
-
-        self.Q = np.diag([Q_continuous_white_noise(3, dt, 0.1), Q_continuous_white_noise(3, dt, 0.1), Q_continuous_white_noise(3, dt, 0.1)])
+            self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 0.1)
 
         # accelerometer 3 axes
         # barometric altimeter 1 axis
@@ -69,7 +68,7 @@ class KalmanFilter:
         i = 0
         for dim in ["x","y","z"]:
             for state in ["alt","vel","accel"]:
-                self.kalman_dict[dim][state].append(self.x_k[i][0])
+                self.kalman_dict[dim][state].append(self.x_k[i])
                 i += 1
 
     def get_state(self):
