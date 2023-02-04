@@ -16,6 +16,7 @@ class Apogee:
     rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
     rasaero = pd.read_csv(rasaero_file_location)
 
+
     def __init__(self, state, dt):
         '''
         self.state:
@@ -154,4 +155,3 @@ class Apogee:
 
 if __name__=='__main__':
     data = pd.read_csv("flight_computer_20221029.csv")
-    
