@@ -31,6 +31,12 @@ class Apogee:
         self.flap_ext = 0.
     
     def set_params(self, state):
+        '''
+        Reset the state vector to the current state of the rocket
+        
+        Args:
+            state (np.array): 2D array of state vectors --> ([pos], [vel], [acc])
+        '''
         self.state = state.copy()
 
     def RK4(self):
@@ -153,6 +159,15 @@ class Apogee:
         return self.get_accel()    
     
     def predict_apogee(self, current_state):
+        '''
+        Runs RK4 to predict apogee of rocket given current state
+        
+        Args:
+            current_state (np.array): current state of rocket in form of state vector
+            
+        Returns:
+            self.state[0] (float): predicted apogee of rocket
+        '''
         self.set_params(current_state.copy())
         while (self.state[1] > 0):
             self.RK4()
