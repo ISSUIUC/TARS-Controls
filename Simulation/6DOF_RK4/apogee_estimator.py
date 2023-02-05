@@ -16,6 +16,7 @@ class Apogee:
     rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
     rasaero = pd.read_csv(rasaero_file_location)
 
+
     def __init__(self, state, dt):
         '''
         self.state:
@@ -153,5 +154,24 @@ class Apogee:
 
 
 if __name__=='__main__':
-    data = pd.read_csv("flight_computer_20221029.csv")
+    import matplotlib.pyplot as plt
+    data = pd.read_csv(os.path.join(os.path.dirname(__file__), "flight_computer_20221029.csv"))
+    # print(data.head())
+    state_estimate = data["state_est_x"]
+    ax = data["ax"]
+    rocket_estimated_apogee = data["state_est_apo"]
+    timestamps = data["timestamp_ms"]
+    # print(state_estimate.head())
+    # print(ax.head())
+    #TODO: add testing for apogee estimator and fix state input
+    apogee_estimator = Apogee(state_estimate[0], 0.01)
+    apogee_estimates = np.array([])
+    for estimate in state_estimate:
+        apogee_estimate = apogee_estimator.predict_apogee(state_estimate[0])
+        np.append(apogee_estimates, apogee_estimate)
+    
+    plt.plot(timestamps, apogee_estimates, label="Estimated Apogee")
+    plt.plot(timestamps, state_estimate, label="Current alitude")
+    plt.show()
+    
     
