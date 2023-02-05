@@ -31,20 +31,27 @@ class Apogee:
         self.flap_ext = 0.
     
     def set_params(self, state):
-        self.state = state[:3][0].copy()
+        self.state = state.copy()
 
     def RK4(self):
         k1_v = self.state[2]
-        k2_v = self.step_v(self.state[1] + k1_v*(self.dt/2))
-        k3_v = self.step_v(self.state[1] + k2_v*(self.dt/2))
-        k4_v = self.step_v(self.state[1] + k3_v*(self.dt))
+        # k2_v = self.step_v(self.state[1] + k1_v*(self.dt/2))
+        # k3_v = self.step_v(self.state[1] + k2_v*(self.dt/2))
+        # k4_v = self.step_v(self.state[1] + k3_v*(self.dt))
+        k2_v = self.state[2] + k1_v*(self.dt/2)
+        k3_v = self.state[2] + k2_v*(self.dt/2)
+        k4_v = self.state[2] + k3_v*(self.dt)
+
 
         v = (self.state[1] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*self.dt)
     
         k1_p = self.state[1]
-        k2_p = self.step_p(self.state[0] + k1_p*(self.dt/2))
-        k3_p = self.step_p(self.state[0] + k2_p*(self.dt/2))
-        k4_p = self.step_p(self.state[0] + k3_p*(self.dt))
+        # k2_p = self.step_p(self.state[0] + k1_p*(self.dt/2))
+        # k3_p = self.step_p(self.state[0] + k2_p*(self.dt/2))
+        # k4_p = self.step_p(self.state[0] + k3_p*(self.dt))
+        k2_p = self.state[1] + k1_p*(self.dt/2)
+        k3_p = self.state[1] + k2_p*(self.dt/2)
+        k4_p = self.state[1] + k3_p*(self.dt)
 
         p = (self.state[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*self.dt)
 
@@ -149,29 +156,32 @@ class Apogee:
         self.set_params(current_state.copy())
         while (self.state[1] > 0):
             self.RK4()
-
         return self.state[0]
 
 
 if __name__=='__main__':
     import matplotlib.pyplot as plt
+    from tqdm import tqdm
     data = pd.read_csv(os.path.join(os.path.dirname(__file__), "flight_computer_20221029.csv"))
-    # print(data.head())
-    state_estimate = data["state_est_x"]
+    state_estimate_x = data["state_est_x"]
+    state_estimate_vx = data["state_est_vx"]
+    state_estimate_ax = data["state_est_ax"]
+    state_estimate = np.array([state_estimate_x, state_estimate_vx, state_estimate_ax])
     ax = data["ax"]
     rocket_estimated_apogee = data["state_est_apo"]
     timestamps = data["timestamp_ms"]
-    # print(state_estimate.head())
-    # print(ax.head())
+    timestamps = timestamps[:8000:100]
     #TODO: add testing for apogee estimator and fix state input
-    apogee_estimator = Apogee(state_estimate[0], 0.01)
+    apogee_estimator = Apogee(state_estimate, 0.1)
     apogee_estimates = np.array([])
-    for estimate in state_estimate:
-        apogee_estimate = apogee_estimator.predict_apogee(state_estimate[0])
-        np.append(apogee_estimates, apogee_estimate)
+    for estimate in tqdm(state_estimate.T[:8000:100]):
+        apogee_estimate = apogee_estimator.predict_apogee(estimate)
+        apogee_estimates = np.append(apogee_estimates, apogee_estimate)
     
     plt.plot(timestamps, apogee_estimates, label="Estimated Apogee")
-    plt.plot(timestamps, state_estimate, label="Current alitude")
+    plt.plot(timestamps, state_estimate_x[:8000:100], label="Current alitude")
+    plt.plot(timestamps, rocket_estimated_apogee[:8000:100], label="Rocket Estimated Apogee")
+    plt.legend()
     plt.show()
     
     
