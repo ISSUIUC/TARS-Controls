@@ -24,21 +24,9 @@ sim_dict = {
     }
 
 kalman_dict = {
-    "x": {
-        "alt": [],
-        "vel": [],
-        "accel": []
-    },
-    "y": {
-        "alt": [],
-        "vel": [],
-        "accel": []
-    },
-    "z": {
-        "alt": [],
-        "vel": [],
-        "accel": []
-    },
+    "x":[],
+    "y": [],
+    "z": [],
     "time": []
 }
 
@@ -110,7 +98,11 @@ def simulator(x0, dt) -> None:
         # Kalman Filter stuff goes here
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
         kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
-        
+
+        kalman_dict["x"].append(kalman_filter.get_state()[0:3])
+        kalman_dict["y"].append(kalman_filter.get_state()[3:6])
+        kalman_dict["z"].append(kalman_filter.get_state()[6:9])
+
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
@@ -168,15 +160,9 @@ if __name__ == '__main__':
         cur_point += map(str, list([sensor_dict["imu_gyro_x"][point]]))
         cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
         cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
-        cur_point += str(kalman_dict["x"]["pos"][point])
-        cur_point += str(kalman_dict["x"]["vel"][point])
-        cur_point += str(kalman_dict["x"]["accel"][point])
-        cur_point += str(kalman_dict["y"]["pos"][point])
-        cur_point += str(kalman_dict["y"]["vel"][point])
-        cur_point += str(kalman_dict["y"]["accel"][point])
-        cur_point += str(kalman_dict["z"]["pos"][point])
-        cur_point += str(kalman_dict["z"]["vel"][point])
-        cur_point += str(kalman_dict["z"]["accel"][point])
+        cur_point += map(str, list(kalman_dict["x"][point]))
+        cur_point += map(str, list(kalman_dict["y"][point]))
+        cur_point += map(str, list(kalman_dict["z"][point]))
 
         record.append(cur_point)
     
