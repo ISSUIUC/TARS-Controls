@@ -21,7 +21,6 @@ def newtonProp(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
 def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
     '''
     Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
-
     Args:
         y0 (np.array): current state vector [6x3]
              x:         y:         z:
@@ -31,7 +30,6 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
             [ang_pos,   ang_pos,   ang_pos],
             [ang_vel,   ang_vel,   ang_vel],
             [ang_accel, ang_accel, ang_accel]]
-
         dt (float): time step between each iteration in simulation
         time_stamp (float): current time stamp of rocket in simulation
     
@@ -39,13 +37,30 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
         (np.array): state vector of rocket in x-axis [6x3]
     '''
 
-    # k1_v = forces.get_force(y0[0], y0[1], flap_ext)/prop.mass
+    I_inv = prop.I_inv(prop.rocket_total_mass)
+
     k1_v = y0[2].copy()
-    k2_v = step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)[0]/prop.rocket_total_mass
-    k3_v = step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)[0]/prop.rocket_total_mass
-    k4_v = step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext)[0]/prop.rocket_total_mass
+
+    k2_v,k2_av = step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)
+    k3_v,k3_av = step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)
+    k4_v,k4_av = step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext)
+
+    # k2_v = step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)[0]/prop.rocket_total_mass
+    # k3_v = step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)[0]/prop.rocket_total_mass
+    # k4_v = step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext)[0]/prop.rocket_total_mass
+
+    k2_v /= prop.rocket_total_mass
+    k3_v /= prop.rocket_total_mass
+    k4_v /= prop.rocket_total_mass
 
     v = (y0[1] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*dt)
+
+    k1_av = y0[5].copy()
+    k2_av = I_inv@k2_av
+    k3_av = I_inv@k3_av
+    k4_av = I_inv@k4_av
+
+    ang_v = (y0[4] + (1/6)*(k1_av+(2*k2_av)+(2*k3_av)+k4_av)*dt)
 
     k1_p = y0[1].copy()
     k2_p = step_p(y0[0], y0[0] + (dt/2)*k1_p, dt/2)
@@ -54,12 +69,19 @@ def RK4(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
 
     p = (y0[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
 
+    k1_ap = y0[4].copy()
+    k2_ap = step_p(y0[3], y0[3] + (dt/2)*k1_ap, dt/2)
+    k3_ap = step_p(y0[3], y0[3] + (dt/2)*k2_ap, dt/2)
+    k4_ap = step_p(y0[3], y0[3] + dt*k3_ap, dt)
+
+    ang_p = (y0[3] + (1/6)*(k1_ap+(2*k2_ap)+(2*k3_ap)+k4_ap)*dt)
+
     temp,alpha = (forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp))
     # print(time_stamp, y0[3], temp[0], temp[1])
     a = temp[0]/prop.rocket_total_mass
 
-    ang_p, ang_v, ang_a = angular_rk4(y0, dt, time_stamp, prop.I_inv(prop.rocket_total_mass), flap_ext)
-    return np.array([p, v, a, ang_p, ang_v, ang_a]), alpha
+    # ang_p, ang_v, ang_a = angular_rk4(y0, dt, time_stamp, prop.I_inv(prop.rocket_total_mass), flap_ext)
+    return np.array([p, v, a, ang_p, ang_v, I_inv @ temp[1]]), alpha
 
 def step_p(y0, y1, dt):
     '''

@@ -2,10 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+import ekf
 import motor
 import properties as prop
 import simulator as sim
 import plotSIM as plotter
+import sensors
+import time
 
 motor = motor.Motor()
 
@@ -19,6 +22,26 @@ sim_dict = {
     "alpha": [],
     "time": []
     }
+
+kalman_dict = {
+    "x":[],
+    "y": [],
+    "z": [],
+    "time": []
+}
+
+sensor_dict ={
+    "baro_alt":[],
+    "imu_accel_x": [],
+    "imu_accel_y": [],
+    "imu_accel_z":[],
+    "imu_ang_pos_x":[],
+    "imu_ang_pos_y":[],
+    "imu_ang_pos_z":[],
+    "imu_gyro_x":[],
+    "imu_gyro_y": [],
+    "imu_gyro_z": []
+}
 
 def simulator(x0, dt) -> None:
     '''
@@ -37,6 +60,8 @@ def simulator(x0, dt) -> None:
     
     '''
     x = x0.copy()
+    kalman_filter = ekf.KalmanFilter(
+        dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
     idle_time = 0 # time in seconds before launch
     while time_stamp < idle_time:
@@ -47,10 +72,37 @@ def simulator(x0, dt) -> None:
     motor.ignite(time_stamp*dt)
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
+    t_start = time.time()
     while x[1,0] >= 0 or start:
         if start:
             start = False
+            
+        # Get sensor data
+        baro_alt = sensors.get_barometer_data(x)
+        accel_x, accel_y ,accel_z = sensors.get_accelerometer_data(x)
+        gyro_x, gyro_y, gyro_z = sensors.get_gyro_data(x)
+        bno_ang_pos_x, bno_ang_pos_y, bno_ang_pos_z = sensors.get_bno_orientation(x)
+        
+        # Append to sensor_dict
+        sensor_dict["baro_alt"].append(baro_alt)
+        sensor_dict["imu_accel_x"].append(accel_x)
+        sensor_dict["imu_accel_y"].append(accel_y)
+        sensor_dict["imu_accel_z"].append(accel_z)
+        sensor_dict["imu_ang_pos_x"].append(bno_ang_pos_x)
+        sensor_dict["imu_ang_pos_y"].append(bno_ang_pos_y)
+        sensor_dict["imu_ang_pos_z"].append(bno_ang_pos_z)
+        sensor_dict["imu_gyro_x"].append(gyro_x)
+        sensor_dict["imu_gyro_y"].append(gyro_y)
+        sensor_dict["imu_gyro_z"].append(gyro_z)
+        
         # Kalman Filter stuff goes here
+        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
+
+        kalman_dict["x"].append(kalman_filter.get_state()[0:3])
+        kalman_dict["y"].append(kalman_filter.get_state()[3:6])
+        kalman_dict["z"].append(kalman_filter.get_state()[6:9])
+
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
@@ -66,13 +118,17 @@ def simulator(x0, dt) -> None:
         x,alpha = sim.RK4(x, dt, time_stamp)
         sim_dict["alpha"].append(alpha)
         time_stamp += dt
+    t_end = time.time() - t_start
+    print("Time: ", t_end)
 
 
 if __name__ == '__main__':
     x0 = np.zeros((6,3))
-    x0[3] = [0, 0, .1]
+    x0[3] = [0, .05, 0]
+    x0[1] = [0,0,0]
     dt = 0.01
     simulator(x0, dt)
+
     # plot entries in sim_dict
     # print(np.array(sim_dict["pos"]))
     # # print(sim_dict["time"])
@@ -94,10 +150,24 @@ if __name__ == '__main__':
         cur_point += list(map(str, sim_dict["ang_vel"][point]))
         cur_point += list(map(str, sim_dict["ang_accel"][point]))
         cur_point += map(str, list([sim_dict["alpha"][point]]))
+        cur_point += map(str, list([sensor_dict["baro_alt"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_accel_x"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_accel_y"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_accel_z"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_ang_pos_x"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_ang_pos_y"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_ang_pos_z"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_gyro_x"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
+        cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
+        cur_point += map(str, list(kalman_dict["x"][point]))
+        cur_point += map(str, list(kalman_dict["y"][point]))
+        cur_point += map(str, list(kalman_dict["z"][point]))
+
         record.append(cur_point)
     
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha\n")
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_x_pos,kalman_x_vel,kalman_x_accel,kalman_y_pos,kalman_y_vel,kalman_y_accel,kalman_z_pos,kalman_z_vel,kalman_z_accel\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
