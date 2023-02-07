@@ -57,7 +57,12 @@ A_s = 2*r_r*l
 max_ext_length = .0178
 
 # Moment of Inertia
-
+I = lambda total_mass : np.diag([(1/2) * total_mass * r_r**2, 
+             (total_mass/12) * (l**2 + 3*r_r**2), 
+             (total_mass/12) * (l**2 + 3*r_r**2)])
+I_inv = lambda total_mass : np.diag([1/((1/2) * total_mass * r_r**2), 
+             1/((total_mass/12) * (l**2 + 3*r_r**2)), 
+             1/((total_mass/12) * (l**2 + 3*r_r**2))])
 
 def I(total_mass): return np.diag([(1/2) * total_mass * r_r**2,
                                    (total_mass/12) * (l**2 + 3*r_r**2),
