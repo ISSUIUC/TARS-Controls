@@ -131,6 +131,7 @@ class Motor():
                                            0,
                                            time_stamp)
         pr.rocket_total_mass = pr.rocket_dry_mass + self.current_mass
+        pr.cm = (pr.cm_rocket*pr.rocket_dry_mass + pr.cm_motor*self.current_mass) / (pr.rocket_dry_mass + self.current_mass)
         return self.current_mass
 
 
@@ -142,6 +143,7 @@ class Motor():
     """
     def set_coast_time(self, coast_time: np.float64) -> None:
         self.coast_time = coast_time
+
 
 
 if __name__ == '__main__':

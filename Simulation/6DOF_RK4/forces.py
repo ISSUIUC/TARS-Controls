@@ -51,16 +51,23 @@ class Forces:
         moment = vct.body_to_world(*x_state[2], np.cross(-prop.cm, thrust) + self.aerodynamic_moment(drag))
         return np.array([force, moment]), alpha
 
-    def get_Ca_Cn(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:
+    def get_Ca_Cn_Cp(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:
         # TODO: account for area change of flaps in C_a calculation
         '''
-        References lookup table to find C_a based on flap extension
+        References lookup table to find C_a, C_n, C_p based on flap extension
 
         Args:
+            x_state (np.array): State Vector [4x3]
+            alpha (float): angle between world x-axis and rocket x-axis (radians)
+            rasaero (csv): lookup file for flight properties
+            before_burnout (float): if greater than 0, then it is before burnout
             flap_ext (float): current flap extention config
-        
+                    
         Returns:
-            (float): coefficient of drag based on current config of flaps
+            [Ca, Cn, Cp]
+            Ca (float): Coefficinet of Axial Force
+            Cn (float): Coefficinet of Normal Force
+            Cp (np.array): Coefficinet of Pressure
         '''
         alt = x_state[0,0]
         vel = x_state[1]
@@ -88,17 +95,21 @@ class Forces:
         Ca = 0
         # Define starting Cn
         Cn = 0
-        
+        # Define starting Cp
+        Cp = 0
+
         ca_vals = csv_file["CA Power-Off"]
         if (before_burnout):
             ca_vals = csv_file["CA Power-On"]
         
         cn_vals = csv_file["CN Total"]
-        
+        cp_vals = csv_file["CP Total"]
+
         # Find indices where the mach values match up
         mach_indices = np.where(csv_file['Mach Number'] == mach)[0]    
+        
         if len(mach_indices) == 0:
-            return [0,0]
+            return [0,0,0]
 
         # Interpolate to find Cn value
         for idx in range(mach_indices[0], mach_indices[-1] + 1):
@@ -110,9 +121,16 @@ class Forces:
                 Cn_low = cn_vals[idx]
                 Cn_up = cn_vals[idx+1]
 
+                Cp_low = cp_vals[idx]
+                Cp_up = cp_vals[idx+1]
+
                 Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])  
                 Cn = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cn_low, Cn_up])  
-        return [Ca,Cn]
+                Cp = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cp_low, Cp_up])  
+
+        Cp = Cp/100. #Convert cm to m
+
+        return [Ca,Cn,np.array([Cp, 0.0, 0.0])]
 
     def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext) -> np.ndarray:
         '''
@@ -126,8 +144,7 @@ class Forces:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
         vel = vct.world_to_body(*x_state[2].copy(), x_state[1].copy() - wind_vector.copy())
-        C_a,C_n = self.get_Ca_Cn(x_state, alpha, rasaero, before_burnout, flap_ext)
-
+        C_a,C_n,prop.cp = self.get_Ca_Cn_Cp(x_state, alpha, rasaero, before_burnout, flap_ext)
         roll_aero = np.arctan2(x_state[1,2], x_state[1,1])
 
         C_n_y = np.abs(C_n * np.cos(roll_aero)) #TODO: Check with other values
