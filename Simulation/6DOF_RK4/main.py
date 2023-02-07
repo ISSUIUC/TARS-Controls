@@ -13,35 +13,36 @@ import time
 motor = motor.Motor()
 
 sim_dict = {
-    "pos":[],
+    "pos": [],
     "vel": [],
     "accel": [],
-    "ang_pos":[],
+    "ang_pos": [],
     "ang_vel": [],
     "ang_accel": [],
     "alpha": [],
     "time": []
-    }
+}
 
 kalman_dict = {
-    "x":[],
+    "x": [],
     "y": [],
     "z": [],
     "time": []
 }
 
-sensor_dict ={
-    "baro_alt":[],
+sensor_dict = {
+    "baro_alt": [],
     "imu_accel_x": [],
     "imu_accel_y": [],
-    "imu_accel_z":[],
-    "imu_ang_pos_x":[],
-    "imu_ang_pos_y":[],
-    "imu_ang_pos_z":[],
-    "imu_gyro_x":[],
+    "imu_accel_z": [],
+    "imu_ang_pos_x": [],
+    "imu_ang_pos_y": [],
+    "imu_ang_pos_z": [],
+    "imu_gyro_x": [],
     "imu_gyro_y": [],
     "imu_gyro_z": []
 }
+
 
 def simulator(x0, dt) -> None:
     '''
@@ -57,32 +58,33 @@ def simulator(x0, dt) -> None:
             [ang_vel,   ang_vel,   ang_vel],
             [ang_accel, ang_accel, ang_accel]]
         dt (float): time step between each iteration in simulation
-    
+
     '''
     x = x0.copy()
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
-    idle_time = 0 # time in seconds before launch
+    idle_time = 0  # time in seconds before launch
     while time_stamp < idle_time:
         time_stamp += dt
-    
+
     print("Ignition")
 
     motor.ignite(time_stamp*dt)
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
     t_start = time.time()
-    while x[1,0] >= 0 or start:
+    while x[1, 0] >= 0 or start:
         if start:
             start = False
-            
+
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
-        accel_x, accel_y ,accel_z = sensors.get_accelerometer_data(x)
+        accel_x, accel_y, accel_z = sensors.get_accelerometer_data(x)
         gyro_x, gyro_y, gyro_z = sensors.get_gyro_data(x)
-        bno_ang_pos_x, bno_ang_pos_y, bno_ang_pos_z = sensors.get_bno_orientation(x)
-        
+        bno_ang_pos_x, bno_ang_pos_y, bno_ang_pos_z = sensors.get_bno_orientation(
+            x)
+
         # Append to sensor_dict
         sensor_dict["baro_alt"].append(baro_alt)
         sensor_dict["imu_accel_x"].append(accel_x)
@@ -94,7 +96,7 @@ def simulator(x0, dt) -> None:
         sensor_dict["imu_gyro_x"].append(gyro_x)
         sensor_dict["imu_gyro_y"].append(gyro_y)
         sensor_dict["imu_gyro_z"].append(gyro_z)
-        
+
         # Kalman Filter stuff goes here
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
         kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
@@ -113,9 +115,10 @@ def simulator(x0, dt) -> None:
         sim_dict["ang_pos"].append(x[3])
         sim_dict["ang_vel"].append(x[4])
         sim_dict["ang_accel"].append(x[5])
-        sim_dict["time"].append(sim_dict["time"][-1]+dt if len(sim_dict["time"]) > 0 else 0)
+        sim_dict["time"].append(sim_dict["time"][-1] +
+                                dt if len(sim_dict["time"]) > 0 else 0)
 
-        x,alpha = sim.RK4(x, dt, time_stamp)
+        x, alpha = sim.RK4(x, dt, time_stamp)
         sim_dict["alpha"].append(alpha)
         time_stamp += dt
     t_end = time.time() - t_start
@@ -123,9 +126,8 @@ def simulator(x0, dt) -> None:
 
 
 if __name__ == '__main__':
-    x0 = np.zeros((6,3))
-    x0[3] = [0, .05, 0]
-    x0[1] = [0,0,0]
+    x0 = np.zeros((6, 3))
+    x0[3] = [0, 0.05, 0]
     dt = 0.01
     simulator(x0, dt)
 
@@ -165,7 +167,7 @@ if __name__ == '__main__':
         cur_point += map(str, list(kalman_dict["z"][point]))
 
         record.append(cur_point)
-    
+
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     with open(output_file, 'w') as f:
         f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_x_pos,kalman_x_vel,kalman_x_accel,kalman_y_pos,kalman_y_vel,kalman_y_accel,kalman_z_pos,kalman_z_vel,kalman_z_accel\n")
