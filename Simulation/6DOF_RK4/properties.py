@@ -26,7 +26,7 @@ cm_motor = np.array([0.3755, 0., 0.])
 
 impulse = 9671.0  # Ns
 motor_mass = 8.064  # Kg
-delay = 0  # s
+delay = 60  # s
 motor_lookup_file = '../6DOF_RK4/LookUp/m2500.csv'
 
 # # Motor Properties N5800:

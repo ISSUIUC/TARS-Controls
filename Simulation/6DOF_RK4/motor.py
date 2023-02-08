@@ -25,7 +25,7 @@ class Motor():
         self.current_mass = mass
         self.coast_time = delay
         self.alignment = np.array([0, 0])
-        self.start_time = 0
+        self.start_time = pr.delay
         self.cur_line = 0
 
 

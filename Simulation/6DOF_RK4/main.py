@@ -64,13 +64,18 @@ def simulator(x0, dt) -> None:
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
-    idle_time = 0  # time in seconds before launch
-    while time_stamp < idle_time:
+    # Idle stage
+    while time_stamp < prop.delay:
         time_stamp += dt
+        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
+
+        kalman_dict["x"].append(kalman_filter.get_state()[0:3])
+        kalman_dict["y"].append(kalman_filter.get_state()[3:6])
+        kalman_dict["z"].append(kalman_filter.get_state()[6:9])
 
     print("Ignition")
 
-    motor.ignite(time_stamp*dt)
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
     t_start = time.time()
