@@ -87,3 +87,18 @@ C_A_total = 3
 
 # simulation output file
 output_file = '../6DOF_RK4/Output/simulated_6dof.csv'
+
+# simulation output file
+output_file = '../6DOF_RK4/Output/simulated_6dof.csv'
+
+# Root Mean Squared KX134 (High_G accel)
+High_G_RMS = 1.9 # mg (milli g's)
+
+# Root Mean Squared LSM6DSL (3D Gyro)
+Gyro_RMS = 75 #mdps (millidegrees per second)
+
+# Root Mean Squared MS5611 (Barometer)
+Barometer_RMS = .012 # Pascal Conversion
+
+# Rotation Error BNO08X
+Bno_error = 2.5 # degrees of error
