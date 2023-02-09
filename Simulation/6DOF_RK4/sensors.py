@@ -5,7 +5,8 @@ import properties as prop
 import atmosphere as atm
 
 def get_accelerometer_data(x_state):
-    body_accel = vct.world_to_body(*x_state[3], x_state[2])
+    gravity = [(prop.G*prop.m_e)/((prop.r_e+x_state[0,0])**2), 0, 0]
+    body_accel = vct.world_to_body(*x_state[3], x_state[2] + gravity)
     kx134_rms = prop.High_G_RMS * 9.8/1000 # Convert to m/(s^2)
     accel_reading = np.array([random.gauss(body_accel[0], kx134_rms), 
                       random.gauss(body_accel[1], kx134_rms), 
