@@ -67,6 +67,12 @@ def simulator(x0, dt) -> None:
     # Idle stage
     while time_stamp < prop.delay:
         time_stamp += dt
+        baro_alt = sensors.get_barometer_data(x)
+        accel_x, accel_y, accel_z = sensors.get_accelerometer_data(x)
+        gyro_x, gyro_y, gyro_z = sensors.get_gyro_data(x)
+        bno_ang_pos_x, bno_ang_pos_y, bno_ang_pos_z = sensors.get_bno_orientation(
+            x)
+            
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
         kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
 
