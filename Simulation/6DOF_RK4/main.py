@@ -43,6 +43,33 @@ sensor_dict = {
     "imu_gyro_z": []
 }
 
+def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha):
+    # Append to sensor_dict
+    sensor_dict["baro_alt"].append(baro_alt)
+    sensor_dict["imu_accel_x"].append(accel[0])
+    sensor_dict["imu_accel_y"].append(accel[1])
+    sensor_dict["imu_accel_z"].append(accel[2])
+    sensor_dict["imu_ang_pos_x"].append(bno_ang_pos[0])
+    sensor_dict["imu_ang_pos_y"].append(bno_ang_pos[1])
+    sensor_dict["imu_ang_pos_z"].append(bno_ang_pos[2])
+    sensor_dict["imu_gyro_x"].append(gyro[0])
+    sensor_dict["imu_gyro_y"].append(gyro[1])
+    sensor_dict["imu_gyro_z"].append(gyro[2])
+
+    kalman_dict["x"].append(kalman_filter[0:3])
+    kalman_dict["y"].append(kalman_filter[3:6])
+    kalman_dict["z"].append(kalman_filter[6:9])
+
+    # Update Simulator Log
+    sim_dict["pos"].append(x[0])
+    sim_dict["vel"].append(x[1])
+    sim_dict["accel"].append(x[2])
+    sim_dict["ang_pos"].append(x[3])
+    sim_dict["ang_vel"].append(x[4])
+    sim_dict["ang_accel"].append(x[5])
+    sim_dict["time"].append(sim_dict["time"][-1] +
+                            dt if len(sim_dict["time"]) > 0 else 0)
+    sim_dict["alpha"].append(alpha)
 
 def simulator(x0, dt) -> None:
     '''
@@ -64,21 +91,20 @@ def simulator(x0, dt) -> None:
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
+
     # Idle stage
     while time_stamp < prop.delay:
         time_stamp += dt
         baro_alt = sensors.get_barometer_data(x)
-        accel_x, accel_y, accel_z = sensors.get_accelerometer_data(x)
-        gyro_x, gyro_y, gyro_z = sensors.get_gyro_data(x)
-        bno_ang_pos_x, bno_ang_pos_y, bno_ang_pos_z = sensors.get_bno_orientation(
-            x)
+        accel = sensors.get_accelerometer_data(x)
+        gyro = sensors.get_gyro_data(x)
+        bno_ang_pos = sensors.get_bno_orientation(x)
             
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
+        kalman_filter.update(baro_alt, accel[0], accel[1], accel[2])
+        
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter.get_state(), 0)
 
-        kalman_dict["x"].append(kalman_filter.get_state()[0:3])
-        kalman_dict["y"].append(kalman_filter.get_state()[3:6])
-        kalman_dict["z"].append(kalman_filter.get_state()[6:9])
 
     print("Ignition")
 
@@ -91,47 +117,22 @@ def simulator(x0, dt) -> None:
 
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
-        accel_x, accel_y, accel_z = sensors.get_accelerometer_data(x)
-        gyro_x, gyro_y, gyro_z = sensors.get_gyro_data(x)
-        bno_ang_pos_x, bno_ang_pos_y, bno_ang_pos_z = sensors.get_bno_orientation(
-            x)
-
-        # Append to sensor_dict
-        sensor_dict["baro_alt"].append(baro_alt)
-        sensor_dict["imu_accel_x"].append(accel_x)
-        sensor_dict["imu_accel_y"].append(accel_y)
-        sensor_dict["imu_accel_z"].append(accel_z)
-        sensor_dict["imu_ang_pos_x"].append(bno_ang_pos_x)
-        sensor_dict["imu_ang_pos_y"].append(bno_ang_pos_y)
-        sensor_dict["imu_ang_pos_z"].append(bno_ang_pos_z)
-        sensor_dict["imu_gyro_x"].append(gyro_x)
-        sensor_dict["imu_gyro_y"].append(gyro_y)
-        sensor_dict["imu_gyro_z"].append(gyro_z)
+        accel = sensors.get_accelerometer_data(x)
+        gyro = sensors.get_gyro_data(x)
+        bno_ang_pos = sensors.get_bno_orientation(x)
 
         # Kalman Filter stuff goes here
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(baro_alt, accel_x, accel_y, accel_z)
-
-        kalman_dict["x"].append(kalman_filter.get_state()[0:3])
-        kalman_dict["y"].append(kalman_filter.get_state()[3:6])
-        kalman_dict["z"].append(kalman_filter.get_state()[6:9])
+        kalman_filter.update(baro_alt, accel[0], accel[1], accel[2])
 
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
-        # Update Simulator Log
-        sim_dict["pos"].append(x[0])
-        sim_dict["vel"].append(x[1])
-        sim_dict["accel"].append(x[2])
-        sim_dict["ang_pos"].append(x[3])
-        sim_dict["ang_vel"].append(x[4])
-        sim_dict["ang_accel"].append(x[5])
-        sim_dict["time"].append(sim_dict["time"][-1] +
-                                dt if len(sim_dict["time"]) > 0 else 0)
-
         x, alpha = sim.RK4(x, dt, time_stamp)
-        sim_dict["alpha"].append(alpha)
         time_stamp += dt
+
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter.get_state(), alpha)
+
     t_end = time.time() - t_start
     print("Time: ", t_end)
 
