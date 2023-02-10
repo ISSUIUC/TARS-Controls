@@ -7,7 +7,7 @@ class KalmanFilter:
         self.dt = dt
         self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
-        self.R = np.diag([1., 100., 100., 100.])
+        self.R = np.diag([1., 1., 1., 1.])
         self.P_k = np.zeros((9,9))
         self.x_priori = np.zeros((9,1))
         self.P_priori = np.zeros((9,9))
@@ -21,9 +21,14 @@ class KalmanFilter:
 
         for i in range(3):
             self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
-                                    [0.0, 1.0, dt],
-                                    [0.0, 0.0, 1.0]]
-            self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 0.1)
+                                            [0.0, 1.0, dt],
+                                            [0.0, 0.0, 1.0]]
+            # Q = np.array([[(dt**5)/20., ((dt**4)/8.)*80., (dt**3)/6.],
+            #               [((dt**4)/8.)*80., ((dt**3)/8.), (dt**2)/2.],
+            #               [(dt**3)/6., (dt**2)/2., dt]])
+            # self.Q[3*i:3*i+3, 3*i:3*i+3] = Q*13.
+            self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 13.)
+
 
         # accelerometer 3 axes
         # barometric altimeter 1 axis
@@ -32,7 +37,7 @@ class KalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-    def priori(self, u):
+    def priori(self, u=0):
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
@@ -49,5 +54,5 @@ class KalmanFilter:
     def get_state(self):
         return self.x_k
         
-        
-        
+
+
