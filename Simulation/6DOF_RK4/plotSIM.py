@@ -5,61 +5,46 @@ import os
 
 import properties as prop
 
-def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0, coast_start=0, sim_runtime=0):
-
-    # plt.style.use('Solarize_Light2')
-
+def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
     fig_linear,(pos_nc,vel_nc,accel_nc) = plt.subplots(3,1,figsize=(15,10), sharex=True)
     fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 25)
 
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
-    # plt.legend(fontsize = 14) 
     plt.xlabel("Time (s)", fontsize = 14)
     pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,0], label="X", color="tab:red", linewidth = 2)
     pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,1], label="Y", color="tab:green", linewidth = 2)
     pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,2], label="Z", color="tab:blue", linewidth = 2)
+    pos_nc.plot(sensor_dict["time"], sensor_dict["baro_alt"], label="Barometric Altimeter", color="darkred", linestyle = ":",linewidth = 2)
+    pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2)
+    pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2)
+    pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2)
     pos_nc.set_ylabel("Position (m)")
-    # alt_nc.axhline(y = apogee, color = "tab:brown", linestyle = "dotted", linewidth = 2.5, label="Apogee")
-    # alt_nc.plot(sim_dict_noisy["time"], sim_dict_noisy["altitude"],label="Noisy Altitude Reading",color="lightsteelblue", linewidth = 3, linestyle=":")
-    # alt_nc.plot(sim_dict_kalman["time"], sim_dict_kalman["altitude"],label="Kalman Filter State",linestyle="--",color="tab:red")
-    # alt_nc.set(ylabel = "Altitude (m)")
-    # alt_nc.axvline(x = const.sim_start_delay, color = "tab:green", linestyle = "dotted", linewidth = 2.5, label="Boost")
-    # alt_nc.axvline(x = coast_start, color = "tab:blue", linestyle = "dotted", linewidth = 2.5, label="Coast")
-    # alt_nc.text(0.67, 0.05, "Target Apogee: " + str(round(const.DESIRED_APOGEE,2)) + " m", verticalalignment='center', horizontalalignment='left', transform=alt_nc.transAxes, color='black', fontsize=10)
-    # alt_nc.text(0.67, 0.17, "Apogee: " + str(round(apogee,2)) + " m", verticalalignment='center', horizontalalignment='left', transform=alt_nc.transAxes, color='black', fontsize=10)
-    # alt_nc.text(0.67, 0.29, "Sim Runtime: " + str(round(sim_runtime,2)) + " s", verticalalignment='center', horizontalalignment='left', transform=alt_nc.transAxes, color='black', fontsize=10)
     pos_nc.legend()
 
     # Real Velocity vs Kalman Filter Graph (No Control)
     vel_nc.plot(sim_dict["time"], sim_dict["vel"][:,0],label="X",color="tab:red", linewidth = 2);  
     vel_nc.plot(sim_dict["time"], sim_dict["vel"][:,1],label="Y",color="tab:green", linewidth = 2);  
     vel_nc.plot(sim_dict["time"], sim_dict["vel"][:,2],label="Z",color="tab:blue", linewidth = 2);  
+    vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2)
+    vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2)
+    vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2)
     vel_nc.set_ylabel("Velocity (m/s)")
-    # vel_nc.plot(sim_dict_kalman["time"], sim_dict_kalman["velocity"],label="Kalman Filter State",linestyle="--",color="tab:red")
-    # vel_nc.set(ylabel = "Velocity (m/s)")
-    # vel_nc.axvline(x = const.sim_start_delay, color = "tab:green", linestyle = "dotted", linewidth = 2.5, label="Boost")
-    # vel_nc.axvline(x = coast_start, color = "tab:blue", linestyle = "dotted", linewidth = 2.5, label="Coast")
     vel_nc.legend()
 
     # Acceleration Measurements vs Real Acceleration vs Kalman Filter Graph (No Control)
     accel_nc.plot(sim_dict["time"], sim_dict["accel"][:,0],label="X",color="tab:red", linewidth = 2);  
     accel_nc.plot(sim_dict["time"], sim_dict["accel"][:,1],label="Y",color="tab:green", linewidth = 2);  
     accel_nc.plot(sim_dict["time"], sim_dict["accel"][:,2],label="Z",color="tab:blue", linewidth = 2);  
+    accel_nc.plot(sensor_dict["time"], sensor_dict["imu_accel_x"], label="IMU X", color="darkred", linestyle = ":",linewidth = 2)
+    accel_nc.plot(sensor_dict["time"], sensor_dict["imu_accel_y"], label="IMU Y", color="darkgreen", linestyle = ":",linewidth = 2)
+    accel_nc.plot(sensor_dict["time"], sensor_dict["imu_accel_z"], label="IMU Z", color="darkblue", linestyle = ":",linewidth = 2)
+    accel_nc.plot(kalman_dict["time"], kalman_dict["kalman_accel"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2)
+    accel_nc.plot(kalman_dict["time"], kalman_dict["kalman_accel"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2)
+    accel_nc.plot(kalman_dict["time"], kalman_dict["kalman_accel"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2)
     accel_nc.set_ylabel("Acceleration (m/s^2)")
-    # accel_nc.plot(sim_dict_noisy["time"], sim_dict_noisy["acceleration"],label="Noisy Accelerometer Reading",color="lightsteelblue", linewidth = 3, linestyle=":")
-    # accel_nc.plot(sim_dict_kalman["time"], sim_dict_kalman["acceleration"],label="Kalman Filter State",linestyle="--",color="tab:red")
-    # accel_nc.set(ylabel = "Acceleration (m/s^2)")
-    # accel_nc.axvline(x = const.sim_start_delay, color = "tab:green", linestyle = "dotted", linewidth = 2.5, label="Boost")
-    # accel_nc.axvline(x = coast_start, color = "tab:blue", linestyle = "dotted", linewidth = 2.5, label="Coast")
     accel_nc.legend()
     plt.tight_layout()
-
-    # error_nc.plot(sim_error["time"], sim_error["error"],label="Error",color="tab:purple", linewidth = 1)
-    # error_nc.set(ylabel = "Altitude Error (m)")
-    # error_nc.axvline(x = const.sim_start_delay, color = "tab:green", linestyle = "dotted", linewidth = 2.5, label="Boost")
-    # error_nc.axvline(x = coast_start, color = "tab:blue", linestyle = "dotted", linewidth = 2.5, label="Coast")
-    # error_nc.legend()
 
     fig_angular,(ang_pos_nc, ang_vel_nc, ang_accel_nc, alpha_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True)
     fig_angular.suptitle("PYSIM 6DOF ANGULAR PLOT", color='#F5B14C', fontsize = 25)
@@ -67,12 +52,18 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
     ang_pos_nc.plot(sim_dict["time"], sim_dict["ang_pos"][:,0], label="Roll", color="tab:red", linewidth = 2)
     ang_pos_nc.plot(sim_dict["time"], sim_dict["ang_pos"][:,1], label="Pitch", color="tab:green", linewidth = 2)
     ang_pos_nc.plot(sim_dict["time"], sim_dict["ang_pos"][:,2], label="Yaw", color="tab:blue", linewidth = 2)
+    ang_pos_nc.plot(sensor_dict["time"], sensor_dict["imu_ang_pos_x"], label="IMU Roll", color="darkred", linestyle = ":",linewidth = 2)
+    ang_pos_nc.plot(sensor_dict["time"], sensor_dict["imu_ang_pos_y"], label="IMU Pitch", color="darkgreen", linestyle = ":",linewidth = 2)
+    ang_pos_nc.plot(sensor_dict["time"], sensor_dict["imu_ang_pos_z"], label="IMU Yaw", color="darkblue", linestyle = ":",linewidth = 2)
     ang_pos_nc.set_ylabel("Position (rad)");  
     ang_pos_nc.legend()
 
     ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,0],label="Roll",color="tab:red", linewidth = 2);   
     ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,1],label="Pitch",color="tab:green", linewidth = 2);  
     ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,2],label="Yaw",color="tab:blue", linewidth = 2);  
+    ang_vel_nc.plot(sensor_dict["time"], sensor_dict["imu_gyro_x"], label="IMU Roll Rate", color="darkred", linestyle = ":",linewidth = 2)
+    ang_vel_nc.plot(sensor_dict["time"], sensor_dict["imu_gyro_y"], label="IMU Pitch Rate", color="darkgreen", linestyle = ":",linewidth = 2)
+    ang_vel_nc.plot(sensor_dict["time"], sensor_dict["imu_gyro_z"], label="IMU Yaw Rate", color="darkblue", linestyle = ":",linewidth = 2)
     ang_vel_nc.set_ylabel("Velocity (rad/s)");  
     ang_vel_nc.legend()
 
@@ -93,10 +84,12 @@ def plotter(sim_dict, sim_dict_noisy=0, sim_dict_kalman=0, sim_error=0, apogee=0
 if __name__ == "__main__":
     sim_dict = {}
     sensor_dict = {}
+    kalman_dict = {}
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     file_data = pd.read_csv(output_file)
     sim_dict["time"] = file_data["time"].values
     sensor_dict["time"] = file_data["time"].values
+    kalman_dict["time"] = file_data["time"].values
     # print(sim_dict["time"].values)
     # sim_dict["pos"] = np.array(
     #     list(zip(file_data["pos_x"].values, file_data["pos_y"].values, file_data["pos_z"].values)))
@@ -109,7 +102,11 @@ if __name__ == "__main__":
     for attr in ["pos", "vel", "accel", "ang_pos", "ang_vel", "ang_accel"]:
         sim_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+    for attr in ["kalman_pos", "kalman_vel", "kalman_accel"]:
+        kalman_dict[attr] = np.array(
+            list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
     sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
+    sensor_dict["baro_alt"] = np.array(list(zip(file_data["baro_alt"].values)))
     sensor_dict["imu_accel_x"] = np.array(list(zip(file_data["imu_accel_x"].values)))
     sensor_dict["imu_accel_y"] = np.array(list(zip(file_data["imu_accel_y"].values)))
     sensor_dict["imu_accel_z"] = np.array(list(zip(file_data["imu_accel_z"].values)))
@@ -120,4 +117,4 @@ if __name__ == "__main__":
     sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
     
-    plotter(sim_dict=sim_dict)
+    plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)
