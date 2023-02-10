@@ -17,25 +17,6 @@ class KalmanFilter:
         self.current_time = 0
         self.s_dt = dt
 
-        self.kalman_dict = {
-            "x":{
-            "alt": [],
-            "vel": [],
-            "accel": []
-            },
-            "y":{
-            "alt": [],
-            "vel": [],
-            "accel": []
-            },
-            "z":{
-            "alt": [],
-            "vel": [],
-            "accel": []
-            },
-            "time": []
-        }
-
         self.x_k = np.array([pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z]).T
 
         for i in range(3):
@@ -65,17 +46,8 @@ class KalmanFilter:
 
         self.current_time += self.s_dt
 
-        i = 0
-        for dim in ["x","y","z"]:
-            for state in ["alt","vel","accel"]:
-                self.kalman_dict[dim][state].append(self.x_k[i])
-                i += 1
-
     def get_state(self):
         return self.x_k
-
-    def get_kalman_dict(self):
-        return self.kalman_dict
         
         
         
