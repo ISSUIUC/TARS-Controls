@@ -101,7 +101,7 @@ def simulator(x0, dt) -> None:
         bno_ang_pos = sensors.get_bno_orientation(x)
             
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(baro_alt, accel[0], accel[1], accel[2])
+        kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter.get_state(), 0)
 
@@ -123,7 +123,7 @@ def simulator(x0, dt) -> None:
 
         # Kalman Filter stuff goes here
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(baro_alt, accel[0], accel[1], accel[2])
+        kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
 
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)

@@ -1,6 +1,7 @@
 # all the linear positions
 from filterpy.common import Q_continuous_white_noise
 import numpy as np
+import util.vectors as vct
 
 class KalmanFilter:
     def __init__(self, dt, pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z):
@@ -41,10 +42,10 @@ class KalmanFilter:
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
-    def update(self, x_pos, x_accel, y_accel, z_accel):
+    def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
-        
-        y_k = np.array([x_pos, x_accel, y_accel, z_accel]).T
+        acc = vct.body_to_world(*bno_attitude, np.array([x_accel,y_accel,z_accel]))
+        y_k = np.array([x_pos, *acc]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori
