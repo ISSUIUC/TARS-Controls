@@ -44,9 +44,6 @@ class Apogee:
 
     def RK4(self):
         k1_v = self.state[2]
-        # k2_v = self.step_v(self.state[1] + k1_v*(self.dt/2))
-        # k3_v = self.step_v(self.state[1] + k2_v*(self.dt/2))
-        # k4_v = self.step_v(self.state[1] + k3_v*(self.dt))
         k2_v = self.state[2] + k1_v*(self.dt/2)
         k3_v = self.state[2] + k2_v*(self.dt/2)
         k4_v = self.state[2] + k3_v*(self.dt)
@@ -55,9 +52,6 @@ class Apogee:
         v = (self.state[1] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*self.dt)
     
         k1_p = self.state[1]
-        # k2_p = self.step_p(self.state[0] + k1_p*(self.dt/2))
-        # k3_p = self.step_p(self.state[0] + k2_p*(self.dt/2))
-        # k4_p = self.step_p(self.state[0] + k3_p*(self.dt))
         k2_p = self.state[1] + k1_p*(self.dt/2)
         k3_p = self.state[1] + k2_p*(self.dt/2)
         k4_p = self.state[1] + k3_p*(self.dt)
@@ -89,31 +83,8 @@ class Apogee:
         mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
         mach = round(mach_number, 2)
 
-        # define csv file to search through
-        # csv_file = self.rasaero
-
-        # Define starting Ca
-        # Ca = 0
-        
-        # ca_vals = csv_file["CA Power-Off"]
-
-        # # Find indices where the mach values match up
-        # mach_indices = np.where(csv_file['Mach Number'] == mach)[0]    
-        # if len(mach_indices) == 0:
-        #     return Ca
-        # Ca = ca_vals[mach_indices[0]]
         Ca = self.approximate_cubic_spline(self.c, self.x_interpolate, mach)
         return Ca
-        
-        # # Interpolate to find Cn value
-        # for idx in range(mach_indices[0], mach_indices[-1] + 1):
-        #     if (0 == csv_file['Alpha (deg)'][idx] and csv_file['Protuberance (%)'][idx] <= protub_perc <= csv_file['Protuberance (%)'][idx+1]):
-                
-        #         Ca_low = ca_vals[idx]
-        #         Ca_up = ca_vals[idx+1]
-
-        #         Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])    
-        # return Ca
 
 
     def get_accel(self) -> np.ndarray:
@@ -177,8 +148,6 @@ class Apogee:
     ########################################
     def f_true(self, x):
         x = round(x,2)
-        # print(x)
-
         return self.rasaero[self.rasaero['Mach Number'] == x]['CA Power-Off'].values[0]
     
     def calc_spline_coefficients(self, a, b, n):
@@ -253,12 +222,7 @@ class Apogee:
                 # update values from condition (4)
                 A[ind + 3, ind] = 0
                 A[ind + 3, ind + 1] = 1
-                # A[ind + 3, ind + 2] = ### YOUR CODE HERE ###
-                # A[ind + 3, ind + 3] = ### YOUR CODE HERE ###
                 A[ind + 3, ind + 4] = -1
-                # A[ind + 3, ind + 5] = ### YOUR CODE HERE ###
-                # A[ind + 3, ind + 6] = ### YOUR CODE HERE ###
-                # A[ind + 3, ind + 7] = ### YOUR CODE HERE ###
 
             # update values from conditions (3), (4) and "extra" conditions (7)-(8)
             f[ind + 2] = 0 # f_true(0)
@@ -294,7 +258,7 @@ class Apogee:
         elif x in x_interpolate:
             i = x_interpolate.index(x)  # index for interpolation points
         else:
-            i = math.floor(x*(self.n/3))# np.searchsorted(x_interpolate, x) - 1   # index for test points between interpolation points
+            i = math.floor(x*(self.n/3)) # index for test points between interpolation points
 
         # get first row index associated with the ith spline in c
         ind = i * 4
