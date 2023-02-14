@@ -9,6 +9,7 @@ import simulator as sim
 import plotSIM as plotter
 import sensors
 import time
+import apogee_estimator as apg
 
 motor = motor.Motor()
 
@@ -40,10 +41,11 @@ sensor_dict = {
     "imu_ang_pos_z": [],
     "imu_gyro_x": [],
     "imu_gyro_y": [],
-    "imu_gyro_z": []
+    "imu_gyro_z": [],
+    "apogee_estimate": []
 }
 
-def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha):
+def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apogee_esimtation):
     # Append to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
     sensor_dict["imu_accel_x"].append(accel[0])
@@ -55,6 +57,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha):
     sensor_dict["imu_gyro_x"].append(gyro[0])
     sensor_dict["imu_gyro_y"].append(gyro[1])
     sensor_dict["imu_gyro_z"].append(gyro[2])
+    sensor_dict["apogee_estimate"].append(apogee_esimtation)
 
     kalman_dict["x"].append(kalman_filter[0:3])
     kalman_dict["y"].append(kalman_filter[3:6])
@@ -87,10 +90,13 @@ def simulator(x0, dt) -> None:
         dt (float): time step between each iteration in simulation
 
     '''
+
     x = x0.copy()
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
+    
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1)
 
     # Idle stage
     while time_stamp < prop.delay:
@@ -99,11 +105,12 @@ def simulator(x0, dt) -> None:
         accel = sensors.get_accelerometer_data(x)
         gyro = sensors.get_gyro_data(x)
         bno_ang_pos = sensors.get_bno_orientation(x)
-            
+        
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
         kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
-        
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter.get_state(), 0)
+
+        current_state = kalman_filter.get_state()
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, 0, current_state[0])
 
 
     print("Ignition")
@@ -111,6 +118,7 @@ def simulator(x0, dt) -> None:
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
     t_start = time.time()
+
     while x[1, 0] >= 0 or start:
         if start:
             start = False
@@ -125,13 +133,16 @@ def simulator(x0, dt) -> None:
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
         kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
 
+        current_state = kalman_filter.get_state()
+        apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
+
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
         x, alpha = sim.RK4(x, dt, time_stamp)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter.get_state(), alpha)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, alpha, apogee_est)
 
     t_end = time.time() - t_start
     print("Time: ", t_end)
@@ -174,6 +185,7 @@ if __name__ == '__main__':
         cur_point += map(str, list([sensor_dict["imu_gyro_x"][point]]))
         cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
         cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
+        cur_point += map(str, list([sensor_dict["apogee_estimate"][point]]))
         cur_point += map(str, list(kalman_dict["x"][point]))
         cur_point += map(str, list(kalman_dict["y"][point]))
         cur_point += map(str, list(kalman_dict["z"][point]))
@@ -182,6 +194,6 @@ if __name__ == '__main__':
 
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z\n")
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")

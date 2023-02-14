@@ -85,16 +85,9 @@ class Apogee:
         # Define mach number for csv lookup, rounded to hundreds place
         mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
         mach = round(mach_number, 2)
-        
-        #Define blank upper and lower Cds
-        Ca_low = 0
-        Ca_up = 0
 
         # define csv file to search through
         csv_file = self.rasaero
-
-        # Define protuberance percentage of full extension given current extension
-        protub_perc = self.flap_ext/prop.max_ext_length
 
         # Define starting Ca
         Ca = 0
@@ -105,16 +98,18 @@ class Apogee:
         mach_indices = np.where(csv_file['Mach Number'] == mach)[0]    
         if len(mach_indices) == 0:
             return Ca
-            
-        # Interpolate to find Cn value
-        for idx in range(mach_indices[0], mach_indices[-1] + 1):
-            if (0 == csv_file['Alpha (deg)'][idx] and csv_file['Protuberance (%)'][idx] <= protub_perc <= csv_file['Protuberance (%)'][idx+1]):
-                
-                Ca_low = ca_vals[idx]
-                Ca_up = ca_vals[idx+1]
-
-                Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])    
+        Ca = ca_vals[mach_indices[0]]
         return Ca
+        
+        # # Interpolate to find Cn value
+        # for idx in range(mach_indices[0], mach_indices[-1] + 1):
+        #     if (0 == csv_file['Alpha (deg)'][idx] and csv_file['Protuberance (%)'][idx] <= protub_perc <= csv_file['Protuberance (%)'][idx+1]):
+                
+        #         Ca_low = ca_vals[idx]
+        #         Ca_up = ca_vals[idx+1]
+
+        #         Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])    
+        # return Ca
 
 
     def get_accel(self) -> np.ndarray:
