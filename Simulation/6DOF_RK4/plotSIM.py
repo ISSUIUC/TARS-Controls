@@ -19,6 +19,8 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2)
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2)
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2)
+    pos_nc.plot(sensor_dict["time"], sensor_dict["apogee_estimate"], label="Apogee Estimator",color="brown", linewidth = 2)
+    pos_nc.axhline(y=sim_dict["pos"][-1,0], label="Simulated Apogee", linestyle = "dashed", color="gray", linewidth = 2)
     pos_nc.set_ylabel("Position (m)")
     pos_nc.legend()
 
@@ -116,5 +118,7 @@ if __name__ == "__main__":
     sensor_dict["imu_gyro_x"] = np.array(list(zip(file_data["imu_gyro_x"].values)))
     sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
+    sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
+
     
     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)
