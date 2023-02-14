@@ -14,7 +14,7 @@ class SimProperties:
     cp = np.array([3.34-2.71, 0., 0.])
 
     # RASAero Look Up
-    # rasaero_lookup_file = '../6DOF_RK4/LookUp/RASAero.csv'
+    rasaero_lookup_file = '../6DOF_RK4/LookUp/RASAero.csv'
 
     # Temporary C_d constant
     C_d = 0.5
@@ -61,23 +61,25 @@ class SimProperties:
 
     # Moment of Inertia
 
-    def I(total_mass): return np.diag([(1/2) * total_mass * r_r**2,
-                                       (total_mass/12) * (l**2 + 3*r_r**2),
-                                       (total_mass/12) * (l**2 + 3*r_r**2)])
+    def I(self, total_mass): return np.diag([(1/2) * total_mass * self.r_r**2,
+                                             (total_mass/12) *
+                                             (self.l**2 + 3*self.r_r**2),
+                                             (total_mass/12) * (self.l**2 + 3*self.r_r**2)])
 
-    def I_inv(total_mass): return np.diag([1/((1/2) * total_mass * r_r**2),
-                                           1/((total_mass/12) *
-                                              (l**2 + 3*r_r**2)),
-                                           1/((total_mass/12) * (l**2 + 3*r_r**2))])
+    def I_inv(self, total_mass): return np.diag([1/((1/2) * total_mass * self.r_r**2),
+                                                 1/((total_mass/12) *
+                                                    (self.l**2 + 3*self.r_r**2)),
+                                                 1/((total_mass/12) * (self.l**2 + 3*self.r_r**2))])
 
-    def I(total_mass): return np.diag([(1/2) * total_mass * r_r**2,
-                                       (total_mass/12) * (l**2 + 3*r_r**2),
-                                       (total_mass/12) * (l**2 + 3*r_r**2)])
+    # def I(self, total_mass): return np.diag([(1/2) * total_mass * self.r_r**2,
+    #                                          (total_mass/12) *
+    #                                          (self.l**2 + 3*self.r_r**2),
+    #                                          (total_mass/12) * (self.l**2 + 3*self.r_r**2)])
 
-    def I_inv(total_mass): return np.diag([1/((1/2) * total_mass * r_r**2),
-                                           1/((total_mass/12) *
-                                              (l**2 + 3*r_r**2)),
-                                           1/((total_mass/12) * (l**2 + 3*r_r**2))])
+    # def I_inv(self, total_mass): return np.diag([1/((1/2) * total_mass * r_r**2),
+    #                                              1/((total_mass/12) *
+    #                                                 (l**2 + 3*r_r**2)),
+    #                                              1/((total_mass/12) * (l**2 + 3*r_r**2))])
 
     # Total Normal force
     C_N_total = 9

@@ -3,14 +3,15 @@ import matplotlib.pyplot as plt
 import os
 
 import ekf
-import motor
+import motor as m
 import properties as prop
 import simulator as sim
 import plotSIM as plotter
 import sensors
 import time
 
-motor = motor.Motor()
+import sim_properties as sp
+import forces as f
 
 sim_dict = {
     "pos": [],
@@ -43,6 +44,7 @@ sensor_dict = {
     "imu_gyro_z": []
 }
 
+
 def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha):
     # Append to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
@@ -71,6 +73,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha):
                             dt if len(sim_dict["time"]) > 0 else 0)
     sim_dict["alpha"].append(alpha)
 
+
 def simulator(x0, dt) -> None:
     '''
     Method which handles running the simulation and logging sim data to dict
@@ -92,6 +95,10 @@ def simulator(x0, dt) -> None:
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
 
+    prop = sp.SimProperties('../6DOF_RK4/LookUp/m2500.csv',
+                            '../6DOF_RK4/Output/simulated_6dof.csv')
+    motor = m.Motor(prop)
+
     # Idle stage
     while time_stamp < prop.delay:
         time_stamp += dt
@@ -99,12 +106,13 @@ def simulator(x0, dt) -> None:
         accel = sensors.get_accelerometer_data(x)
         gyro = sensors.get_gyro_data(x)
         bno_ang_pos = sensors.get_bno_orientation(x)
-            
-        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
-        
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter.get_state(), 0)
 
+        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.update(bno_ang_pos, baro_alt,
+                             accel[0], accel[1], accel[2])
+
+        addToDict(x, baro_alt, accel, bno_ang_pos,
+                  gyro, kalman_filter.get_state(), 0)
 
     print("Ignition")
 
@@ -123,15 +131,19 @@ def simulator(x0, dt) -> None:
 
         # Kalman Filter stuff goes here
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
+        kalman_filter.update(bno_ang_pos, baro_alt,
+                             accel[0], accel[1], accel[2])
 
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
-        x, alpha = sim.RK4(x, dt, time_stamp)
+        forces = f.Forces(prop)
+
+        x, alpha = sim.RK4(x, dt, time_stamp, forces)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter.get_state(), alpha)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro,
+                  kalman_filter.get_state(), alpha)
 
     t_end = time.time() - t_start
     print("Time: ", t_end)
