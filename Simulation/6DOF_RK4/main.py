@@ -96,7 +96,7 @@ def simulator(x0, dt) -> None:
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
     
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1)
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 45)
 
     # Idle stage
     while time_stamp < prop.delay:

@@ -8,6 +8,7 @@ import atmosphere
 import motor
 import os
 import pandas as pd
+import math
 
 class Apogee: 
 
@@ -16,8 +17,7 @@ class Apogee:
     rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
     rasaero = pd.read_csv(rasaero_file_location)
 
-
-    def __init__(self, state, dt):
+    def __init__(self, state, dt, a, b, n):
         '''
         self.state:
         
@@ -29,6 +29,9 @@ class Apogee:
         self.state = state[:3][0].copy()
         self.dt = dt
         self.flap_ext = 0.
+        self.c, self.x_interpolate = self.calc_spline_coefficients(a, b, n)
+        self.n = n
+    
     
     def set_params(self, state):
         '''
@@ -87,18 +90,19 @@ class Apogee:
         mach = round(mach_number, 2)
 
         # define csv file to search through
-        csv_file = self.rasaero
+        # csv_file = self.rasaero
 
         # Define starting Ca
-        Ca = 0
+        # Ca = 0
         
-        ca_vals = csv_file["CA Power-Off"]
+        # ca_vals = csv_file["CA Power-Off"]
 
-        # Find indices where the mach values match up
-        mach_indices = np.where(csv_file['Mach Number'] == mach)[0]    
-        if len(mach_indices) == 0:
-            return Ca
-        Ca = ca_vals[mach_indices[0]]
+        # # Find indices where the mach values match up
+        # mach_indices = np.where(csv_file['Mach Number'] == mach)[0]    
+        # if len(mach_indices) == 0:
+        #     return Ca
+        # Ca = ca_vals[mach_indices[0]]
+        Ca = self.approximate_cubic_spline(self.c, self.x_interpolate, mach)
         return Ca
         
         # # Interpolate to find Cn value
@@ -167,32 +171,164 @@ class Apogee:
         while (self.state[1] > 0):
             self.RK4()
         return self.state[0]
+    
+    ########################################
+    # C_a function approximation functions #
+    ########################################
+    def f_true(self, x):
+        x = round(x,2)
+        # print(x)
 
+        return self.rasaero[self.rasaero['Mach Number'] == x]['CA Power-Off'].values[0]
+    
+    def calc_spline_coefficients(self, a, b, n):
+        """Returns function approximations and error for natural cubic spline interpolation.
+
+        This function assumes an f_true(x) function is globally available for calculating the true function value at x.
+        
+        Parameters
+        ----------
+        a : float_like
+            Lower bound of domain (inclusive)
+        b : float_like
+            Upper bound of domain (inclusive)
+        n : integer
+            Number of local splines
+            
+        Returns
+        -------
+        c : array_like
+            Vector of cubic spline coefficients
+        x_interpolate : array_like
+            List of interpolation points used
+        
+        """
+        
+        # get interpolation points (uniform) and delta x
+        ### YOUR CODE HERE ###
+        x_interpolate = np.linspace(a, b, n+1).tolist()
+        dx = x_interpolate[1] - x_interpolate[0]
+
+        # get A matrix and f vector
+        A = np.zeros((4 * n, 4 * n))
+        f = np.zeros(4 * n)
+        for i in range(n): # loop through each local spline (i)
+
+            # get first row/column index associated with the ith spline
+            ind = i * 4
+            
+            # update values from condition (1), (5)
+            A[ind, ind] = dx**2/6
+            A[ind, ind + 1] = 0
+            A[ind, ind + 2] = x_interpolate[i]
+            A[ind, ind + 3] = 1
+
+            f[ind] = self.f_true(x_interpolate[i])
+
+            # update values from condition (2), (6)
+            A[ind + 1, ind] =  0
+            A[ind + 1, ind + 1] = dx**2/6
+            A[ind + 1, ind + 2] = x_interpolate[i+1]
+            A[ind + 1, ind + 3] = 1
+
+            f[ind + 1] = self.f_true(x_interpolate[i+1])
+            
+            if i == n - 1:
+                # update values from "extra" condition (7)
+                A[ind + 2, 0] = 1
+
+                # update values from "extra" condition (8)
+                A[ind + 3, ind + 1] = 1
+            else:
+                # update values from condition (3)
+                A[ind + 2, ind] = 0
+                A[ind + 2, ind + 1] = dx/2
+                A[ind + 2, ind + 2] = 1
+                A[ind + 2, ind + 3] = 0
+                A[ind + 2, ind + 4] = dx/2
+                A[ind + 2, ind + 5] = 0
+                A[ind + 2, ind + 6] = -1
+                A[ind + 2, ind + 7] = 0
+
+                # update values from condition (4)
+                A[ind + 3, ind] = 0
+                A[ind + 3, ind + 1] = 1
+                # A[ind + 3, ind + 2] = ### YOUR CODE HERE ###
+                # A[ind + 3, ind + 3] = ### YOUR CODE HERE ###
+                A[ind + 3, ind + 4] = -1
+                # A[ind + 3, ind + 5] = ### YOUR CODE HERE ###
+                # A[ind + 3, ind + 6] = ### YOUR CODE HERE ###
+                # A[ind + 3, ind + 7] = ### YOUR CODE HERE ###
+
+            # update values from conditions (3), (4) and "extra" conditions (7)-(8)
+            f[ind + 2] = 0 # f_true(0)
+            f[ind + 3] = 0 # f_true(0)
+            
+
+        # solve matrix system
+        ### YOUR CODE HERE ###
+        c = np.linalg.solve(A, f)
+        return c, x_interpolate
+    
+    def approximate_cubic_spline(self, c, x_interpolate, x):
+        """
+        Returns the approximated function value for x using the cubic spline coefficients c and the interpolation points x_interpolate.
+        
+        Parameters:
+        -----------
+            c : array_like
+                Vector of cubic spline coefficients
+            x_interpolate : array_like
+                List of interpolation points used
+            x : float
+                Value to evaluate the approximated function at
+        
+        Returns:
+        --------
+            fa_val : float_like
+                Approximated function value at x
+        """
+        # get spline index i for x
+        if x == x_interpolate[-1]:
+            i = len(x_interpolate) - 1   # index for last interpolation point
+        elif x in x_interpolate:
+            i = x_interpolate.index(x)  # index for interpolation points
+        else:
+            i = math.floor(x*(self.n/3))# np.searchsorted(x_interpolate, x) - 1   # index for test points between interpolation points
+
+        # get first row index associated with the ith spline in c
+        ind = i * 4
+        
+        # get spline i output ("\"" is a line continuation character)
+        fa_val = c[ind]/(6*(x_interpolate[i]-x_interpolate[i+1]))*(x-x_interpolate[i+1])**3 + \
+                    c[ind+1]/(6*(x_interpolate[i+1]-x_interpolate[i]))*(x-x_interpolate[i])**3 + \
+                    c[ind+2]*x + c[ind+3]
+        return fa_val
 
 if __name__=='__main__':
     import matplotlib.pyplot as plt
     from tqdm import tqdm
-    data = pd.read_csv(os.path.join(os.path.dirname(__file__), "flight_computer_20221029.csv"))
+    data = pd.read_csv(os.path.join(os.path.dirname(__file__), "LookUp", "flight_computer_20221029.csv"))
     state_estimate_x = data["state_est_x"]
     state_estimate_vx = data["state_est_vx"]
     state_estimate_ax = data["state_est_ax"]
     state_estimate = np.array([state_estimate_x, state_estimate_vx, state_estimate_ax])
-    timestep = 0.05
+    timestep = 0.01
     ax = data["ax"]
     rocket_estimated_apogee = data["state_est_apo"]
     timestamps = data["timestamp_ms"]
     max_timestamp = 5000
-    timestamps = timestamps[:max_timestamp:int(1/timestep)]
+    timestamps = timestamps[:max_timestamp]
     #TODO: add testing for apogee estimator and fix state input
     apogee_estimator = Apogee(state_estimate, timestep)
     apogee_estimates = np.array([])
-    for estimate in tqdm(state_estimate.T[:max_timestamp:int(1/timestep)]):
+    for estimate in tqdm(state_estimate.T[:max_timestamp]):
         apogee_estimate = apogee_estimator.predict_apogee(estimate)
         apogee_estimates = np.append(apogee_estimates, apogee_estimate)
     
     plt.plot(timestamps, apogee_estimates, label="Estimated Apogee")
     plt.plot(timestamps, state_estimate_x[:max_timestamp:int(1/timestep)], label="Current alitude")
-    plt.plot(timestamps, rocket_estimated_apogee[:max_timestamp:int(1/timestep)], label=" Estimated Apogee")
+    plt.plot(timestamps, rocket_estimated_apogee[:max_timestamp:int(1/timestep)], label="Rocket Estimated Apogee")
     plt.legend()
     
     plt.figure()
