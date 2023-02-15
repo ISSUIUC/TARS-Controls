@@ -44,7 +44,7 @@ class KalmanFilter:
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
-        acc = vct.body_to_world(*bno_attitude, np.array([x_accel,y_accel,z_accel]))
+        acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
         y_k = np.array([x_pos, *acc]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
