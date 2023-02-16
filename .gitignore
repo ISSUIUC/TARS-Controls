@@ -5,3 +5,5 @@ __pycache__/
 **/__pycache__/
 
 Simulation/6DOF_RK4/Output/simulated_6dof.csv
+
+**/.DS_Store
