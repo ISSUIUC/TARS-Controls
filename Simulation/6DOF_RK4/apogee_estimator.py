@@ -277,22 +277,22 @@ if __name__=='__main__':
     state_estimate_vx = data["state_est_vx"]
     state_estimate_ax = data["state_est_ax"]
     state_estimate = np.array([state_estimate_x, state_estimate_vx, state_estimate_ax])
-    timestep = 0.01
+    timestep = 0.1
     ax = data["ax"]
     rocket_estimated_apogee = data["state_est_apo"]
     timestamps = data["timestamp_ms"]
     max_timestamp = 5000
-    timestamps = timestamps[:max_timestamp]
-    #TODO: add testing for apogee estimator and fix state input
-    apogee_estimator = Apogee(state_estimate, timestep)
+    timestamps = timestamps[:max_timestamp:int(timestep*100)]
+
+    apogee_estimator = Apogee(state_estimate, timestep, 0.01, 3, 300)
     apogee_estimates = np.array([])
-    for estimate in tqdm(state_estimate.T[:max_timestamp]):
+    for estimate in tqdm(state_estimate.T[:max_timestamp:int(timestep*100)]):
         apogee_estimate = apogee_estimator.predict_apogee(estimate)
         apogee_estimates = np.append(apogee_estimates, apogee_estimate)
     
     plt.plot(timestamps, apogee_estimates, label="Estimated Apogee")
-    plt.plot(timestamps, state_estimate_x[:max_timestamp:int(1/timestep)], label="Current alitude")
-    plt.plot(timestamps, rocket_estimated_apogee[:max_timestamp:int(1/timestep)], label="Rocket Estimated Apogee")
+    plt.plot(timestamps, state_estimate_x[:max_timestamp:int(timestep*100)], label="Current alitude")
+    plt.plot(timestamps, rocket_estimated_apogee[:max_timestamp:int(timestep*100)], label="Rocket Estimated Apogee")
     plt.legend()
     
     plt.figure()
