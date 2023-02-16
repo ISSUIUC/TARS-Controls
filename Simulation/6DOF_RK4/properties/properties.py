@@ -99,6 +99,6 @@ Gyro_RMS = 75  # mdps (millidegrees per second)
 Barometer_RMS = .012  # Pascal Conversion
 
 # Rotation Error BNO08X
-Bno_error = 2.5  # degrees of error
+Bno_error = 2.5/3  # degrees of error
 
 

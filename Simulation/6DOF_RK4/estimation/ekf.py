@@ -8,7 +8,7 @@ class KalmanFilter:
         self.dt = dt
         self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
-        self.R = np.diag([1., 1., 1., 1.])
+        self.R = np.diag([2., 1.9, 1.9, 1.9])
         self.P_k = np.zeros((9,9))
         self.x_priori = np.zeros((9,1))
         self.P_priori = np.zeros((9,9))
