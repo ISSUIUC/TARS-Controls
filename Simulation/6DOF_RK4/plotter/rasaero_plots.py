@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import math
 
 data = pd.read_csv(os.path.join(os.path.dirname(__file__), '../lookup', 'RASAero.csv'), usecols=['Mach Number', 'Protuberance (%)', 'Alpha (deg)', 'CA Power-Off'])
 
@@ -123,7 +124,7 @@ def approximate_cubicspline(a, b, n, x_test):
         elif x in x_interpolate:
             i = x_interpolate.index(x)  # index for interpolation points
         else:
-            i = np.searchsorted(x_interpolate, x) - 1   # index for test points between interpolation points
+            i = math.floor(x*(n/3))  # index for test points between interpolation points
 
         # get first row index associated with the ith spline in c
         ind = i * 4
@@ -274,7 +275,7 @@ fa_10, f, err, x_interpolate = approximate_cubicspline(0.01, 3, 10, data['Mach N
 fa_15, f, err, x_interpolate = approximate_cubicspline(0.01, 3, 15, data['Mach Number'])
 fa_20, f, err, x_interpolate = approximate_cubicspline(0.01, 3, 20, data['Mach Number'])
 fa_30, f, err, x_interpolate = approximate_cubicspline(0.01, 3, 30, data['Mach Number'])
-
+fa_300, f, err, x_interpolate = approximate_cubicspline(0.01, 3, 300, data['Mach Number'])
 x_interp = [0.01, 0.13, 0.2, 0.4, 0.71, 0.8, 1.06, 1.3, 1.5, 1.7, 2.0, 2.3, 3.0]
 fa_custom, f, err, x_interpolate = approximate_cubicspline_custom_interpolation(0.01, 3, x_interp, data['Mach Number'])
 plt.plot(data['Mach Number'], data['CA Power-Off'], label='RASAero')
@@ -283,6 +284,7 @@ plt.plot(data['Mach Number'], data['CA Power-Off'], label='RASAero')
 # plt.plot(data['Mach Number'], fa_15, label='Cubic Spline, n=15')
 plt.plot(data['Mach Number'], fa_20, label='Cubic Spline, n=20')
 plt.plot(data['Mach Number'], fa_30, label='Cubic Spline, n=30')
+plt.plot(data['Mach Number'], fa_300, label='Cubic Spline, n=300')
 # plt.plot(data['Mach Number'], fa_custom, label='Cubic Spline, custom interpolation')
 plt.legend()
 plt.figure()
@@ -290,6 +292,7 @@ plt.figure()
 # plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_15)/data['CA Power-Off'], label='Error, n=15')
 plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_20)/data['CA Power-Off'], label='Error, n=20')
 plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_30)/data['CA Power-Off'], label='Error, n=30')
+plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_300)/data['CA Power-Off'], label='Error, n=300')
 # plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_custom)/data['CA Power-Off'], label='Error, custom interpolation')
 plt.legend()
 plt.show()
