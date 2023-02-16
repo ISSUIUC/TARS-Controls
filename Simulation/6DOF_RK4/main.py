@@ -109,6 +109,7 @@ def simulator(x0, dt) -> None:
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
         kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
 
+        kalman_filter.reset_lateral_pos()
         current_state = kalman_filter.get_state()
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, 0, current_state[0])
 
