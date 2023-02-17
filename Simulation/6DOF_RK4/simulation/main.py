@@ -1,18 +1,20 @@
+import rocket.controller as contr
+import estimation.apogee_estimator as apg
+import time
+import rocket.sensors as sensors
+import plotter.plotSIM as plotter
+import simulator as sim
+import properties.properties as prop
+import rocket.motor as motor
+import estimation.ekf as ekf
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 
-import estimation.ekf as ekf
-import rocket.motor as motor
-import properties.properties as prop
-import simulator as sim
-import plotter.plotSIM as plotter
-import rocket.sensors as sensors
-import time
-import estimation.apogee_estimator as apg
 
 motor = motor.Motor()
 
@@ -48,6 +50,7 @@ sensor_dict = {
     "apogee_estimate": []
 }
 
+
 def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apogee_esimtation):
     # Append to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
@@ -77,6 +80,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apoge
                             dt if len(sim_dict["time"]) > 0 else 0)
     sim_dict["alpha"].append(alpha)
 
+
 def simulator(x0, dt) -> None:
     '''
     Method which handles running the simulation and logging sim data to dict
@@ -98,8 +102,11 @@ def simulator(x0, dt) -> None:
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
-    
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30) # Use an n value (last parameter) that is divisible by 3 to make computations easier
+
+    # Use an n value (last parameter) that is divisible by 3 to make computations easier
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30)
+    Kp, Ki, Kd = 0.5, 0.5, 0.5
+    controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
 
     # Idle stage
     while time_stamp < prop.delay:
@@ -108,14 +115,15 @@ def simulator(x0, dt) -> None:
         accel = sensors.get_accelerometer_data(x)
         gyro = sensors.get_gyro_data(x)
         bno_ang_pos = sensors.get_bno_orientation(x)
-        
+
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
+        kalman_filter.update(bno_ang_pos, baro_alt,
+                             accel[0], accel[1], accel[2])
 
         kalman_filter.reset_lateral_pos()
         current_state = kalman_filter.get_state()
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, 0, current_state[0])
-
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro,
+                  current_state, 0, current_state[0])
 
     print("Ignition")
 
@@ -135,18 +143,21 @@ def simulator(x0, dt) -> None:
 
         # Kalman Filter stuff goes here
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
+        kalman_filter.update(bno_ang_pos, baro_alt,
+                             accel[0], accel[1], accel[2])
 
         current_state = kalman_filter.get_state()
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
+        flap_ext = controller.get_flap_extension(apogee_est)
 
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
 
-        x, alpha = sim.RK4(x, dt, time_stamp)
+        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, alpha, apogee_est)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro,
+                  current_state, alpha, apogee_est)
 
     t_end = time.time() - t_start
     print("Time: ", t_end)
