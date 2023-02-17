@@ -107,7 +107,7 @@ def simulator(x0, dt) -> None:
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
     apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30)
-    Kp, Ki, Kd = 0.08, 0, 0
+    Kp, Ki, Kd = 0.8, 0, 0
     controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
 
     # Idle stage
