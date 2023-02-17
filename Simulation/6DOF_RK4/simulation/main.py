@@ -26,6 +26,7 @@ sim_dict = {
     "ang_vel": [],
     "ang_accel": [],
     "alpha": [],
+    "flap_ext": [],
     "time": []
 }
 
@@ -51,7 +52,7 @@ sensor_dict = {
 }
 
 
-def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apogee_esimtation):
+def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apogee_esimtation, flap_ext):
     # Append to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
     sensor_dict["imu_accel_x"].append(accel[0])
@@ -78,6 +79,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apoge
     sim_dict["ang_accel"].append(x[5])
     sim_dict["time"].append(sim_dict["time"][-1] +
                             dt if len(sim_dict["time"]) > 0 else 0)
+    sim_dict["flap_ext"].append(flap_ext)                    
     sim_dict["alpha"].append(alpha)
 
 
@@ -105,7 +107,7 @@ def simulator(x0, dt) -> None:
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
     apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30)
-    Kp, Ki, Kd = 0.8, 0, 0
+    Kp, Ki, Kd = 0.08, 0, 0
     controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
 
     # Idle stage
@@ -123,7 +125,7 @@ def simulator(x0, dt) -> None:
         kalman_filter.reset_lateral_pos()
         current_state = kalman_filter.get_state()
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro,
-                  current_state, 0, current_state[0])
+                  current_state, 0, current_state[0],0)
 
     print("Ignition")
 
@@ -161,7 +163,7 @@ def simulator(x0, dt) -> None:
         time_stamp += dt
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro,
-                  current_state, alpha, apogee_est)
+                  current_state, alpha, apogee_est, flap_ext)
 
     t_end = time.time() - t_start
     print("Time: ", t_end)
@@ -194,6 +196,7 @@ if __name__ == '__main__':
         cur_point += list(map(str, sim_dict["ang_vel"][point]))
         cur_point += list(map(str, sim_dict["ang_accel"][point]))
         cur_point += map(str, list([sim_dict["alpha"][point]]))
+        cur_point += map(str, list([sim_dict["flap_ext"][point]]))
         cur_point += map(str, list([sensor_dict["baro_alt"][point]]))
         cur_point += map(str, list([sensor_dict["imu_accel_x"][point]]))
         cur_point += map(str, list([sensor_dict["imu_accel_y"][point]]))
@@ -213,6 +216,6 @@ if __name__ == '__main__':
 
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z\n")
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")

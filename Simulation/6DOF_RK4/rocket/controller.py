@@ -1,3 +1,4 @@
+import numpy as np
 import properties.properties as prop
 
 
