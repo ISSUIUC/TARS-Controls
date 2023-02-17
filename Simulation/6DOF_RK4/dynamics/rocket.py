@@ -86,12 +86,16 @@ class Rocket:
                                     self.motor,
                                     self.atm)
 
-    def I(self, total_mass): return np.diag([(1/2) * total_mass * self.r_r**2,
+    def set_motor_mass(self, timestamp):
+        self.motor_mass = self.motor.get_mass(timestamp)
+        self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
+        
+    def I(self, total_mass=rocket_total_mass): return np.diag([(1/2) * total_mass * self.r_r**2,
                                        (total_mass/12) * (self.l**2 + 3*self.r_r**2),
                                        (total_mass/12) * (self.l**2 + 3*self.r_r**2)])
 
 
-    def I_inv(self, total_mass): return np.diag([1/((1/2) * total_mass * self.r_r**2),
+    def I_inv(self, total_mass=rocket_total_mass): return np.diag([1/((1/2) * total_mass * self.r_r**2),
                                        1/((total_mass/12) * (self.l**2 + 3*self.r_r**2)),
                                        1/((total_mass/12) * (self.l**2 + 3*self.r_r**2))])
     

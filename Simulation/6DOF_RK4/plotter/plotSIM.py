@@ -85,6 +85,10 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     alpha_nc.legend()
     
     plt.tight_layout()
+    
+    # plt.figure()
+    # plt.plot(sim_dict["time"],sim_dict["rocket_total_mass"],label="Rocket Mass",color="tab:green", linewidth = 2)
+    # plt.plot(sim_dict["time"],sim_dict["motor_mass"],label="Motor Mass",color="tab:red", linewidth = 2)
     plt.show()
 
 if __name__ == "__main__":
@@ -112,6 +116,8 @@ if __name__ == "__main__":
         kalman_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
     sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
+    # sim_dict["rocket_total_mass"] = np.array(list(zip(file_data["rocket_total_mass"].values)))
+    # sim_dict["motor_mass"] = np.array(list(zip(file_data["motor_mass"].values)))
     sensor_dict["baro_alt"] = np.array(list(zip(file_data["baro_alt"].values)))
     sensor_dict["imu_accel_x"] = np.array(list(zip(file_data["imu_accel_x"].values)))
     sensor_dict["imu_accel_y"] = np.array(list(zip(file_data["imu_accel_y"].values)))

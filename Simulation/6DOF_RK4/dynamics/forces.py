@@ -44,6 +44,7 @@ class Forces:
         
         Returns:
             (np.array): 2D array of forces and moments --> ([Fx, Fy, Fz], [Mx, My, Mz])
+            (float): angle of attack (radians)
         '''
         # TODO: Add random disturbances
         # print("State: ", x_state)
