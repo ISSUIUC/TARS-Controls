@@ -1,3 +1,11 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
 import rocket.controller as contr
 import estimation.apogee_estimator as apg
 import time
@@ -7,14 +15,6 @@ import simulator as sim
 import properties.properties as prop
 import rocket.motor as motor
 import estimation.ekf as ekf
-import numpy as np
-import matplotlib.pyplot as plt
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
-
 
 motor = motor.Motor()
 
@@ -105,7 +105,7 @@ def simulator(x0, dt) -> None:
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
     apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30)
-    Kp, Ki, Kd = 0.5, 0.5, 0.5
+    Kp, Ki, Kd = 0.8, 0, 0
     controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
 
     # Idle stage
@@ -148,7 +148,11 @@ def simulator(x0, dt) -> None:
 
         current_state = kalman_filter.get_state()
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
-        flap_ext = controller.get_flap_extension(apogee_est)
+
+        if(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0):
+            flap_ext = controller.get_flap_extension(apogee_est)
+        else:
+            flap_ext = 0
 
         # flap_ext will be passed by kalman filter
         prop.motor_mass = motor.get_mass(time_stamp)
