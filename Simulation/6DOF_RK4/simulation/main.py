@@ -6,15 +6,19 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import estimation.ekf as ekf
-import rocket.motor as motor
 import properties.properties as prop
 import simulator as sim
 import plotter.plotSIM as plotter
-import rocket.sensors as sensors
+import dynamics.sensors as sensors
 import time
 import estimation.apogee_estimator as apg
+import dynamics.rocket as rocket_model
+import environment.atmosphere as atmosphere
 
-motor = motor.Motor()
+atm = atmosphere.Atmosphere()
+print(f"{atm} from main")
+rocket = rocket_model.Rocket(atm=atm)
+motor = rocket.motor
 
 sim_dict = {
     "pos": [],
@@ -99,7 +103,7 @@ def simulator(x0, dt) -> None:
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
     
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30) # Use an n value (last parameter) that is divisible by 3 to make computations easier
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm) # Use an n value (last parameter) that is divisible by 3 to make computations easier
 
     # Idle stage
     while time_stamp < prop.delay:

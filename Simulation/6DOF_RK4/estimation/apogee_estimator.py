@@ -6,20 +6,18 @@ import pandas as pd
 import math
 # aaaaaaaaaaaaaaa
 
-import rocket.forces as forces
+import dynamics.forces as forces
 import util.vectors as vct
 import properties.properties as prop
-import environment.atmosphere as atmosphere
-import rocket.motor as motor
-
+import dynamics.rocket as rocket_model
 class Apogee: 
 
-    atm = atmosphere.Atmosphere()
-    motor = motor.Motor()
+    atm = None
     rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
     rasaero = pd.read_csv(rasaero_file_location)
-
-    def __init__(self, state, dt, a, b, n):
+    rocket = rocket_model.Rocket()
+    
+    def __init__(self, state, dt, a, b, n, atm):
         '''
         self.state:
         
@@ -33,7 +31,7 @@ class Apogee:
         self.flap_ext = 0.
         self.c, self.x_interpolate = self.calc_spline_coefficients(a, b, n)
         self.n = n
-    
+        self.atm = atm
     
     def set_params(self, state):
         '''
@@ -104,7 +102,7 @@ class Apogee:
         drag = -0.5*(self.state[1]**2 * C_a*density*prop.A)
         grav = self.gravitational_force(alt)
         force =  drag + grav
-        return force/prop.rocket_dry_mass
+        return force/self.rocket.rocket_dry_mass
 
     def gravitational_force(self, altitude) -> np.ndarray:
         '''
@@ -118,7 +116,7 @@ class Apogee:
         Returns:
             (np.array): vector of gravitational forces on each axis [1x3]
         '''
-        return -(prop.G*prop.m_e*prop.rocket_dry_mass)/((prop.r_e+altitude)**2)
+        return -(prop.G*prop.m_e*self.rocket.rocket_dry_mass)/((prop.r_e+altitude)**2)
 
     def step_v(self):
         

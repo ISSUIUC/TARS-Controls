@@ -1,11 +1,15 @@
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
-import rocket.forces as forces
+import dynamics.forces as forces
 import util.vectors as vct
 import properties.properties as prop
+import dynamics.rocket as rocket_model
+import environment.atmosphere as atm_model
 
-forces = forces.Forces()
+atm = atm_model.Atmosphere()
+rocket = rocket_model.Rocket(atm=atm)
+forces = rocket.forces
 
 ### TEST PURPOSES ###
 def newtonProp(y0, dt, time_stamp, flap_ext=0) -> np.ndarray:

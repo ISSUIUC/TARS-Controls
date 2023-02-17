@@ -1,0 +1,6 @@
+- deez nuts
+- constructor for forces
+- extend constructor for motor to include everything related to rocket
+- standardize docs
+- forces spline interpolation
+- 

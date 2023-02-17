@@ -69,10 +69,7 @@ def I_inv(total_mass): return np.diag([1/((1/2) * total_mass * r_r**2),
                                        1/((total_mass/12) * (l**2 + 3*r_r**2))])
 
 
-# Total Normal force
-C_N_total = 9
-# Total Axial force
-C_A_total = 3
+
 
 # simulation output file
 output_file = '../output/simulated_6dof.csv'
