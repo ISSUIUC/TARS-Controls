@@ -86,9 +86,14 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     
     plt.tight_layout()
     
-    # plt.figure()
-    # plt.plot(sim_dict["time"],sim_dict["rocket_total_mass"],label="Rocket Mass",color="tab:green", linewidth = 2)
-    # plt.plot(sim_dict["time"],sim_dict["motor_mass"],label="Motor Mass",color="tab:red", linewidth = 2)
+    plt.figure()
+    plt.plot(sim_dict["time"], sim_dict["moment_of_inertia_x"],label="Moment of Inertia X",color="tab:green", linewidth = 2)
+    plt.plot(sim_dict["time"], sim_dict["moment_of_inertia_y"],label="Moment of Inertia Y",color="tab:red", linewidth = 2)
+    plt.plot(sim_dict["time"], sim_dict["moment_of_inertia_z"],label="Moment of Inertia Z",color="tab:blue", linewidth = 2)
+    plt.legend()
+
+    plt.plot(sim_dict["time"],sim_dict["rocket_total_mass"],label="Rocket Mass",color="tab:green", linewidth = 2)
+    plt.plot(sim_dict["time"],sim_dict["motor_mass"],label="Motor Mass",color="tab:red", linewidth = 2)
     plt.show()
 
 if __name__ == "__main__":
@@ -116,8 +121,12 @@ if __name__ == "__main__":
         kalman_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
     sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
-    # sim_dict["rocket_total_mass"] = np.array(list(zip(file_data["rocket_total_mass"].values)))
-    # sim_dict["motor_mass"] = np.array(list(zip(file_data["motor_mass"].values)))
+    
+    sim_dict["moment_of_inertia_x"] = np.array(list(zip(file_data["moment_of_inertia_x"])))
+    sim_dict["moment_of_inertia_y"] = np.array(list(zip(file_data["moment_of_inertia_y"])))
+    sim_dict["moment_of_inertia_z"] = np.array(list(zip(file_data["moment_of_inertia_z"])))
+    sim_dict["rocket_total_mass"] = np.array(list(zip(file_data["rocket_total_mass"].values)))
+    sim_dict["motor_mass"] = np.array(list(zip(file_data["motor_mass"].values)))
     sensor_dict["baro_alt"] = np.array(list(zip(file_data["baro_alt"].values)))
     sensor_dict["imu_accel_x"] = np.array(list(zip(file_data["imu_accel_x"].values)))
     sensor_dict["imu_accel_y"] = np.array(list(zip(file_data["imu_accel_y"].values)))
@@ -129,6 +138,6 @@ if __name__ == "__main__":
     sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
     sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
-
+    print(sim_dict.keys())
     
     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)

@@ -44,29 +44,29 @@ motor_lookup_file = '../lookup/m2500.csv'
 # motor_lookup_file = '../6DOF_RK4/lookup/n2540.csv'
 
 # rocket mass w/out motor
-rocket_dry_mass = 14.691
+# rocket_dry_mass = 14.691
 # rocket mass with motor
-rocket_total_mass = rocket_dry_mass + motor_mass
+# rocket_total_mass = rocket_dry_mass + motor_mass
 # radius of rocket
-r_r = 0.0508
+# r_r = 0.0508
 # length of rocket
-l = 3.34
+# l = 3.34
 # area w/out flaps
-A = math.pi*r_r**2
+# A = math.pi*r_r**2
 # side profile area
-A_s = 2*r_r*l
+# A_s = 2*r_r*l
 # flap max estension length (m)
-max_ext_length = .0178
+# max_ext_length = .0178
 
 # Moment of Inertia
-def I(total_mass): return np.diag([(1/2) * total_mass * r_r**2,
-                                   (total_mass/12) * (l**2 + 3*r_r**2),
-                                   (total_mass/12) * (l**2 + 3*r_r**2)])
+# def I(total_mass): return np.diag([(1/2) * total_mass * r_r**2,
+#                                    (total_mass/12) * (l**2 + 3*r_r**2),
+#                                    (total_mass/12) * (l**2 + 3*r_r**2)])
 
 
-def I_inv(total_mass): return np.diag([1/((1/2) * total_mass * r_r**2),
-                                       1/((total_mass/12) * (l**2 + 3*r_r**2)),
-                                       1/((total_mass/12) * (l**2 + 3*r_r**2))])
+# def I_inv(total_mass): return np.diag([1/((1/2) * total_mass * r_r**2),
+#                                        1/((total_mass/12) * (l**2 + 3*r_r**2)),
+#                                        1/((total_mass/12) * (l**2 + 3*r_r**2))])
 
 
 

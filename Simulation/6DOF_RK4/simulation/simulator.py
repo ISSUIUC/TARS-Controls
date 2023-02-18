@@ -50,16 +50,11 @@ class Simulator():
         '''
 
         I_inv = self.rocket.I_inv(self.rocket.rocket_total_mass)
-
         k1_v = y0[2].copy()
 
         k2_v,k2_av = self.step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)
         k3_v,k3_av = self.step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)
         k4_v,k4_av = self.step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext)
-        
-        # k2_v = step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)[0]/prop.rocket_total_mass
-        # k3_v = step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext)[0]/prop.rocket_total_mass
-        # k4_v = step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext)[0]/prop.rocket_total_mass
 
         k2_v /= self.rocket.rocket_total_mass
         k3_v /= self.rocket.rocket_total_mass
@@ -94,6 +89,7 @@ class Simulator():
 
         # ang_p, ang_v, ang_a = angular_rk4(y0, dt, time_stamp, prop.I_inv(prop.rocket_total_mass), flap_ext)
         return np.array([p, v, a, ang_p, ang_v, I_inv @ temp[1]]), alpha
+        # return np.array([p, v, a, np.array([0,0,0]), np.array([0,0,0]), np.array([0,0,0])]), alpha
 
     def step_p(self, y0, y1, dt):
         '''
@@ -125,25 +121,3 @@ class Simulator():
             (np.array): rate of change of velocity (acceleration) in form of state vector
         '''
         return self.forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp)[0] # return slope times mass/inertia 
-
-    def angular_rk4(self, y0, dt, time_stamp, I_inv, flap_ext=0):
-        k1_v = y0[5].copy()
-        k2_v = I_inv@self.step_v(y0[0], y0[1], y0[3], y0[4] + (dt/2)*k1_v, dt/2, time_stamp, flap_ext)[1]
-        k3_v = I_inv@self.step_v(y0[0], y0[1], y0[3], y0[4] + (dt/2)*k2_v, dt/2, time_stamp, flap_ext)[1]
-        k4_v = I_inv@self.step_v(y0[0], y0[1], y0[3], y0[4] + dt*k3_v, dt, time_stamp, flap_ext)[1]
-
-        v = (y0[4] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*dt)
-
-        k1_p = y0[4].copy()
-        k2_p = self.step_p(y0[3], y0[3] + (dt/2)*k1_p, dt/2)
-        k3_p = self.step_p(y0[3], y0[3] + (dt/2)*k2_p, dt/2)
-        k4_p = self.step_p(y0[3], y0[3] + dt*k3_p, dt)
-
-        p = (y0[3] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*dt)
-        temp = (self.forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))[0]
-        a = I_inv @ temp[1]
-        return (p,v,a)
-
-    def body_to_euler(self, v):
-        return v
-

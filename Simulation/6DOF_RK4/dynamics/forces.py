@@ -57,6 +57,7 @@ class Forces:
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
+        # print(self.aerodynamic_moment(drag))
         return np.array([force, moment]), alpha
 
     def get_Ca_Cn_Cp(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:
@@ -135,10 +136,14 @@ class Forces:
                 Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])  
                 Cn = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cn_low, Cn_up])  
                 Cp = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cp_low, Cp_up])  
+                # print('CP: ', Cp)
+                # print('Cn: ', Cn)
+                # print("Ca: ", Ca)
+                Cp = Cp/100. #Convert cm to m
 
-        Cp = Cp/100. #Convert cm to m
-
-        return [Ca,Cn,np.array([Cp, 0.0, 0.0])]
+                return [Ca,Cn,np.array([Cp, 0.0, 0.0])]
+            
+        return [0,0,0]
 
     def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext) -> np.ndarray:
         '''
@@ -180,7 +185,7 @@ class Forces:
         return -np.array([(prop.G*prop.m_e*total_mass)/((prop.r_e+altitude)**2), 0, 0])
 
     def aerodynamic_moment(self, aerodynamic_force) -> np.ndarray:
-        aerodynamic_moment = np.cross(self.cp - self.cm, aerodynamic_force)
+        aerodynamic_moment = np.cross(self.cp - self.motor.cm, aerodynamic_force)
         return aerodynamic_moment
         
     def get_alpha(self, x_state, wind_vector) -> float:
