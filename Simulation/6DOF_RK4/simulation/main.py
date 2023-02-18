@@ -6,18 +6,21 @@ import sys
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-import rocket.controller as contr
-import estimation.apogee_estimator as apg
-import time
-import rocket.sensors as sensors
-import plotter.plotSIM as plotter
-import simulator as sim
-import properties.properties as prop
-import rocket.motor as motor
 import estimation.ekf as ekf
+import properties.properties as prop
+import simulator as sim_class
+import plotter.plotSIM as plotter
+import dynamics.sensors as sensors
+import time
+import estimation.apogee_estimator as apg
+import dynamics.rocket as rocket_model
+import environment.atmosphere as atmosphere
+import dynamics.controller as contr
 
-motor = motor.Motor()
-
+atm = atmosphere.Atmosphere()
+rocket = rocket_model.Rocket(atm=atm)
+motor = rocket.motor
+sim = sim_class.Simulator(atm=atm, rocket=rocket)
 sim_dict = {
     "pos": [],
     "vel": [],
@@ -27,7 +30,9 @@ sim_dict = {
     "ang_accel": [],
     "alpha": [],
     "flap_ext": [],
-    "time": []
+    "rocket_total_mass": [],
+    "motor_mass": [],
+    "time": [],
 }
 
 kalman_dict = {
@@ -51,8 +56,7 @@ sensor_dict = {
     "apogee_estimate": []
 }
 
-
-def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apogee_esimtation, flap_ext):
+def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext):
     # Append to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
     sensor_dict["imu_accel_x"].append(accel[0])
@@ -64,7 +68,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apoge
     sensor_dict["imu_gyro_x"].append(gyro[0])
     sensor_dict["imu_gyro_y"].append(gyro[1])
     sensor_dict["imu_gyro_z"].append(gyro[2])
-    sensor_dict["apogee_estimate"].append(apogee_esimtation)
+    sensor_dict["apogee_estimate"].append(apogee_estimation)
 
     kalman_dict["x"].append(kalman_filter[0:3])
     kalman_dict["y"].append(kalman_filter[3:6])
@@ -81,6 +85,8 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apoge
                             dt if len(sim_dict["time"]) > 0 else 0)
     sim_dict["flap_ext"].append(flap_ext)                    
     sim_dict["alpha"].append(alpha)
+    sim_dict["rocket_total_mass"].append(rocket_total_mass)
+    sim_dict["motor_mass"].append(motor_mass)
 
 
 def simulator(x0, dt) -> None:
@@ -106,12 +112,12 @@ def simulator(x0, dt) -> None:
     time_stamp = 0
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30)
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm)
     Kp, Ki, Kd = 0.8, 0, 0
     controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
 
     # Idle stage
-    while time_stamp < prop.delay:
+    while time_stamp < rocket.delay:
         time_stamp += dt
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
@@ -124,8 +130,8 @@ def simulator(x0, dt) -> None:
 
         kalman_filter.reset_lateral_pos()
         current_state = kalman_filter.get_state()
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro,
-                  current_state, 0, current_state[0],0)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
+
 
     print("Ignition")
 
@@ -136,7 +142,7 @@ def simulator(x0, dt) -> None:
     while x[1, 0] >= 0 or start:
         if start:
             start = False
-
+        # print("Timestamp: ", time_stamp)
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
@@ -157,13 +163,13 @@ def simulator(x0, dt) -> None:
             flap_ext = 0
 
         # flap_ext will be passed by kalman filter
-        prop.motor_mass = motor.get_mass(time_stamp)
+        rocket.set_motor_mass(time_stamp)
+        # rocket.motor_mass = motor.get_mass(time_stamp)
 
         x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro,
-                  current_state, alpha, apogee_est, flap_ext)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
 
     t_end = time.time() - t_start
     print("Time: ", t_end)
@@ -196,6 +202,8 @@ if __name__ == '__main__':
         cur_point += list(map(str, sim_dict["ang_vel"][point]))
         cur_point += list(map(str, sim_dict["ang_accel"][point]))
         cur_point += map(str, list([sim_dict["alpha"][point]]))
+        cur_point += map(str, list([sim_dict["rocket_total_mass"][point]]))
+        cur_point += map(str, list([sim_dict["motor_mass"][point]]))
         cur_point += map(str, list([sim_dict["flap_ext"][point]]))
         cur_point += map(str, list([sensor_dict["baro_alt"][point]]))
         cur_point += map(str, list([sensor_dict["imu_accel_x"][point]]))
@@ -216,6 +224,6 @@ if __name__ == '__main__':
 
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z\n")
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
