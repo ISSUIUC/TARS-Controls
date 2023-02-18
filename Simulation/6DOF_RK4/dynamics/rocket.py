@@ -66,7 +66,6 @@ class Rocket:
         self.max_ext_length = max_ext_length
         self.atm = atm
 
-        print('atm from rocket:', self.atm)
         # need to change motor and forces constructors to refer to properties from this class rather than properties file
         self.motor = motor.Motor(self.rocket_dry_mass, 
                                  self.cm, 

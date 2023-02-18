@@ -17,8 +17,7 @@ class Simulator():
         self.atm = atm
         self.rocket = rocket
         self.forces = self.rocket.forces
-        print(f'{self.rocket} from simulator')
-
+        
     ### TEST PURPOSES ###
     def newtonProp(self, y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
         temp = (self.forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))

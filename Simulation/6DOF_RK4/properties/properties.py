@@ -59,6 +59,8 @@ A_s = 2*r_r*l
 max_ext_length = .0178
 
 # Moment of Inertia
+
+
 def I(total_mass): return np.diag([(1/2) * total_mass * r_r**2,
                                    (total_mass/12) * (l**2 + 3*r_r**2),
                                    (total_mass/12) * (l**2 + 3*r_r**2)])
@@ -86,4 +88,5 @@ Barometer_RMS = .012  # Pascal Conversion
 # Rotation Error BNO08X
 Bno_error = 2.5/3  # degrees of error
 
-
+# Desired Apogee
+des_apogee = 4572  # meters (15000 feet)
