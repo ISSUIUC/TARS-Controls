@@ -142,7 +142,7 @@ def simulator(x0, dt) -> None:
     while x[1, 0] >= 0 or start:
         if start:
             start = False
-
+        # print("Timestamp: ", time_stamp)
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)

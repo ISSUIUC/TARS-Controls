@@ -84,12 +84,8 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     alpha_nc.axhline(88 ,label="Alpha Limit",color="tab:red",linewidth = 2);  
     alpha_nc.set_ylabel("Angle of Attack (degrees)");   
     alpha_nc.legend(loc='best')
-    
     plt.tight_layout()
     
-    # plt.figure()
-    # plt.plot(sim_dict["time"],sim_dict["rocket_total_mass"],label="Rocket Mass",color="tab:green", linewidth = 2)
-    # plt.plot(sim_dict["time"],sim_dict["motor_mass"],label="Motor Mass",color="tab:red", linewidth = 2)
     plt.show()
 
 if __name__ == "__main__":
@@ -101,14 +97,6 @@ if __name__ == "__main__":
     sim_dict["time"] = file_data["time"].values
     sensor_dict["time"] = file_data["time"].values
     kalman_dict["time"] = file_data["time"].values
-    # print(sim_dict["time"].values)
-    # sim_dict["pos"] = np.array(
-    #     list(zip(file_data["pos_x"].values, file_data["pos_y"].values, file_data["pos_z"].values)))
-    # print(sim_dict["pos"])
-    # sim_dict["vel"] = np.array(
-    #     list(zip(file_data["vel_x"].values, file_data["vel_y"].values, file_data["vel_z"].values)))
-    # sim_dict["accel"] = np.array(
-    #     list(zip(file_data["accel_x"].values, file_data["accel_y"].values, file_data["accel_z"].values)))
 
     for attr in ["pos", "vel", "accel", "ang_pos", "ang_vel", "ang_accel"]:
         sim_dict[attr] = np.array(
@@ -131,6 +119,5 @@ if __name__ == "__main__":
     sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
     sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
-
     
     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)

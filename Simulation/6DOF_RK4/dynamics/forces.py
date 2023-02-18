@@ -57,6 +57,7 @@ class Forces:
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
+        # print(self.aerodynamic_moment(drag))
         return np.array([force, moment]), alpha
 
     def get_Ca_Cn_Cp(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:
@@ -135,7 +136,9 @@ class Forces:
                 Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])  
                 Cn = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cn_low, Cn_up])  
                 Cp = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cp_low, Cp_up])  
-
+                # print('CP: ', Cp)
+                # print('Cn: ', Cn)
+                # print("Ca: ", Ca)
                 Cp = Cp/100. #Convert cm to m
 
                 return [Ca,Cn,np.array([Cp, 0.0, 0.0])]

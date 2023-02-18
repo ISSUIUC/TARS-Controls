@@ -99,7 +99,7 @@ class Apogee:
         C_a = self.get_Ca()
         alt = self.state[0]
         density = self.atm.get_density(alt)
-        drag = -0.5*(self.state[1]**2 * C_a*density*prop.A)
+        drag = -0.5*(self.state[1]**2 * C_a*density*self.rocket.A)
         grav = self.gravitational_force(alt)
         force =  drag + grav
         return force/self.rocket.rocket_dry_mass
