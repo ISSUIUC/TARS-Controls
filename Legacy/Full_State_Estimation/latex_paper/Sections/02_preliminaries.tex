@@ -1,0 +1,114 @@
+\section{PRELIMINARIES}
+
+\subsection{Rocket Frame of Reference}
+
+In order to maintain congruency with roll-pitch-yaw conventions commonly employed in aerospace dynamics, the following reference frame will be used to express the vehicle's motion. The origin of this frame shall be the center of mass (COM) of the vehicle, with the $\boldsymbol{x}$ axis aligned to the axis of the rocket.
+
+
+\begin{center}
+\begin{tikzpicture}[x=1cm, y=1cm, z=-0.5cm]
+    % Draw axes, angular velocity arrows
+    \draw [->] (0,0,0) -- (4,0,0) node [at end, right] {$\boldsymbol{z}$}
+                                  node [near end] {\AxisRotatorX}
+                                  node [near end, above=0.3cm] {$\omega_z$ (yaw)};
+    \draw [->] (0,0,0) -- (0,4.5,0) node [at end, left] {$\boldsymbol{x}$}
+                                    node [very near end] {\AxisRotatorY}
+                                    node (omega_x) [near end, above=0.5cm, right=0.2cm] {$\omega_x$ (roll)};
+    \draw [->] (0,0,0) -- (0,0,4) node [at end, left] {$\boldsymbol{y}$}
+                                  node [near end] {\AxisRotatorZ}
+                                  node [right=0.5cm] {$\omega_y$}
+                                  node [below=0.5cm, right=0.15cm] {(pitch)};
+    % Draw rocket
+    \draw (-0.3,2,0) -- (-0.3,-2,0) -- (0.3,-2,0) -- (0.3,2,0); % rocket body
+    \draw (-0.3,2,0) arc (180:151:2.5); % nosecone left
+    \draw (0.3,2,0) arc (0:29:2.5); % nosecone right
+    \draw (-0.3,-1.2,0) -- (-0.6,-1.4,0) -- (-0.6,-1.8,0) -- (-0.3,-2,0); % Left Fin
+    \draw (0.3,-1.2,0) -- (0.6,-1.4,0) -- (0.6,-1.8,0) -- (0.3,-2,0); % Right Fin
+\end{tikzpicture}
+\end{center}
+
+\subsection{Tait-Brian Angles (aka Euler Angles)}
+
+\begin{tikzpicture}[x=1cm, y=1cm]
+    % Draw inertial frame
+    \draw [->] (0,0) -- (4.5,0) node [at end, right] {$\boldsymbol{e_x}$};
+    \draw [->] (0,0) -- (0,4.5) node [at end, right] {$\boldsymbol{e_y}$};
+    % Draw rocket and rocket frame axes at 15 degree pitch
+    \begin{scope} [rotate around z=-75]
+      % Draw rocket frame axes x and y
+      \draw [->] (0,0) -- (-4.5,0) node [at end, right] {$\boldsymbol{y}$};
+      \draw [->] (0,0) -- (0,4.5) node [at end, right] {$\boldsymbol{x}$};
+      % Draw Rocket
+      \draw (-0.3,2,0) -- (-0.3,-2,0) -- (0.3,-2,0) -- (0.3,2,0); % rocket body
+      \draw (-0.3,2,0) arc (180:151:2.5); % nosecone left
+      \draw (0.3,2,0) arc (0:29:2.5); % nosecone right
+      \draw (-0.3,-1.2,0) -- (-0.6,-1.4,0) -- (-0.6,-1.8,0) -- (-0.3,-2,0); % Left Fin
+      \draw (0.3,-1.2,0) -- (0.6,-1.4,0) -- (0.6,-1.8,0) -- (0.3,-2,0); % Right Fin
+    \end{scope}
+    % Draw pitch angle arcs and labels
+    \draw (3.7,0) arc (0:15:3.7) node [midway, right] {$\phi=15^{\circ}$};
+    \draw (0,3.7) arc (90:105:3.7) node [midway, above] {$\phi$};
+\end{tikzpicture}
+
+\subsection{Quaternions}
+
+\begin{equation*}
+  q =
+  \begin{bmatrix}
+  q_0 \\ q_1 \\ q_2 \\ q_3
+  \end{bmatrix},
+  \quad
+  \dot{q} =
+  \begin{bmatrix}
+  \dot{q_0} \\ \dot{q_1} \\ \dot{q_2} \\ \dot{q_3}
+  \end{bmatrix}
+\end{equation*}
+
+Euler angle to quaternion conversion:
+
+\begin{equation*}
+  q(\phi, \theta, \psi) =
+  \renewcommand\arraystretch{1.5}
+  \begin{bmatrix}
+  q_0 = \cos(\phi/2)\cos(\theta/2)\cos(\psi/2) + \sin(\phi/2)\sin(\theta/2)\sin(\psi/2) \\
+  q_1 = \sin(\phi/2)\cos(\theta/2)\cos(\psi/2) - \cos(\phi/2)\sin(\theta/2)\sin(\psi/2) \\
+  q_2 = \cos(\phi/2)\sin(\theta/2)\cos(\psi/2) + \sin(\phi/2)\cos(\theta/2)\sin(\psi/2) \\
+  q_3 = \cos(\phi/2)\cos(\theta/2)\sin(\psi/2) - \sin(\phi/2)\sin(\theta/2)\cos(\psi/2) \\
+  \end{bmatrix}
+\end{equation*}
+
+Quaternion to euler angle conversion:
+
+\begin{equation*}
+  \begin{bmatrix}
+  \phi \\ \theta \\ \psi
+  \end{bmatrix}
+  =
+  \renewcommand\arraystretch{1.5}
+  \begin{bmatrix}
+  \arctan(\frac{2(q_0q_1 + q_2q_3)}{1 - 2(q_1^2 + q_2^2)}) \\
+  \arcsin(2(q_0q_2 - q_3q_1)) \\
+  \arctan(\frac{2(q_0q_3 + q_1q_2)}{1 - 2(q_2^2 + q_3^2)}) \\
+  \end{bmatrix}
+\end{equation*}
+
+\begin{equation*}
+  \dot{q} = \frac{1}{2} \vec{\omega} \cdot q =
+  \frac{1}{2}
+  \begin{bmatrix}
+  0 \\ \omega_x \\ \omega_y \\ \omega_z
+  \end{bmatrix}
+  \begin{bmatrix}
+  q_0 \\ q_1 \\ q_2 \\ q_3
+  \end{bmatrix} =
+  \frac{1}{2}
+  \begin{bmatrix}
+  -q_1  & -q_2  & -q_3 \\
+   q_0  & -q_3  &  q_2 \\
+   q_3  &  q_0  & -q_1 \\
+  -q_2  &  q_1  & q_0
+  \end{bmatrix}
+  \begin{bmatrix}
+  \omega_x \\ \omega_y \\ \omega_z
+  \end{bmatrix}
+\end{equation*}
