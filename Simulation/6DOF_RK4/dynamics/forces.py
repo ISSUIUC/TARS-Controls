@@ -3,7 +3,7 @@ Forces on rocket:
 - gravity
 - motor thrust
 - aerodynamic
-- wind (comes from atmosphere class)
+    - wind (comes from atmosphere class)
 '''
 import dynamics.motor as motor
 import environment.atmosphere as atmosphere
@@ -16,6 +16,18 @@ import os
 # Define Objects
 
 class Forces:
+    """Forces on rocket:
+    
+    Args:
+        max_ext_length (float): maximum extension length of flaps
+        cm (np.array): center of mass of rocket
+        cp (np.array): center of pressure of rocket
+        A (float): cross sectional area of rocket
+        A_s (float): cross sectional area of the side of the rocket
+        rocket_dry_mass (float): mass of rocket without motor
+        motor (motor.Motor): motor object
+        atm (atmosphere.Atmosphere): atmosphere object
+    """
     # Define class objects
     atm = None
     motor = None
@@ -34,8 +46,7 @@ class Forces:
         self.atm = atm
 
     def get_force(self, x_state, flap_ext, time_stamp) -> np.ndarray:
-        '''
-        Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
+        '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
 
         Args:
             x_state (np.array): State Vector [4x3]
@@ -62,8 +73,7 @@ class Forces:
 
     def get_Ca_Cn_Cp(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:
         # TODO: account for area change of flaps in C_a calculation
-        '''
-        References lookup table to find C_a, C_n, C_p based on flap extension
+        '''References lookup table to find C_a, C_n, C_p based on flap extension
 
         Args:
             x_state (np.array): State Vector [4x3]
@@ -146,8 +156,7 @@ class Forces:
         return [0,0,0]
 
     def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext) -> np.ndarray:
-        '''
-        Calculates aerodynamic drag force acting on rocket based on velocity and altitude
+        '''Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
         Args:
             x_state (np.array): State Vector [4x3]
@@ -168,8 +177,7 @@ class Forces:
         return aero_force
     
     def gravitational_force(self, altitude, time_stamp) -> np.ndarray:
-        '''
-        Calculates gravitational force acting on rocket based on altitude
+        '''Calculates gravitational force acting on rocket based on altitude
         Relevant Equations:
             F = GMm/r^2
 

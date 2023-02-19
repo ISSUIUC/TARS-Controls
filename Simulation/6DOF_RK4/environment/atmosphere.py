@@ -39,8 +39,7 @@ class Atmosphere:
         return (r*altitude)/(r+altitude)
     
     def get_temperature(self, altitude):
-        '''
-        Temperature getter function based on altitude
+        '''Temperature getter function based on altitude
         
         Args:
             altitude (float): Altitude above sea level, in meters
@@ -98,6 +97,14 @@ class Atmosphere:
         return temperature
         
     def get_pressure(self, altitude):
+        """Pressure getter function based on altitude
+        
+        Args:
+            altitude (float): Altitude above sea level, in meters
+            
+        Returns:
+            pressure (float): Pressure at altitude
+        """
         # temperature under standard condition (15 degrees C at sealevel) kelvin
         P_0 = 101325
 
@@ -115,8 +122,7 @@ class Atmosphere:
         return P_0 * ((T_0 +(altitude)*b)/T_0)**(-g/(b*R))
     
     def get_density(self, altitude)->float:
-        '''
-        Returns the density at a given altitude
+        '''Returns the density at a given altitude
         
         Args:
             altitude (float): Altitude above sea level, in meters
@@ -205,14 +211,13 @@ class Atmosphere:
         return density
     
     def get_altitude(self, pressure):
-        '''
-        Returns altitude at a given pressure using the international barometric formula
+        '''Returns altitude at a given pressure using the international barometric formula
         
         Args:
-        Pressure Pascals
+            pressure: Atmospheric pressure (pascals)
         
         Returns:
-        Altitude from sea level in meters
+            Altitude from sea level in meters
         
         '''
         # temperature under standard condition (15 degrees C at sealevel) kelvin
@@ -233,6 +238,14 @@ class Atmosphere:
         return -(T_0*((pressureRatio)**(b*R/(g)) - 1) * (pressureRatio)**(-b*R/(g)))/b
     
     def get_speed_of_sound(self, altitude)->float:
+        '''Returns the speed of sound at a given altitude
+        
+        Args:
+            altitude (float): Altitude above sea level, in meters
+        
+        Returns:
+            speed of sound (float): Speed of sound at altitude
+        '''
         gamma = 1.4 # Heat capacity ratio of air
         gas_constant = 287.05 # Gas constant of air
         
@@ -262,8 +275,7 @@ class Atmosphere:
         self.enable_magnitude_variance_ = toggle
         
     def get_wind_vector(self, tStamp)->np.ndarray:
-        '''
-        Returns the wind vector at a given time
+        '''Returns the wind vector at a given time
         
         Args:
             tStamp (float): Time stamp in seconds

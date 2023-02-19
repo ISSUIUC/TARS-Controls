@@ -9,17 +9,18 @@ https://geomag.bgs.ac.uk/data_service/models_compass/igrf_calc.html - Online Mag
 import numpy as np
 import pandas as pd
 
-'''
-input:
-r - Geocentric radius
-theta - lattitude in degrees (North) from equator
-phi - longitude in degrees (East) from Greenwich
-days - decimal days since Jan 1, 2020
-
-output:
-B vector in x, y, and z directions respectively in nT
-'''
 def magnet(r, theta, phi, days):
+    '''Magentic field model for the Earth's magnetic field
+
+    Args:
+        r: Geocentric radius
+        theta: lattitude in degrees (North) from equator
+        phi: longitude in degrees (East) from Greenwich
+        days: decimal days since Jan 1, 2020
+
+    Return:
+        B vector in x, y, and z directions respectively in nT
+    '''
     # To avoid singularities check for poles
     if (theta > -.00000001 and theta < .00000001):
         theta = 0.00000001
@@ -84,17 +85,19 @@ def magnet(r, theta, phi, days):
     
     return sphere_to_cartesian(Br, -Bt, -Bp / np.sin(theta))
 
-'''
-Used to convert spherical magnetic field to cartesian coordinates
-
-Inputs: B vector with radial, theta, and phi directions
-Outputs: (all directions by convention)
-Bx - Magnetic field in North direction
-By - Magnetic field in East Direction
-Bz - Magnetic field in Downward Direction
-'''
-
 def sphere_to_cartesian(Br, Bt, Bp):
+    '''Used to convert spherical magnetic field to cartesian coordinates
+    
+    Args:
+        Br (float): B vector radial direction
+        Bt (float): B vector theta direction
+        Bp (float): B vector phi direction
+        
+    Returns: (all directions by convention)
+        Bx (float): Magnetic field in North direction
+        By (float): Magnetic field in East Direction
+        Bz (float): Magnetic field in Downward Direction
+    '''
     e = 0
     Bx = -Bt*np.cos(e) - Br*np.sin(e)
     By = Bp
@@ -102,16 +105,17 @@ def sphere_to_cartesian(Br, Bt, Bp):
     return Bx, By, Bz
 
 
-'''
-Quasi-normalizing the input coefficient file
-
-Input: File path as string
-Outputs: 
-G - quasi-normalized 2D array
-H - quasi-normalized 2D array
-Max_M_N - max N or M values in the coefficients
-'''
 def quasi_normalize(file_lookup_path):
+    '''Quasi-normalizing the input coefficient file
+
+    Args:
+        file_lookup_path: Path to the IGRF coefficient file
+        
+    Returns: 
+        gs: Quasi-normalized g values
+        hs: Quasi-normalized h values
+        max_M_N: Max value of m and n
+    '''
     IGRF_lookup = pd.read_csv(file_lookup_path)
     IGRF_dict = IGRF_lookup.set_index(['n','m', 'g/h']).T.to_dict('list')
     

@@ -10,7 +10,13 @@ sys.path.insert(0, os.path.abspath(
 import properties.properties as prop
 
 def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
-
+    """Plots the simulation data from the simulation dictionary
+    
+    Args:
+        sim_dict (dict): Dictionary containing simulation data
+        sensor_dict (dict, optional): Dictionary containing sensor data. Defaults to 0.
+        kalmann_dict (dict, optional): Dictionary containing kalman filter data. Defaults to 0.
+    """
     fig_linear,(pos_nc,vel_nc,accel_nc) = plt.subplots(3,1,figsize=(15,10), sharex=True)
     fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 25)
 
@@ -85,7 +91,12 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     alpha_nc.set_ylabel("Angle of Attack (degrees)");   
     alpha_nc.legend(loc='best')
     plt.tight_layout()
-    
+
+    plt.figure()
+    plt.plot(sim_dict["time"], sim_dict["flap_ext"],label="Flap Extension",color="tab:green", linewidth = 2);   
+    plt.xlabel("Time (sec)"); 
+    plt.ylabel("Flap Extension (m)");  
+
     plt.show()
 
 if __name__ == "__main__":

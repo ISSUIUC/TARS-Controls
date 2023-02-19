@@ -3,7 +3,15 @@ import properties.properties as prop
 
 
 class Controller():
-
+    """Flap extension controller class for the rocket
+    
+    Args:
+        Kp (float): proportional gain
+        Ki (float): integral gain
+        Kd (float): derivative gain
+        timestep (float): timestep in seconds
+        des_apogee (float): desired apogee in meters
+    """
     def __init__(self, Kp, Ki, Kd, timestep, des_apogee):
         self.Kp = Kp
         self.Ki = Ki
@@ -15,6 +23,14 @@ class Controller():
         # self.prop = prop
 
     def get_flap_extension(self, pred_apogee):
+        """Returns the flap extension in meters given the predicted apogee in meters
+        
+        Args:
+            pred_apogee (float): predicted apogee in meters
+            
+        Returns:
+            float: flap extension in meters
+        """
         error_curr = pred_apogee - self.des_apogee
         self.error_sum += error_curr*self.dt
         error_dt = (error_curr - self.error_prev) / self.dt

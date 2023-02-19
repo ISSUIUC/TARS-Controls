@@ -4,13 +4,22 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import math
-# aaaaaaaaaaaaaaa
 
 import dynamics.forces as forces
 import util.vectors as vct
 import properties.properties as prop
 import dynamics.rocket as rocket_model
 class Apogee: 
+    '''Apogee Estimator Class
+    
+    Args:
+        state (np.array): 2D array of state vectors --> ([pos], [vel], [acc])
+        dt (float): time step for RK4
+        a (float): lower bound of domain (inclusive)
+        b (float): upper bound of domain (inclusive)
+        n (int): number of points to use in approximation
+        atm (Atmosphere): atmosphere object
+    '''
 
     atm = None
     rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
@@ -18,14 +27,6 @@ class Apogee:
     rocket = rocket_model.Rocket()
     
     def __init__(self, state, dt, a, b, n, atm):
-        '''
-        self.state:
-        
-        x-axis:
-        [[pos],
-         [vel],
-         [acc]]
-        '''
         self.state = state[:3][0].copy()
         self.dt = dt
         self.flap_ext = 0.
@@ -34,8 +35,7 @@ class Apogee:
         self.atm = atm
     
     def set_params(self, state):
-        '''
-        Reset the state vector to the current state of the rocket
+        '''Reset the state vector to the current state of the rocket
         
         Args:
             state (np.array): 2D array of state vectors --> ([pos], [vel], [acc])
@@ -43,6 +43,8 @@ class Apogee:
         self.state = state.copy()
 
     def RK4(self):
+        """Runge-Kutta 4th order method for state propogation
+        """
         k1_v = self.state[2]
         k2_v = self.state[2] + k1_v*(self.dt/2)
         k3_v = self.state[2] + k2_v*(self.dt/2)
@@ -63,12 +65,21 @@ class Apogee:
         self.state = np.array([p,v,a])
     
     def step_p(self, y0, y1, dt):
+        """Calculates slope of position over given delta t for state propogation
+        
+        Args:
+            y0 (float): initial position
+            y1 (float): final position
+            dt (float): time step
+            
+        Returns:
+            (float): slope of position over given delta t
+        """
         return (y1-y0)/dt
     
     def get_Ca(self) -> float:
         # TODO: account for area change of flaps in C_a calculation
-        '''
-        References lookup table to find C_a based on flap extension
+        '''References lookup table to find C_a based on flap extension
 
         Args:
             flap_ext (float): current flap extention config
@@ -88,8 +99,7 @@ class Apogee:
 
 
     def get_accel(self) -> np.ndarray:
-        '''
-        Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
+        '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
         
         Returns:
             (np.array): 2D array of forces and moments --> ([Fx, Fy, Fz], [Mx, My, Mz])
@@ -105,8 +115,7 @@ class Apogee:
         return force/self.rocket.rocket_dry_mass
 
     def gravitational_force(self, altitude) -> np.ndarray:
-        '''
-        Calculates gravitational force acting on rocket based on altitude
+        '''Calculates gravitational force acting on rocket based on altitude
         Relevant Equations:
             F = GMm/r^2
 
@@ -120,8 +129,7 @@ class Apogee:
 
     def step_v(self):
         
-        '''
-        Calculates slope of v over given delta t for state propogation
+        '''Calculates slope of v over given delta t for state propogation
         
         Returns:
             (np.array): rate of change of velocity (acceleration) in form of state vector
@@ -129,8 +137,7 @@ class Apogee:
         return self.get_accel()    
     
     def predict_apogee(self, current_state):
-        '''
-        Runs RK4 to predict apogee of rocket given current state
+        '''Runs RK4 to predict apogee of rocket given current state
         
         Args:
             current_state (np.array): current state of rocket in form of state vector
@@ -155,22 +162,13 @@ class Apogee:
 
         This function assumes an f_true(x) function is globally available for calculating the true function value at x.
         
-        Parameters
-        ----------
-        a : float_like
-            Lower bound of domain (inclusive)
-        b : float_like
-            Upper bound of domain (inclusive)
-        n : integer
-            Number of local splines
+        Args:
+            a (float): lower bound of interpolation interval
+            b (float): upper bound of interpolation interval
+            n (int): number of interpolation points
             
-        Returns
-        -------
-        c : array_like
-            Vector of cubic spline coefficients
-        x_interpolate : array_like
-            List of interpolation points used
-        
+        Returns:
+            (np.array): 4xn array of spline coefficients
         """
         
         # get interpolation points (uniform) and delta x
@@ -238,19 +236,13 @@ class Apogee:
         """
         Returns the approximated function value for x using the cubic spline coefficients c and the interpolation points x_interpolate.
         
-        Parameters:
-        -----------
-            c : array_like
-                Vector of cubic spline coefficients
-            x_interpolate : array_like
-                List of interpolation points used
-            x : float
-                Value to evaluate the approximated function at
+        Args:
+            c (array_like): Vector of cubic spline coefficients
+            x_interpolate (array_like): List of interpolation points used
+            x (float): Value to evaluate the approximated function at
         
         Returns:
-        --------
-            fa_val : float_like
-                Approximated function value at x
+            fa_val (float_like): Approximated function value at x
         """
         # get spline index i for x
         if x == x_interpolate[-1]:

@@ -30,8 +30,7 @@ class Simulator():
         return np.array([p, v, a, y0[3], y0[4], alpha])
 
     def RK4(self, y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
-        '''
-        Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
+        '''Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
         Args:
             y0 (np.array): current state vector [6x3]
                 x:         y:         z:
@@ -91,8 +90,7 @@ class Simulator():
         # return np.array([p, v, a, np.array([0,0,0]), np.array([0,0,0]), np.array([0,0,0])]), alpha
 
     def step_p(self, y0, y1, dt):
-        '''
-        Calculates rate of change of position over given delta time for state propogation
+        '''Calculates rate of change of position over given delta time for state propogation
 
         Args:
             y0 (np.array): current state vector [6x3]
@@ -106,8 +104,7 @@ class Simulator():
         return (y1-y0)/dt # return slope (velocity)
 
     def step_v(self, pos, vel, ang_pos, ang_vel, dt, time_stamp, flap_ext):
-        '''
-        Calculates slope of v over given delta t for state propogation
+        '''Calculates slope of v over given delta t for state propogation
 
         Args:
             pos (np.array): current posiiton state vector [1x3]

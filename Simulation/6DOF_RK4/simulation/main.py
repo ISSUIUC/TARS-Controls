@@ -1,3 +1,28 @@
+# ______      _____ _              __________ ___________ 
+# | ___ \    /  ___(_)            / ___|  _  \  _  |  ___|
+# | |_/ /   _\ `--. _ _ __ ___   / /___| | | | | | | |_   
+# |  __/ | | |`--. \ | '_ ` _ \  | ___ \ | | | | | |  _|  
+# | |  | |_| /\__/ / | | | | | | | \_/ | |/ /\ \_/ / |    
+# \_|   \__, \____/|_|_| |_| |_| \_____/___/  \___/\_|    
+#        __/ |                                            
+#       |___/                                             
+
+# A 6DOF RK-4 Based simulation that uses RASAero aerodynamic data and known motor thrust data to simulate motion of the rocket
+# with simulated sensor data as well as a implementation of the Extended Kalman Filter and active drag PID controller for the ISS
+# Spaceshot entry for the 2023 IREC competition. This simulation was used to quantify the effects of the airbrakes, test 
+# different system design methodlogies, and provide preliminary tuning for the EKF and controller prior to implementation in 
+# SILSIM and flight software.
+# 
+# 2022-2023 Guidance, Navigation, and Control Main Contributors #
+# Sub-Team Lead: Parth Shrotri (2024)
+# Colin Kinsey (2024)
+# Evan Yu (2025)
+# Rithvik Bhogavilli (2025)
+# Kabir Cheema (2025)
+# Freya Bansal (2025)
+# Ishaan Bansal (2025)
+# Ethan Pereira (2026)
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -90,8 +115,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, alpha, apoge
 
 
 def simulator(x0, dt) -> None:
-    '''
-    Method which handles running the simulation and logging sim data to dict
+    '''Method which handles running the simulation and logging sim data to dict
 
     Args:
         x0 (np.array): state vector initialized to 0s [6x3]

@@ -6,18 +6,19 @@ import pandas as pd
 import properties.properties as prop
 
 
-"""
-Represents the motor of the rocket
 
-Args:
-    impulse: Total impulse of the motor in Ns
-    mass: Total mass of the motor in kg(?)
-    delay: Time delay of the motor in seconds
-    lookup_file: CSV file containing the thrust curve of the motor
-"""
 class Motor():
+    """Represents the motor of the rocket
+
+    Args:
+        impulse: Total impulse of the motor in Ns
+        mass: Total mass of the motor in kg(?)
+        delay: Time delay of the motor in seconds
+        lookup_file: CSV file containing the thrust curve of the motor
+    """
     def __init__(self, rocket_total_mass, cm, cm_rocket, cm_motor, rocket_dry_mass, 
                  impulse=prop.impulse, mass=prop.motor_mass, delay=prop.delay, lookup_file: str=prop.motor_lookup_file):
+        
         lookup = os.path.join(os.path.dirname(__file__), lookup_file)
         self.thrust_data = pd.read_csv(lookup)
         # print(self.thrust_data["Thrust (N)"].dtype)
@@ -35,37 +36,35 @@ class Motor():
         self.rocket_dry_mass = rocket_dry_mass
 
 
-    """
-    Ignites the motor at the given time
-
-    Args:
-        start_time: Time stamp of the launch
-    """
+   
     def ignite(self, start_time):
+        """Ignites the motor at the given time
+
+        Args:
+            start_time: Time stamp of the launch
+        """
         self.start_time = start_time
 
 
-    """
-    Helper function to linearly interpolate between two values
-
-    Args:
-        x1: Lower bound of the current interval
-        x2: Upper bound of the current interval
-        y1: Lower bound of the mapped interval
-        y2: Upper bound of the mapped interval
-        x: Value to be mapped
-    """
     def lerp_(self, x1, x2, y1, y2, x):
+        """Helper function to linearly interpolate between two values
+
+        Args:
+            x1: Lower bound of the current interval
+            x2: Upper bound of the current interval
+            y1: Lower bound of the mapped interval
+            y2: Upper bound of the mapped interval
+            x: Value to be mapped
+        """
         return y1 + ((y2 - y1) / (x2 - x1)) * (x - x1)
 
 
-    """
-    Gets the thrust of the motor at a given time
-
-    Args:
-        time: Time stamp of the current state
-    """
     def get_thrust(self, time_stamp: float) -> np.ndarray:
+        """Gets the thrust of the motor at a given time
+
+        Args:
+            time: Time stamp of the current state
+        """
         # if (time_stamp < 7/.01):
         #     return np.array([2500.,0.,0.])
         # else:
@@ -97,33 +96,30 @@ class Motor():
         # return temp
 
 
-    """
-    Sets the alignment of the motor
-
-    Args:
-        alignment: 3D vector representing the alignment of the motor
-    """
     def set_alignment(self) -> None:
+        """Sets the alignment of the motor
+
+        Args:
+            alignment: 3D vector representing the alignment of the motor
+        """
         # read current alignment from csv file
         if self.cur_line < len(self.thrust_data):
             self.alignment = np.array([float(self.thrust_data["Theta"].iloc[self.cur_line]), float(self.thrust_data["Phi"].iloc[self.cur_line])])
             self.cur_line += 1
 
 
-    """
-    Gets the alignment of the motor
-    """
     def get_alignment(self) -> np.ndarray:
+        """Gets the alignment of the motor
+        """
         return self.alignment
 
 
-    """
-    Gets the mass of the motor at a given time
-    
-    Args:
-        time: Time stamp of the current state
-    """ 
     def get_mass(self, time_stamp: float) -> np.float64:
+        """Gets the mass of the motor at a given time
+        
+        Args:
+            time: Time stamp of the current state
+        """ 
         # shift time_stamp to reflect the time since ignition
         time_stamp = time_stamp - self.start_time
         if time_stamp < self.thrust_data["Time (s)"].iloc[0]:
@@ -141,13 +137,12 @@ class Motor():
         return self.current_mass
 
 
-    """
-    Sets the coast time of the motor
-
-    Args:
-        coast_time: Time to coast after ignition
-    """
     def set_coast_time(self, coast_time: np.float64) -> None:
+        """Sets the coast time of the motor
+
+        Args:
+            coast_time: Time to coast after ignition
+        """
         self.coast_time = coast_time
 
 
