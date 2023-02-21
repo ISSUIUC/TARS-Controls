@@ -65,6 +65,9 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     ang_pos_nc.plot(sim_dict["time"], sim_dict["ang_pos"][:,0], label="Roll", color="tab:red", linewidth = 2)
     ang_pos_nc.plot(sim_dict["time"], sim_dict["ang_pos"][:,1], label="Pitch", color="tab:green", linewidth = 2)
     ang_pos_nc.plot(sim_dict["time"], sim_dict["ang_pos"][:,2], label="Yaw", color="tab:blue", linewidth = 2)
+    ang_pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_rpos"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2)
+    ang_pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_rpos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2)
+    ang_pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_rpos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2)
     ang_pos_nc.plot(sensor_dict["time"], sensor_dict["imu_ang_pos_x"], label="IMU Roll", color="darkred", linestyle = ":",linewidth = 2)
     ang_pos_nc.plot(sensor_dict["time"], sensor_dict["imu_ang_pos_y"], label="IMU Pitch", color="darkgreen", linestyle = ":",linewidth = 2)
     ang_pos_nc.plot(sensor_dict["time"], sensor_dict["imu_ang_pos_z"], label="IMU Yaw", color="darkblue", linestyle = ":",linewidth = 2)
@@ -73,7 +76,10 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
     ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,0],label="Roll",color="tab:red", linewidth = 2);   
     ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,1],label="Pitch",color="tab:green", linewidth = 2);  
-    ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,2],label="Yaw",color="tab:blue", linewidth = 2);  
+    ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,2],label="Yaw",color="tab:blue", linewidth = 2); 
+    ang_vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_rvel"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2)
+    ang_vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_rvel"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2)
+    ang_vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_rvel"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2) 
     ang_vel_nc.plot(sensor_dict["time"], sensor_dict["imu_gyro_x"], label="IMU Roll Rate", color="darkred", linestyle = ":",linewidth = 2)
     ang_vel_nc.plot(sensor_dict["time"], sensor_dict["imu_gyro_y"], label="IMU Pitch Rate", color="darkgreen", linestyle = ":",linewidth = 2)
     ang_vel_nc.plot(sensor_dict["time"], sensor_dict["imu_gyro_z"], label="IMU Yaw Rate", color="darkblue", linestyle = ":",linewidth = 2)
@@ -82,7 +88,10 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
     ang_accel_nc.plot(sim_dict["time"], sim_dict["ang_accel"][:,0],label="Roll",color="tab:red", linewidth = 2);  
     ang_accel_nc.plot(sim_dict["time"], sim_dict["ang_accel"][:,1],label="Pitch",color="tab:green", linewidth = 2);  
-    ang_accel_nc.plot(sim_dict["time"], sim_dict["ang_accel"][:,2],label="Yaw",color="tab:blue", linewidth = 2);    
+    ang_accel_nc.plot(sim_dict["time"], sim_dict["ang_accel"][:,2],label="Yaw",color="tab:blue", linewidth = 2);
+    ang_accel_nc.plot(kalman_dict["time"], kalman_dict["kalman_raccel"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2)
+    ang_accel_nc.plot(kalman_dict["time"], kalman_dict["kalman_raccel"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2)
+    ang_accel_nc.plot(kalman_dict["time"], kalman_dict["kalman_raccel"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2)    
     ang_accel_nc.set_ylabel("Acceleration (rad\s^2)");   
     ang_accel_nc.legend(loc='best')
 
@@ -113,6 +122,9 @@ if __name__ == "__main__":
         sim_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
     for attr in ["kalman_pos", "kalman_vel", "kalman_accel"]:
+        kalman_dict[attr] = np.array(
+            list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+    for attr in ["kalman_rpos", "kalman_rvel", "kalman_raccel"]:
         kalman_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
     sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
