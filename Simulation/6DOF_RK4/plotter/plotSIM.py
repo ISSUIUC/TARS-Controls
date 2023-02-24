@@ -72,7 +72,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     ang_pos_nc.plot(sensor_dict["time"], sensor_dict["imu_ang_pos_y"], label="IMU Pitch", color="darkgreen", linestyle = ":",linewidth = 2)
     ang_pos_nc.plot(sensor_dict["time"], sensor_dict["imu_ang_pos_z"], label="IMU Yaw", color="darkblue", linestyle = ":",linewidth = 2)
     ang_pos_nc.set_ylabel("Position (rad)");  
-    ang_pos_nc.legend(loc='best')
+    ang_pos_nc.legend(loc='best', fontsize=8)
 
     ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,0],label="Roll",color="tab:red", linewidth = 2);   
     ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:,1],label="Pitch",color="tab:green", linewidth = 2);  
@@ -84,7 +84,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     ang_vel_nc.plot(sensor_dict["time"], sensor_dict["imu_gyro_y"], label="IMU Pitch Rate", color="darkgreen", linestyle = ":",linewidth = 2)
     ang_vel_nc.plot(sensor_dict["time"], sensor_dict["imu_gyro_z"], label="IMU Yaw Rate", color="darkblue", linestyle = ":",linewidth = 2)
     ang_vel_nc.set_ylabel("Velocity (rad/s)");  
-    ang_vel_nc.legend(loc='best')
+    ang_vel_nc.legend(loc='best', fontsize=8)
 
     ang_accel_nc.plot(sim_dict["time"], sim_dict["ang_accel"][:,0],label="Roll",color="tab:red", linewidth = 2);  
     ang_accel_nc.plot(sim_dict["time"], sim_dict["ang_accel"][:,1],label="Pitch",color="tab:green", linewidth = 2);  
