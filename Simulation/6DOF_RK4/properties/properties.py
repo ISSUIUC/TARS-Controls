@@ -44,6 +44,9 @@ motor_lookup_file = '../lookup/m2500.csv'
 # flap max estension length (m)
 max_ext_length = .0178
 
+# flap max extension speed (m/s)
+max_ext_spd = 0.001
+
 # simulation output file
 output_file = '../output/simulated_6dof.csv'
 

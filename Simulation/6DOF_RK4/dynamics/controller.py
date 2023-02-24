@@ -20,24 +20,33 @@ class Controller():
         self.error_prev = 0
         self.dt = timestep
         self.des_apogee = des_apogee
-        # self.prop = prop
+        self.prev_flap = 0
 
-    def get_flap_extension(self, pred_apogee):
+    def get_flap_extension(self, control, pred_apogee):
         """Returns the flap extension in meters given the predicted apogee in meters
         
         Args:
+            control (boolean): is control allowed
             pred_apogee (float): predicted apogee in meters
             
         Returns:
             float: flap extension in meters
         """
-        error_curr = pred_apogee - self.des_apogee
-        self.error_sum += error_curr*self.dt
-        error_dt = (error_curr - self.error_prev) / self.dt
-        flap_ext = self.Kp * error_curr + self.Ki * self.error_sum + self.Kd * error_dt
-        self.error_prev = error_curr
-        if (flap_ext > prop.max_ext_length):
-            return prop.max_ext_length
-        elif (flap_ext < 0):
-            return 0
+        if control:
+            error_curr = pred_apogee - self.des_apogee
+            self.error_sum += error_curr*self.dt
+            error_dt = (error_curr - self.error_prev) / self.dt
+            flap_ext = self.Kp * error_curr + self.Ki * self.error_sum + self.Kd * error_dt
+            self.error_prev = error_curr
+
+            flap_ext += np.sign(flap_ext - self.prev_flap)*min(abs((flap_ext - self.prev_flap)/self.dt), prop.max_ext_spd)*self.dt
+            
+            if (flap_ext > prop.max_ext_length):
+                flap_ext =  prop.max_ext_length
+            elif (flap_ext < 0):
+                flap_ext = 0
+                
+            self.prev_flap = flap_ext
+        else:
+            flap_ext = 0   
         return flap_ext

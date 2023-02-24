@@ -137,7 +137,7 @@ def simulator(x0, dt) -> None:
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
     apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm)
-    Kp, Ki, Kd = 0.8, 0, 0
+    Kp, Ki, Kd = 0.0002, 0, 0
     controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
 
     # Idle stage
@@ -153,8 +153,8 @@ def simulator(x0, dt) -> None:
                              accel[0], accel[1], accel[2])
 
         kalman_filter.reset_lateral_pos()
-        current_state = kalman_filter.get_state()
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
+        state_est = kalman_filter.get_state()
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, state_est, 0, state_est[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
 
 
     print("Ignition")
@@ -178,13 +178,10 @@ def simulator(x0, dt) -> None:
         kalman_filter.update(bno_ang_pos, baro_alt,
                              accel[0], accel[1], accel[2])
 
-        current_state = kalman_filter.get_state()
-        apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
+        state_est = kalman_filter.get_state()
+        apogee_est = apogee_estimator.predict_apogee(state_est[0:3])
 
-        if(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0):
-            flap_ext = controller.get_flap_extension(apogee_est)
-        else:
-            flap_ext = 0
+        flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
         # flap_ext will be passed by kalman filter
         rocket.set_motor_mass(time_stamp)
@@ -193,10 +190,10 @@ def simulator(x0, dt) -> None:
         x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, state_est, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
 
     t_end = time.time() - t_start
-    print("Time: ", t_end)
+    print(f"Time: {t_end:.2f}")
 
 
 if __name__ == '__main__':
