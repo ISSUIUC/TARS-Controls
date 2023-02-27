@@ -141,9 +141,37 @@ def simulator(x0, dt) -> None:
     x = x0.copy()
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-
+    accel = sensors.get_accelerometer_data(x)
+    x_data = []
+    y_data = []
+    z_data = []
+    for i in range(10):
+        reading = sensors.get_accelerometer_data(x)
+        x_data.append(reading[0])
+        y_data.append(reading[1])
+        z_data.append(reading[2])
+    
+    accel_tracker = np.array([])
+    # if accel_tracker.size < 10:
+    #     accel_tracker = np.append(accel_tracker, accel)
+    # else:
+    #     accel_tracker = np.delete(accel_tracker,0)
+    #     accel_tracker = np.append(accel_tracker, accel)
+    # x=z
+    # y=x
+    # z=-y
+    ax = sum(x_data)/len(x_data)
+    ay = sum(y_data)/len(y_data)
+    az = sum(z_data)/len(z_data)
+    # ax = np.mean(accel_tracker[:,0])
+    # ay = np.mean(accel_tracker[:,1])
+    # az = np.mean(accel_tracker[:,2])
+    pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
+    yaw = np.arctan2(-ax,-ay) + np.pi/2
     r_kalman_filter = r_ekf.KalmanFilter_R(
-        dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
+    # r_kalman_filter = r_ekf.KalmanFilter_R(
+    #     dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     time_stamp = 0
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
