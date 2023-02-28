@@ -44,7 +44,7 @@ import environment.atmosphere as atmosphere
 import dynamics.controller as contr
 
 atm = atmosphere.Atmosphere()
-rocket = rocket_model.Rocket(atm=atm)
+rocket = rocket_model.Rocket(atm=atm, delay=60)
 motor = rocket.motor
 sim = sim_class.Simulator(atm=atm, rocket=rocket)
 sim_dict = {
@@ -139,11 +139,22 @@ def simulator(x0, dt) -> None:
     '''
 
     x = x0.copy()
+    baro = 0
+    bno_ang_pos = 0
+
+    len_buffer = 30
+    for i in range(len_buffer):
+        baro+=sensors.get_barometer_data(x)
+        bno_ang_pos+=sensors.get_bno_orientation(x)
+
+    baro_avg = baro/len_buffer
+    bno_ang_pos_avg = bno_ang_pos/len_buffer
+
     kalman_filter = ekf.KalmanFilter(
-        dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        dt, baro_avg, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
     r_kalman_filter = r_ekf.KalmanFilter_R(
-        dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        dt, bno_ang_pos_avg[0], 0.0, 0.0, bno_ang_pos_avg[1], 0.0, 0.0, bno_ang_pos_avg[2], 0.0, 0.0)
     time_stamp = 0
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
@@ -159,7 +170,7 @@ def simulator(x0, dt) -> None:
         gyro = sensors.get_gyro_data(x)
         bno_ang_pos = sensors.get_bno_orientation(x)
 
-        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.priori()
         kalman_filter.update(bno_ang_pos, baro_alt,
                              accel[0], accel[1], accel[2])
         
@@ -172,12 +183,12 @@ def simulator(x0, dt) -> None:
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
 
-
     print("Ignition")
 
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
     t_start = time.time()
+    motor.ignite(time_stamp)
 
     while x[1, 0] >= 0 or start:
         if start:
@@ -204,7 +215,6 @@ def simulator(x0, dt) -> None:
 
         flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
-        # flap_ext will be passed by kalman filter
         rocket.set_motor_mass(time_stamp)
         # rocket.motor_mass = motor.get_mass(time_stamp)
 
