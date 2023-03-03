@@ -286,6 +286,7 @@ class Atmosphere:
         dir_alpha = 0.9997
         mag_alpha = 0.99
         generated_direction_variance = np.zeros(3)
+        generated_magnitude_variance = 0
         current_wind_direction_ = np.zeros(3)
         if self.enable_direction_variance_:
             if((tStamp - self.last_direction_variance_update_) >= self.direction_variance_update_rate_):

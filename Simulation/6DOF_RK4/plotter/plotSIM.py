@@ -105,7 +105,16 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     alpha_nc.set_ylabel("AoA (degrees)", fontsize = 10);   
     alpha_nc.legend(fontsize=10, loc='center left',ncol=1)
     plt.tight_layout()
-
+    
+    fig_3d = plt.figure()
+    ax_3d = fig_3d.add_subplot(111, projection='3d')
+    fig_3d.suptitle("3D plots", fontsize=20)
+    x, y, z = sim_dict["pos"][:,0], sim_dict["pos"][:,1], sim_dict["pos"][:,2]
+    vx, vy, vz = sim_dict["vel"][:,0], sim_dict["vel"][:,1], sim_dict["vel"][:,2]
+    velocity_magnitude = np.sqrt(vx**2 + vy**2 + vz**2)
+    plot = ax_3d.scatter(y, z, x, label="Simulated Position", c=velocity_magnitude, cmap='viridis', linewidth=0.5)
+    ax_3d.set_zlabel("Altitude (m)")
+    fig_3d.colorbar(plot)
     plt.show()
 
 if __name__ == "__main__":

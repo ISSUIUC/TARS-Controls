@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+import shutil
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -43,7 +44,7 @@ import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 import dynamics.controller as contr
 
-atm = atmosphere.Atmosphere()
+atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 rocket = rocket_model.Rocket(atm=atm)
 motor = rocket.motor
 sim = sim_class.Simulator(atm=atm, rocket=rocket)
@@ -243,7 +244,6 @@ def simulator(x0, dt) -> None:
 
     t_end = time.time() - t_start
     print(f"Time: {t_end:.2f}")
-
 
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))

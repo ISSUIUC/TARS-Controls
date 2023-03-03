@@ -62,7 +62,8 @@ class Forces:
         alt = x_state.copy()[0,0]
         density = self.atm.get_density(alt)
         thrust = self.motor.get_thrust(time_stamp)
-        wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
+        # wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
+        wind_vector = self.atm.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
