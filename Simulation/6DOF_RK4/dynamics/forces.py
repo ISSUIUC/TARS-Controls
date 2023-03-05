@@ -45,7 +45,7 @@ class Forces:
         self.motor = motor
         self.atm = atm
 
-    def get_force(self, x_state, flap_ext, time_stamp) -> np.ndarray:
+    def get_force(self, x_state, flap_ext, time_stamp, density_noise=False) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
 
         Args:
@@ -60,7 +60,7 @@ class Forces:
         # TODO: Add random disturbances
         # print("State: ", x_state)
         alt = x_state.copy()[0,0]
-        density = self.atm.get_density(alt)
+        density = self.atm.get_density(alt, noise=density_noise, position=x_state[0])
         thrust = self.motor.get_thrust(time_stamp)
         # wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
         wind_vector = self.atm.get_wind_vector(time_stamp)

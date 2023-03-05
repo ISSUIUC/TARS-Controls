@@ -41,6 +41,7 @@ def append_to_array(array, x, time_stamp, baro_alt, accel, bno_ang_pos, gyro, ka
     Returns:
         (np.array): Array with new datapoint appended
     '''
+    
     datapoint = np.array([])
     # Simulation true values
     datapoint = np.append(datapoint, x[0])
@@ -121,6 +122,12 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
     sim_data = np.array([])
     
     x = x0.copy()
+    # Random variations to initial state
+    if not nominal:
+        x[0,0] *= np.random.uniform(0.9, 1.1)
+        x[0,1] *= np.random.uniform(0.9, 1.1)
+        x[0,2] *= np.random.uniform(0.9, 1.1)
+        
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     accel = sensors.get_accelerometer_data(x)
@@ -168,7 +175,16 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
         kalman_filter.reset_lateral_pos()
         current_state = kalman_filter.get_state()
         current_state_r = r_kalman_filter.get_state()
-
+        x = np.round(x, 3)
+        time_stamp = np.round(time_stamp, 3)
+        baro_alt = np.round(baro_alt, 3)
+        accel = np.round(accel, 3)
+        bno_ang_pos = np.round(bno_ang_pos, 3)
+        gyro = np.round(gyro, 3)
+        current_state = np.round(current_state, 3)
+        current_state_r = np.round(current_state_r, 3)
+        rocket.rocket_total_mass = np.round(rocket.rocket_total_mass, 3)
+        rocket.motor_mass = np.round(rocket.motor_mass, 3)
         sim_data = append_to_array(sim_data, x, time_stamp, baro_alt, accel, bno_ang_pos, gyro, current_state, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
 
 
@@ -206,9 +222,23 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
         rocket.set_motor_mass(time_stamp)
         # rocket.motor_mass = motor.get_mass(time_stamp)
 
-        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
+        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext, density_noise=True)
         time_stamp += dt
 
+        x = np.round(x, 3)
+        time_stamp = np.round(time_stamp, 3)
+        baro_alt = np.round(baro_alt, 3)
+        accel = np.round(accel, 3)
+        bno_ang_pos = np.round(bno_ang_pos, 3)
+        gyro = np.round(gyro, 3)
+        current_state = np.round(current_state, 3)
+        current_state_r = np.round(current_state_r, 3)
+        alpha = np.round(alpha, 3)
+        apogee_est = np.round(apogee_est, 3)
+        rocket.rocket_total_mass = np.round(rocket.rocket_total_mass, 3)
+        rocket.motor_mass = np.round(rocket.motor_mass, 3)
+        flap_ext = np.round(flap_ext, 3)
+        
         sim_data = append_to_array(sim_data, x, time_stamp, baro_alt, accel, bno_ang_pos, gyro, current_state, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
 
     # Post processing to make sure all datasets are the same size
@@ -220,7 +250,7 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
             
     print(sim_data.shape)
     filename = 'nominal.npy' if nominal else f'sim_data_{sample_number}.npy'
-    np.save(f"{run_folder}/{filename}", sim_data)
+    np.save(f"{run_folder}/SimData/{filename}", sim_data)
     t_end = time.time() - t_start
     print(f"Time: {t_end:.2f}")
     
@@ -238,6 +268,8 @@ def run(x0, dt, samples:int, run_folder:str, target_size:int, clear_contents:boo
         shutil.rmtree(run_folder)
     if not os.path.exists(run_folder):
         os.mkdir(run_folder)
+        os.mkdir(f"{run_folder}/figures")
+        os.mkdir(f"{run_folder}/SimData")
     
     # Calculate nominal trajectory
     print("Calculating nominal trajectory")
@@ -288,7 +320,7 @@ if __name__ == "__main__":
     '''
     # Set up the rocket
     x0 = np.zeros((6,3))
-    x0[3] = np.array([0.0, 0.05, 0.0])
+    x0[3] = np.array([0.0, 0.05, 0.01])
     dt = 0.1
     target_size = 880
     samples = 30
@@ -302,7 +334,7 @@ if __name__ == "__main__":
         clear_contents=True, 
         wind_direction_variance_stddev=0.2, 
         wind_magnitude_variance_stddev=3.0,
-        enable_direction_variance=False,
-        enable_magnitude_variance=False, 
+        enable_direction_variance=True,
+        enable_magnitude_variance=True, 
         nominal_wind_magnitude=2,
         nominal_wind_direction=np.array([0,1,0]))

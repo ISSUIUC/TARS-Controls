@@ -1,7 +1,9 @@
 import numpy as np
 import util.vectors as vct
+from util.random_noise import Perlin
 
 class Atmosphere:
+    perlin = Perlin()
     def __init__(self, wind_direction_variance_mean = 0.0, 
                  wind_direction_variance_stddev = 0.01,
                  wind_magnitude_variance_mean = 0.0, 
@@ -121,7 +123,7 @@ class Atmosphere:
 
         return P_0 * ((T_0 +(altitude)*b)/T_0)**(-g/(b*R))
     
-    def get_density(self, altitude)->float:
+    def get_density(self, altitude, noise=False, position=np.array([0,0,0]))->float:
         '''Returns the density at a given altitude
         
         Args:
@@ -207,8 +209,9 @@ class Atmosphere:
             print("Exceeding calculatable altitude!")
             density = -1.0
         
-
-        return density
+        if noise:
+            density *= 1 + 0.005*self.perlin.f(*(position/100))
+        return density 
     
     def get_altitude(self, pressure):
         '''Returns altitude at a given pressure using the international barometric formula
