@@ -42,6 +42,7 @@ class Simulator():
                 [ang_accel, ang_accel, ang_accel]]
             dt (float): time step between each iteration in simulation
             time_stamp (float): current time stamp of rocket in simulation
+            density_noise (bool): whether or not to add noise to atmospheric density
         
         Returns:
             (np.array): state vector of rocket in x-axis [6x3]

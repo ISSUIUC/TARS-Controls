@@ -127,7 +127,7 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
         x[0,0] *= np.random.uniform(0.9, 1.1)
         x[0,1] *= np.random.uniform(0.9, 1.1)
         x[0,2] *= np.random.uniform(0.9, 1.1)
-        
+            
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     accel = sensors.get_accelerometer_data(x)

@@ -76,9 +76,7 @@ def plotState(state:str, nominal_data:np.ndarray, monte_carlo_data:np.ndarray, f
         ax = fig.add_subplot(111)
     
     # Get the time stamps from the nominal data
-    times = nominal_data[:, indices["time"]]
-    # print(times)
-    
+    times = nominal_data[:, indices["time"]]    
     
     # Plot the Monte Carlo data
     for point in monte_carlo_data:
@@ -116,7 +114,7 @@ def plotStateAndEstimate(state:str, estimate:str, nominal_data:np.ndarray, monte
         
     # Find the mean of the Monte carlo data and plot it
     mean_estimate = np.mean(monte_carlo_data[:, indices[estimate], :], axis=0)
-    ax.plot(times, mean_estimate, 'k--', label="Mean")
+    ax.plot(times, mean_estimate, 'k--', label="Mean Monte Carlo")
     
     # Calculate std dev and plot 
     stddev = np.array([std_dev(monte_carlo_data[:, indices[estimate], i]) for i in range(len(times))])
@@ -127,7 +125,7 @@ def plotStateAndEstimate(state:str, estimate:str, nominal_data:np.ndarray, monte
     mean_nominal = np.mean(monte_carlo_data[:, indices[state], :], axis=0)
     ax.plot(times, mean_nominal, label="Mean true trajectory")
     fig.legend()
-    fig.suptitle(state)
+    fig.suptitle(state + ' true and estimate')
     ax.set_xlabel("Time (s)")
     ax.set_ylabel(state)
     if output_folder is not None:
@@ -180,9 +178,7 @@ def plotTrajectory3D(states:list, nominal_data:np.ndarray, monte_carlo_data:np.n
     # Generate the data from the nominal and monte carlo data
     for i, state in enumerate(states):
         nominal_states[i,:] = nominal_data[:, indices[state]]
-        print(nominal_states[i,:])
         monte_carlo_states[:,i,:] = monte_carlo_data[:, indices[state], :]
-        print(monte_carlo_states[:,i,:])
     
     # Plot nominal data
     fig.colorbar(ax.scatter(nominal_states[0,:], nominal_states[1,:], nominal_states[2,:], c=color_data, cmap=cmap, label="Nominal", marker='.', linewidth=1))
@@ -192,22 +188,21 @@ def plotTrajectory3D(states:list, nominal_data:np.ndarray, monte_carlo_data:np.n
     std_devs = np.zeros(int(len(monte_carlo_states[0][0])/10))
     for i in range(0, len(monte_carlo_states[0][0]), 10):
         # Generate points on a circle
-        # points = np.zeros((len(states), int(len(monte_carlo_states[0][0])/10)))
         for j in range(len(states)):
             std_devs[int(i/10)] += (3*std_dev(monte_carlo_states[:,j,i]))**2
         std_devs[int(i/10)] = np.sqrt(std_devs[int(i/10)])
     
     # Generate unit vectors that span the circle in the plane orthogonal to the nominal trajectory
     angles = np.linspace(0, 2*np.pi, 10)
+    
     # Iterate over each timestep in the standard deviation matrix
-    # print('Nominal unit vectors:')
     for i in range(len(std_devs)):
         # Calculate the unit vector along the nominal trajectory at this timestep
         nominal_unit_vector = np.zeros(len(states))
         for j in range(len(states)):
             nominal_unit_vector[j] = nominal_states[j, 10*i+1] - nominal_states[j, 10*i]
         nominal_unit_vector = nominal_unit_vector / np.linalg.norm(nominal_unit_vector)
-        # print(nominal_unit_vector)
+
         # Calculate the unit vector orthogonal to the nominal trajectory at each angle in angles
         # Orthogonal vector found by setting the x and y coordinates to the cos and sin of the angle and solving for the
         # third coordinate by setting the dot product of the nominal unit vector and the orthogonal unit vector to 0 then normalizing
@@ -218,18 +213,8 @@ def plotTrajectory3D(states:list, nominal_data:np.ndarray, monte_carlo_data:np.n
             orthogonal_unit_vector[1] = np.sin(angle)
             orthogonal_unit_vector[2] = -(nominal_unit_vector[0]*orthogonal_unit_vector[0] + nominal_unit_vector[1]*orthogonal_unit_vector[1]) / nominal_unit_vector[2]
             orthogonal_unit_vector = orthogonal_unit_vector / np.linalg.norm(orthogonal_unit_vector)
-            # print('Nominal unit vector:', nominal_unit_vector)
-            # print('Orthogonal unit vector:', orthogonal_unit_vector)
-            # print('Angle:', angle)
-            # print('Nominal states:', nominal_states[:,10*i])
-            # print('Standard deviation:', std_devs[i])
             circle_points[:,j] = nominal_states[:,10*i] + std_devs[i] * orthogonal_unit_vector
         ax.plot3D(circle_points[0,:], circle_points[1,:], circle_points[2,:], 'gray', alpha=0.5)
-    #TODO: Finish plotting all monte carlo states
-    # print(monte_carlo_states.shape)
-    # ax.scatter(monte_carlo_data[:, indices[states[0]], :], monte_carlo_data[:, indices[states[1]], :], monte_carlo_data[:, indices[states[2]], :], 'gray', alpha=0.5, label="Monte Carlo")
-    # for sim in monte_carlo_states[1:]:
-    #     ax.scatter(sim[0,:], sim[1,:], sim[2,:], 'gray', alpha=0.5)
         
     fig.legend()
     if output_folder is not None:
@@ -244,14 +229,15 @@ if __name__ == "__main__":
         if path.startswith("sim_data") and not path.endswith("_0.npy"):
             monte_carlo_data = np.dstack((monte_carlo_data, np.array(np.load(os.path.join(folder_path, 'SimData', path)))))
     
+    # Reshape the data to make it easier to work with (Different samples on first axis, different states on second axis, timesteps on third axis)
     monte_carlo_data = np.transpose(monte_carlo_data, (2, 1, 0))
-    print(monte_carlo_data.shape)
-    print(nominal_data.shape)
+
+    # Define the output folder as the 'figures' folder in the monte carlo output folder
     output_folder = os.path.join(folder_path, 'figures')
     fig, ax = plotState("x", nominal_data, monte_carlo_data, output_folder=output_folder)
     plotState("kf_x", nominal_data, monte_carlo_data, output_folder=output_folder)
     plotRMSE("x", "kf_x", ["accel_x", "baro_alt"], nominal_data, monte_carlo_data, output_folder=output_folder)
-    plotStateAndEstimate("x", "kf_x", nominal_data, monte_carlo_data)
+    plotStateAndEstimate("x", "kf_x", nominal_data, monte_carlo_data, output_folder=output_folder)
     
     # Plot 3D trajectory
     velocity = np.sqrt(nominal_data[:, indices["vx"]]**2 + nominal_data[:, indices["vy"]]**2 + nominal_data[:, indices["vz"]]**2)
