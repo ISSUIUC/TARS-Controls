@@ -3,6 +3,8 @@ import numpy as np
 import os
 import sys
 
+plt.rcParams.update({'font.size': 14})
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
@@ -181,7 +183,7 @@ def plotTrajectory3D(states:list, nominal_data:np.ndarray, monte_carlo_data:np.n
         monte_carlo_states[:,i,:] = monte_carlo_data[:, indices[state], :]
     
     # Plot nominal data
-    fig.colorbar(ax.scatter(nominal_states[0,:], nominal_states[1,:], nominal_states[2,:], c=color_data, cmap=cmap, label="Nominal", marker='.', linewidth=1))
+    fig.colorbar(ax.scatter(nominal_states[0,:], nominal_states[1,:], nominal_states[2,:], c=color_data, cmap=cmap, label="Nominal", marker='.', linewidth=1), pad=0.1)
     # Generate uncertainty cone based on monte carlo data
     # Every 10th point, generate points on a circle with radius 3 times the standard deviation of the monte carlo data that is orthogonal to the nominal trajectory
     # Calculate standard deviation of the monte carlo data at each time step
