@@ -66,9 +66,3 @@ class KalmanFilter_R:
 
     def get_state(self):
         return self.x_k
-
-    def reset_lateral_pos(self):
-        self.x_k[1:3] = [0,0]
-        
-
-
