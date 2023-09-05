@@ -33,7 +33,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);   
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
-    pos_nc.plot(sensor_dict["time"], sensor_dict["apogee_estimate"], label="Apogee Estimate",color="brown", linewidth = 2);
+    pos_nc.plot(sensor_dict["time"], sensor_dict["apogee_estimate"], label="Apogee Estimate",color="brown", linewidth = 2); 
     pos_nc.axhline(y=sim_dict["pos"][-1,0], label="Sim Apogee", linestyle = "dashed", color="gray", linewidth = 2); 
     pos_nc.axhline(y=prop.des_apogee, label="Desired Apogee", linestyle = "dashed", color="orange", linewidth = 2); 
     pos_nc.set_ylabel("Position (m)", fontsize = 10);   
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     for attr in ["pos", "vel", "accel", "ang_pos", "ang_vel", "ang_accel"]:
         sim_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
-    for attr in ["kalman_pos", "kalman_vel", "kalman_accel"]:
+    for attr in ["kalman_pos", "kalman_vel", "kalman_accel", "pos_cov", "vel_cov", "accel_cov"]:
         kalman_dict[attr] = np.array(
             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
     for attr in ["kalman_rpos", "kalman_rvel", "kalman_raccel"]:
@@ -155,5 +155,5 @@ if __name__ == "__main__":
     sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
     sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
-    
+
     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)

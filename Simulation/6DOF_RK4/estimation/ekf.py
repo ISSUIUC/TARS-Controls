@@ -87,6 +87,14 @@ class KalmanFilter:
             np.array: current state
         """
         return self.x_k
+    
+    def get_covariance(self):
+        """Returns current covariance
+        
+        Returns:
+            np.array: current covariance
+        """
+        return np.diag(self.P_k)
 
     def reset_lateral_pos(self):
         """Resets lateral position to 0
