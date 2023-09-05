@@ -29,7 +29,7 @@ class Simulator():
         p = y0[0] + v*dt + 0.5*a*dt**2
         return np.array([p, v, a, y0[3], y0[4], alpha])
 
-    def RK4(self, y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
+    def RK4(self, y0, dt, time_stamp, flap_ext=0, density_noise=False) -> np.ndarray:
         '''Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
         Args:
             y0 (np.array): current state vector [6x3]
@@ -42,6 +42,7 @@ class Simulator():
                 [ang_accel, ang_accel, ang_accel]]
             dt (float): time step between each iteration in simulation
             time_stamp (float): current time stamp of rocket in simulation
+            density_noise (bool): whether or not to add noise to atmospheric density
         
         Returns:
             (np.array): state vector of rocket in x-axis [6x3]
@@ -81,7 +82,7 @@ class Simulator():
 
         ang_p = (y0[3] + (1/6)*(k1_ap+(2*k2_ap)+(2*k3_ap)+k4_ap)*dt)
 
-        temp,alpha = (self.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp))
+        temp,alpha = (self.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, density_noise=density_noise))
         # print(time_stamp, y0[3], temp[0], temp[1])
         a = temp[0]/self.rocket.rocket_total_mass
 

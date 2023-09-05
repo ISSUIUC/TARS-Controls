@@ -108,7 +108,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     alpha_nc.axhline(88 ,label="Alpha Limit",color="tab:red",linewidth = 2);  
     alpha_nc.set_ylabel("AoA (degrees)", fontsize = 10);   
     alpha_nc.legend(fontsize=10, loc='center left',ncol=1)
-    plt.tight_layout()    
+    plt.tight_layout() 
 
     fig_error, (pos_error_nc, vel_error_nc, accel_error_nc) = plt.subplots(3, 1, figsize = (15,10), sharex=True)
     fig_error.suptitle("Kalman Filter Position, Velocity, and Acceleration Error", fontsize = 16)
@@ -148,35 +148,16 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     accel_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["accel_cov"][:,2]), color="tab:blue", linestyle = "dashed",linewidth = 1);
     accel_error_nc.set_ylabel("Acceleration Error (m/s$^2$)", fontsize = 10)
     accel_error_nc.legend(fontsize=10, loc='upper left',ncol=3)
-    plt.tight_layout()
-
-    pos_x_rmse = rmse(sim_dict["pos"][:,0], kalman_dict["kalman_pos"][:,0])
-    pos_y_rmse = rmse(sim_dict["pos"][:,1], kalman_dict["kalman_pos"][:,1])
-    pos_z_rmse = rmse(sim_dict["pos"][:,2], kalman_dict["kalman_pos"][:,2])
-    vel_x_rmse = rmse(sim_dict["vel"][:,0], kalman_dict["kalman_vel"][:,0])
-    vel_y_rmse = rmse(sim_dict["vel"][:,1], kalman_dict["kalman_vel"][:,1])
-    vel_z_rmse = rmse(sim_dict["vel"][:,2], kalman_dict["kalman_vel"][:,2])
-    accel_x_rmse = rmse(sim_dict["accel"][:,0], kalman_dict["kalman_accel"][:,0])
-    accel_y_rmse = rmse(sim_dict["accel"][:,1], kalman_dict["kalman_accel"][:,1])
-    accel_z_rmse = rmse(sim_dict["accel"][:,2], kalman_dict["kalman_accel"][:,2])
-
-    ang_pos_x_rmse = rmse(sim_dict["ang_pos"][:,0], kalman_dict["kalman_rpos"][:,0])
-    ang_pos_y_rmse = rmse(sim_dict["ang_pos"][:,1], kalman_dict["kalman_rpos"][:,1])
-    ang_pos_z_rmse = rmse(sim_dict["ang_pos"][:,2], kalman_dict["kalman_rpos"][:,2])
-    ang_vel_x_rmse = rmse(sim_dict["ang_vel"][:,0], kalman_dict["kalman_rvel"][:,0])
-    ang_vel_y_rmse = rmse(sim_dict["ang_vel"][:,1], kalman_dict["kalman_rvel"][:,1])
-    ang_vel_z_rmse = rmse(sim_dict["ang_vel"][:,2], kalman_dict["kalman_rvel"][:,2])
-    ang_accel_x_rmse = rmse(sim_dict["ang_accel"][:,0], kalman_dict["kalman_raccel"][:,0])
-    ang_accel_y_rmse = rmse(sim_dict["ang_accel"][:,1], kalman_dict["kalman_raccel"][:,1])
-    ang_accel_z_rmse = rmse(sim_dict["ang_accel"][:,2], kalman_dict["kalman_raccel"][:,2])
     
-    print(f"Position KF RMSE (X,Y,Z): {pos_x_rmse:.4f}, {pos_y_rmse:.4f}, {pos_z_rmse:.4f}")
-    print(f"Velocity KF RMSE (X,Y,Z): {vel_x_rmse:.4f}, {vel_y_rmse:.4f}, {vel_z_rmse:.4f}")
-    print(f"Acceleration KF RMSE (X,Y,Z): {accel_x_rmse:.4f}, {accel_y_rmse:.4f}, {accel_z_rmse:.4f}")
-    print(f"Angular Position KF RMSE (R,P,Y): {ang_pos_x_rmse:.4f}, {ang_pos_y_rmse:.4f}, {ang_pos_z_rmse:.4f}")
-    print(f"Angular Velocity KF RMSE (R,P,Y): {ang_vel_x_rmse:.4f}, {ang_vel_y_rmse:.4f}, {ang_vel_z_rmse:.4f}")
-    print(f"Angular Acceleration KF RMSE (R,P,Y): {ang_accel_x_rmse:.4f}, {ang_accel_y_rmse:.4f}, {ang_accel_z_rmse:.4f}")
-    
+    fig_3d = plt.figure()
+    ax_3d = fig_3d.add_subplot(111, projection='3d')
+    fig_3d.suptitle("3D plots", fontsize=20)
+    x, y, z = sim_dict["pos"][:,0], sim_dict["pos"][:,1], sim_dict["pos"][:,2]
+    vx, vy, vz = sim_dict["vel"][:,0], sim_dict["vel"][:,1], sim_dict["vel"][:,2]
+    velocity_magnitude = np.sqrt(vx**2 + vy**2 + vz**2)
+    plot = ax_3d.scatter(y, z, x, label="Simulated Position", c=velocity_magnitude, cmap='viridis', linewidth=0.5)
+    ax_3d.set_zlabel("Altitude (m)")
+    fig_3d.colorbar(plot)
     plt.show()
 
 if __name__ == "__main__":

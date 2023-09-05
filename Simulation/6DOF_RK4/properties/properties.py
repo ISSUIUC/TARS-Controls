@@ -49,6 +49,7 @@ max_ext_spd = 0.001
 
 # simulation output file
 output_file = '../output/simulated_6dof.csv'
+monte_carlo_output_folder = '../output/monte_carlo'
 
 # Root Mean Squared KX134 (High_G accel)
 High_G_RMS = 1.9  # mg (milli g's)

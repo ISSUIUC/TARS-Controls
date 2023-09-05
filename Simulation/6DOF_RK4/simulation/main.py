@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+import shutil
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -42,8 +43,8 @@ import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 import dynamics.controller as contr
 
-atm = atmosphere.Atmosphere()
-rocket = rocket_model.Rocket(atm=atm, delay=60)
+atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
+rocket = rocket_model.Rocket(atm=atm)
 motor = rocket.motor
 sim = sim_class.Simulator(atm=atm, rocket=rocket)
 sim_dict = {
@@ -155,10 +156,27 @@ def simulator(x0, dt) -> None:
     bno_ang_pos_avg = bno_ang_pos/len_buffer
 
     kalman_filter = ekf.KalmanFilter(
-        dt, baro_avg, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-
+        dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    accel = sensors.get_accelerometer_data(x)
+    x_data = []
+    y_data = []
+    z_data = []
+    for i in range(10):
+        reading = sensors.get_accelerometer_data(x)
+        x_data.append(reading[0])
+        y_data.append(reading[1])
+        z_data.append(reading[2])
+    
+    accel_tracker = np.array([])
+    
+    ax = sum(x_data)/len(x_data)
+    ay = sum(y_data)/len(y_data)
+    az = sum(z_data)/len(z_data)
+    
+    pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
+    yaw = np.arctan2(-ax,-ay) + np.pi/2
     r_kalman_filter = r_ekf.KalmanFilter_R(
-        dt, bno_ang_pos_avg[0], 0.0, 0.0, bno_ang_pos_avg[1], 0.0, 0.0, bno_ang_pos_avg[2], 0.0, 0.0)
+        dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
     time_stamp = 0
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
@@ -198,7 +216,6 @@ def simulator(x0, dt) -> None:
     while x[1, 0] >= 0 or start:
         if start:
             start = False
-        # print("Timestamp: ", time_stamp)
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
@@ -222,7 +239,6 @@ def simulator(x0, dt) -> None:
         flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
         rocket.set_motor_mass(time_stamp)
-        # rocket.motor_mass = motor.get_mass(time_stamp)
 
         x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
         time_stamp += dt
@@ -232,20 +248,11 @@ def simulator(x0, dt) -> None:
     t_end = time.time() - t_start
     print(f"Time: {t_end:.2f}")
 
-
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0]
     dt = 0.01
     simulator(x0, dt)
-
-    # plot entries in sim_dict
-    # print(np.array(sim_dict["pos"]))
-    # # print(sim_dict["time"])
-    # plt.plot(sim_dict["time"], np.array(sim_dict["pos"])[:,0])
-    # plt.plot(sim_dict["time"], np.array(sim_dict["vel"])[:,0])
-    # plt.show()
-    # plotter.plotter(sim_dict=sim_dict)
 
     print("Writing to file...")
 
