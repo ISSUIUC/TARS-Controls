@@ -53,6 +53,7 @@ class Rocket:
 
     motor = None
     forces = None
+
     
     def __init__(self, cm_rocket=np.array([3.34-1.86, 0., 0.]), cm_motor=np.array([0.3755, 0., 0.]),impulse=9671.0,
                  motor_mass=8.064, delay=60, motor_lookup_file='../lookup/m2500.csv',rocket_dry_mass=14.691,r_r=0.0508,l=3.34,
