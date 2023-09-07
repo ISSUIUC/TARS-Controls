@@ -10,6 +10,9 @@ r_e = 6.3781*10**6
 cm = np.array([3.34-2.31, 0., 0.])
 cp = np.array([3.34-2.71, 0., 0.])
 
+# Config file
+sim_config = "../properties/configs/test.yaml"
+
 # RASAero Look Up
 rasaero_lookup_file = '../lookup/RASAero.csv'
 

@@ -1,0 +1,40 @@
+# This file defines all config types for automatic config validation. Adding a variable to a config
+# doesn't require a change to typedef, but it is a good practice to add required variables to typedef,
+# especially if not having that variable will raise an error.
+
+define: &unset _None # Print a warning if this field is unset.
+define: &optional _Ignore # Include this variable in the dictionary returned by the parser, but don't set a value.
+define: &unset_required _None:Required # Raise an error if this field is unset.
+
+define: &simulated_rocket
+  rasaero_lookup_file: *unset_required
+  C_d: *unset_required # Temporary C_d constant
+  C_d_s: *unset_required # Side profile
+  length: *unset_required # m
+  dry_mass: *unset_required # kg
+  radius: *unset_required # m
+  cm: *unset_required # numpy/array
+
+define: &simulated_motor
+  impulse: *unset_required # Ns
+  motor_mass: *unset_required  # Kg
+  delay: *unset_required  # s
+  motor_lookup_file: *unset_required # file path
+  cm: *unset_required # numpy array
+
+define: &simulated_body
+  cm: *unset_required # Center of mass
+  cp: *unset_required # Center of pressure
+
+define: &pysim_simulation
+  desired_apogee: *unset
+  rocket: *simulated_rocket
+  motor: *simulated_motor
+  simulated_body: *simulated_body
+  sensors: *optional
+  flaps: *optional
+  meta:
+    output_file: *unset_required
+    monte_carlo_output_folder: *unset_required
+
+  
