@@ -32,10 +32,10 @@ class Forces:
     atm = None
     motor = None
     
-    rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
-    rasaero = pd.read_csv(rasaero_file_location)
+    rasaero_file_location = "" # Will be set in constructor
+    rasaero = None
 
-    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, atm):
+    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm):
         self.max_ext_length = max_ext_length
         self.cm = cm
         self.cp = cp
@@ -44,6 +44,10 @@ class Forces:
         self.rocket_dry_mass = rocket_dry_mass
         self.motor = motor
         self.atm = atm
+        self.rasaero_file_location = os.path.join(os.path.dirname(__file__), rasaero_lookup_file)
+        self.rasaero = pd.read_csv(self.rasaero_file_location)
+
+    
 
     def get_force(self, x_state, flap_ext, time_stamp, density_noise=False) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
@@ -167,7 +171,7 @@ class Forces:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
         vel = vct.world_to_body(*x_state[2].copy(), x_state[1].copy() - wind_vector.copy())
-        C_a,C_n,self.cp = self.get_Ca_Cn_Cp(x_state, alpha, rasaero, before_burnout, flap_ext)
+        C_a,C_n,self.cp = self.get_Ca_Cn_Cp(x_state, alpha, self.rasaero, before_burnout, flap_ext)
         roll_aero = np.arctan2(x_state[1,2], x_state[1,1])
 
         C_n_y = np.abs(C_n * np.cos(roll_aero)) #TODO: Check with other values

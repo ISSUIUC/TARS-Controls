@@ -44,11 +44,11 @@ import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 import dynamics.controller as contr
 
-# Load defined config file
+# Load desired config file
 config = dataloader.load_config(prop.sim_config)
 
 atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
-rocket = rocket_model.Rocket(atm=atm)
+rocket = rocket_model.Rocket(config, atm=atm)
 motor = rocket.motor
 sim = sim_class.Simulator(atm=atm, rocket=rocket)
 sim_dict = {
@@ -184,7 +184,7 @@ def simulator(x0, dt) -> None:
     time_stamp = 0
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm)
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, config)
     Kp, Ki, Kd = 0.0002, 0, 0
     controller = contr.Controller(Kp, Ki, Kd, dt, config["desired_apogee"])
 

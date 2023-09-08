@@ -9,6 +9,9 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 import properties.properties as prop
+import properties.data_loader as dataloader
+
+config = dataloader.load_config(prop.sim_config)
 
 def rmse(actual, est):
     return np.sqrt(np.sum(np.square(est - actual))/len(actual))
@@ -35,7 +38,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
     pos_nc.plot(sensor_dict["time"], sensor_dict["apogee_estimate"], label="Apogee Estimate",color="brown", linewidth = 2); 
     pos_nc.axhline(y=sim_dict["pos"][-1,0], label="Sim Apogee", linestyle = "dashed", color="gray", linewidth = 2); 
-    pos_nc.axhline(y=prop.des_apogee, label="Desired Apogee", linestyle = "dashed", color="orange", linewidth = 2); 
+    pos_nc.axhline(y=config["desired_apogee"], label="Desired Apogee", linestyle = "dashed", color="orange", linewidth = 2); 
     pos_nc.set_ylabel("Position (m)", fontsize = 10);   
     pos_nc.legend(fontsize=10, loc='upper left', ncol=3);   
 
@@ -164,7 +167,7 @@ if __name__ == "__main__":
     sim_dict = {}
     sensor_dict = {}
     kalman_dict = {}
-    output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
+    output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     file_data = pd.read_csv(output_file)
     sim_dict["time"] = file_data["time"].values
     sensor_dict["time"] = file_data["time"].values

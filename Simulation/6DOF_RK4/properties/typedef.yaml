@@ -26,13 +26,17 @@ define: &simulated_body
   cm: *unset_required # Center of mass
   cp: *unset_required # Center of pressure
 
+define: &simulated_flaps
+  max_ext_spd: *unset_required # flap max extension speed (m/s)
+  max_ext_length: *unset_required # flap max estension length (m)
+
 define: &pysim_simulation
   desired_apogee: *unset
   rocket: *simulated_rocket
   motor: *simulated_motor
   simulated_body: *simulated_body
-  sensors: *optional
-  flaps: *optional
+  sensors: *unset_required
+  flaps: *simulated_flaps
   meta:
     output_file: *unset_required
     monte_carlo_output_folder: *unset_required
