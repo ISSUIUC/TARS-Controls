@@ -171,7 +171,7 @@ def simulator(x0, dt) -> None:
     
     ax = sum(x_data)/len(x_data)
     ay = sum(y_data)/len(y_data)
-    az = sum(z_data)/len(z_data)
+    az = sum(z_data)/len(z_data)    
     
     pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
     yaw = np.arctan2(-ax,-ay) + np.pi/2
@@ -244,6 +244,36 @@ def simulator(x0, dt) -> None:
         time_stamp += dt
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+        
+    while x[0, 0] >= 0:
+        # Get sensor data
+        baro_alt = sensors.get_barometer_data(x)
+        accel = sensors.get_accelerometer_data(x)
+        gyro = sensors.get_gyro_data(x)
+        bno_ang_pos = sensors.get_bno_orientation(x)
+
+        # Kalman Filter stuff goes here
+        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.update(bno_ang_pos, baro_alt,
+                             accel[0], accel[1], accel[2])
+
+        r_kalman_filter.priori()
+        r_kalman_filter.update(*gyro, *accel)
+
+        current_state = kalman_filter.get_state()
+        current_cov = kalman_filter.get_covariance()
+        current_state_r = r_kalman_filter.get_state()
+
+        apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
+
+        #flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+
+        #rocket.set_motor_mass(time_stamp)
+
+        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
+        time_stamp += dt
+
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
 
     t_end = time.time() - t_start
     print(f"Time: {t_end:.2f}")
@@ -298,3 +328,4 @@ if __name__ == '__main__':
         f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
+
