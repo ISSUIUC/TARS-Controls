@@ -244,7 +244,9 @@ def simulator(x0, dt) -> None:
         time_stamp += dt
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
-        
+
+
+    #Recovery Loop <-- 1009     
     while x[0, 0] >= 0:
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
