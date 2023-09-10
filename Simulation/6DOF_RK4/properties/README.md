@@ -31,10 +31,9 @@ import properties.properties as prop
 print(prop.dry_rocket_mass)
 ```
 
-We now must load the config file into a python dictionary using the functions exposed in `properties/data_loader.py`. The process to get this dictionary isn't much different than getting a variable in the legacy `properties.py`, but the access is much different.
+We now must load the config file into a python dictionary using the data exposed in `properties/data_loader.py`. The process to get this dictionary isn't much different than getting a variable in the legacy `properties.py`, but the access is much different.
 
 ```python
-import properties.properties as prop
 import properties.data_loader as dataloader
 
 config = dataloader.config   # Or you can just use dataloader.config in code.
@@ -73,7 +72,7 @@ All objects are automatically casted to their expected type during parsing, but 
 
 Adding data to a `.yaml` file is just as easy as adding another node to the tree, and it can immediately be accessed wherever `config` is defined using dictionary notation. As will be discussed later in documentation, however, it is better to specify structures for your data if not having that piece of data will cause the program to throw an exception.
 ##### Custom datatypes
-Sometimes you need to include additional types in a config file's fields to make code more readable or to make it compatible with legacy code. If this is the case, you can add a constructor for those types within `data_loader` and a custom `!flag` to tell the data loader that this field is of a specific type. For user convenience, `data_loader` for GNC comes with 2 types already pre-implemented:
+Sometimes you need to include additional types in a config file's fields to make code more readable or to make it compatible with legacy code. If this is the case, you can add a constructor for those types within `yaml_datatypes.py` and a custom `!flag` to tell the data loader that this field is of a specific type. For user convenience, `yaml_datatypes` for GNC comes with 2 types already pre-implemented:
 
 `!numpy/array` or `!array` will be typecasted into `numpy.array` on load.
 `!eval` will execute the expression given and return it into the field.
