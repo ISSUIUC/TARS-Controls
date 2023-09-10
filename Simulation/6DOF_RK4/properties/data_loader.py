@@ -1,26 +1,14 @@
 import yaml 
 import numpy
 import os
+from properties.yaml_datatypes import get_loader
+import properties.properties as prop
+
+config = None
 
 # Exception to handle errors raised by the config validator.
 class ConfigurationException(Exception):
     pass
-
-def numpy_array_constructor(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode) -> numpy.array:
-  """Create a numpy array from a yaml !numpy/array tag. (!numpy/array [1, 2, 3])"""
-  return numpy.array(loader.construct_sequence(node))
-
-def evaluate_expr(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode):
-  """Evaluates a python expression passed to the !eval tag. (!eval 1 + 2)"""
-  return eval(loader.construct_scalar(node))
-
-def get_loader():
-  """Add the data parsers above into the PyYAML parser."""
-  loader = yaml.SafeLoader
-  loader.add_constructor("!numpy/array", numpy_array_constructor)
-  loader.add_constructor("!array", numpy_array_constructor)
-  loader.add_constructor("!eval", evaluate_expr)
-  return loader
 
 def rec_validate_config_section(traceback, cfg_section):
     """Recursively validates a config output by the yaml parser by checking every field in the dictionary
@@ -35,7 +23,6 @@ def rec_validate_config_section(traceback, cfg_section):
         if type(cfg_section) is str and cfg_section == "_None:Required":
             raise ConfigurationException("PySim Configuration ERR: " + traceback + " is inherited from a structure but has an unset:required value.")
 
-
 def validate_config(parsed_yaml):
    # Top level for config validation
    sections = parsed_yaml.keys()
@@ -49,12 +36,27 @@ def load_config(config_path):
   Returns config data and constants as a python dictionary.
   """
 
+  if(config != None):
+    print("PySim Configuration WARN: data_loader.load_config() has been called more than once in the same process.\nTo ensure data singularity, instead use dataloader.config")
+ 
   raw_yaml = ""
 
+  # Load all data types and YAML structures
   with open(os.path.join(os.path.dirname(__file__), "../properties/typedef.yaml")) as typedef: 
-    # Load yaml type definitions
+    # Add yaml type definitions to current loaded file
     raw_yaml += typedef.read()
 
+  # Load all ./templates
+  template_directory = os.path.join(os.path.dirname(__file__), "../properties/templates")
+  for template_filename in os.listdir(template_directory):
+    template = os.path.join(template_directory, template_filename)
+    # Check if template is a yaml file or not (All ./templates must be .yaml files.)
+    if os.path.isfile(template) and template.endswith(".yaml"):
+      with open(template) as template_raw: 
+        # Append templates to the yaml header.
+        raw_yaml += "\n" + template_raw.read()
+    else:
+      print("PySim Configuration WARN: Non-yaml File " + template + " is present in the /templates directory. \nEnsure that only YAML templates are present in /templates.")
 
   with open(os.path.join(os.path.dirname(__file__), config_path)) as cfg_raw: 
     # Append the config file to the typedef header
@@ -62,4 +64,7 @@ def load_config(config_path):
  
   yaml_content = yaml.load(raw_yaml, Loader=get_loader()) # PyYaml parser
   validate_config(yaml_content)
+  del yaml_content['define'] # Remove header data from file, leaves only config data.
   return yaml_content
+
+config = load_config(prop.sim_config)

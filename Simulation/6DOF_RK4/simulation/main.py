@@ -45,7 +45,7 @@ import environment.atmosphere as atmosphere
 import dynamics.controller as contr
 
 # Load desired config file
-config = dataloader.load_config(prop.sim_config)
+config = dataloader.config
 
 atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 rocket = rocket_model.Rocket(config, atm=atm)

@@ -1,0 +1,23 @@
+define: &motor_M2500
+  <<: *simulated_motor
+  impulse: 9671.0
+  motor_mass: 8.064
+  delay: 60
+  motor_lookup_file: "../lookup/m2500.csv"
+  cm: !numpy/array [0.3755, 0., 0.]
+
+define: &motor_N5800
+  <<: *simulated_motor
+  impulse: 20145.7
+  motor_mass: 14.826
+  delay: 0
+  motor_lookup_file: "../lookup/n5800.csv"
+  cm: !numpy/array [0.3755, 0., 0.]
+
+define: &motor_N2450
+  <<: *simulated_motor
+  impulse: 17907.0
+  motor_mass: 10.7
+  delay: 0
+  motor_lookup_file: "../lookup/n2540.csv"
+  cm: !numpy/array [0.3755, 0., 0.]

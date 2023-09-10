@@ -20,7 +20,7 @@ import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 import dynamics.controller as contr
 
-config = dataloader.load_config(prop.sim_config)
+config = dataloader.config
 
 def append_to_array(array, x, time_stamp, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext):
     '''Append data to array

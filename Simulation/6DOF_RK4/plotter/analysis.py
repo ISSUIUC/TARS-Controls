@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.abspath(
 import properties.properties as prop
 import properties.data_loader as dataloader
 
-config = dataloader.load_config(prop.sim_config)
+config = dataloader.config
 
 def rmse(actual, est):
     return np.sqrt(np.sum(np.square(est - actual))/len(actual))

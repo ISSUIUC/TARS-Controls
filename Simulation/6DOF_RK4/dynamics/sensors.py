@@ -5,7 +5,7 @@ import properties.properties as prop
 import properties.data_loader as dataloader
 import environment.atmosphere as atm
 
-config = dataloader.load_config(prop.sim_config)
+config = dataloader.config
 
 def get_accelerometer_data(x_state):
     """Returns the accelerometer data in the body frame of the rocket.

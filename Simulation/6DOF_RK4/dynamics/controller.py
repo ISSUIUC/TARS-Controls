@@ -3,7 +3,7 @@ import properties.properties as prop
 import properties.data_loader as dataloader
 
 # Load desired config file
-config = dataloader.load_config(prop.sim_config)
+config = dataloader.config
 
 class Controller():
     """Flap extension controller class for the rocket

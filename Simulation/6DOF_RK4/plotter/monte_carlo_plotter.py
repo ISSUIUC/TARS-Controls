@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(
 
 import properties.properties as prop
 import properties.data_loader as dataloader
-config = dataloader.load_config(prop.sim_config)
+config = dataloader.config
 
 # Indices of each state variable in the output array
 # kf and rkf values are arrays containing position, velocity and acceleration in each axis

@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 # Config file
-sim_config = "../properties/configs/test.yaml"
+sim_config = "../properties/configs/legacy_properties.yaml"
 
 ### Calculated constants
 # Gravitational const
