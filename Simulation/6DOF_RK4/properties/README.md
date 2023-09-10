@@ -24,22 +24,22 @@ r_e = 6.3781*10**6
 
 It is important to note that the `.yaml` parser for Pysim *does* include the ability to also calculate constants on the fly (`!eval`), but that will be covered in a later section.
 
-Because of the dynamic nature of the new configuration files, they must now be **dynamically loaded**. This means that instead of using a `properties.py` variable like so:
+Because of the dynamic nature of the new configuration files, they have slight differences in access and loading from the old `properties.py` file. Instead of accessing a property like so:
 
 ```python
 import properties.properties as prop
 print(prop.dry_rocket_mass)
 ```
 
-We now must load the config file into a python dictionary using the data exposed in `properties/data_loader.py`. The process to get this dictionary isn't much different than getting a variable in the legacy `properties.py`, but the access is much different.
+We access the config file for the current process. To do so, import `data_loader.py`:
 
 ```python
 import properties.data_loader as dataloader
-
-config = dataloader.config   # Or you can just use dataloader.config in code.
 ```
 
-After executing these lines, the config is now loaded in `config` and we are ready to access the config variables in our code.
+And access config variables through Python's dictionary access operation: `['key_name']`. The specifics of YAML config structuring are defined below.
+
+**NOTE `9/10/2023`:** Current convention for Pysim indicates that there should be one simulation run per execution of the program. Because of this, `data_loader` will print a warning if the dynamic load function `load_config()` is called more than once in the same process. However, it will still function as intended.
 
 ##### Accessing properties defined in .yaml:
 The spec for **YAML** can be found here: https://yaml.org/
@@ -54,7 +54,7 @@ object:
 justanode: 3.14
 ```
 
-`data_loader` will allow us to access the data within like a dictionary, where every node of the tree is accessed using Python's built in dictionary access. In other words, to retrieve the value stored in "field1", we would use the following:
+`data_loader.config` will allow us to access the data within like a dictionary, where every node of the tree is accessed using Python's built in dictionary access. In other words, to retrieve the value stored in "field1", we would use the following:
 
 ```python
 dataloader.config["object"]["field1"]      # Returns 123
