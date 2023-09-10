@@ -31,15 +31,13 @@ import properties.properties as prop
 print(prop.dry_rocket_mass)
 ```
 
-We now must load the config file into a python dictionary using the functions exposed in `properties/data_loader.py`. 
-
-Here is a simple way to dynamically load a config file:
+We now must load the config file into a python dictionary using the functions exposed in `properties/data_loader.py`. The process to get this dictionary isn't much different than getting a variable in the legacy `properties.py`, but the access is much different.
 
 ```python
 import properties.properties as prop
 import properties.data_loader as dataloader
 
-config = dataloader.load_config(prop.sim_config)
+config = dataloader.config   # Or you can just use dataloader.config in code.
 ```
 
 After executing these lines, the config is now loaded in `config` and we are ready to access the config variables in our code.
@@ -57,21 +55,21 @@ object:
 justanode: 3.14
 ```
 
-`data_loader` will allow us to access the data within like a dictionary, where every node of the tree is accessed using Python's built in dictionary access. In other words, to retrieve the value stored in "field1", we would use the following (Assuming `config` has already been dynamically loaded.)
+`data_loader` will allow us to access the data within like a dictionary, where every node of the tree is accessed using Python's built in dictionary access. In other words, to retrieve the value stored in "field1", we would use the following:
 
 ```python
-config["object"]["field1"]      # Returns 123
+dataloader.config["object"]["field1"]      # Returns 123
 ```
 
 This works very similarly with every other field.
 
 ```python
-config["object"]["field3"]["foo"]      # Returns "bar"
-config["justanode"]                    # Returns 3.14
-config["object"]                       # Returns a dictionary with all subnodes
+dataloader.config["object"]["field3"]["foo"]      # Returns "bar"
+dataloader.config["justanode"]                    # Returns 3.14
+dataloader.config["object"]                       # Returns a dictionary with all subnodes
 ```
 
-All objects are automatically casted to their expected type during parsing, but they can be manually type-casted using one of the Python `!flags` (explored below)
+All objects are automatically casted to their expected type during parsing, but they can be manually type-casted using one of the Python `!flags` (explored below). It should be noted that it is **not possible** (by design) to access type data from this dictionary.
 
 Adding data to a `.yaml` file is just as easy as adding another node to the tree, and it can immediately be accessed wherever `config` is defined using dictionary notation. As will be discussed later in documentation, however, it is better to specify structures for your data if not having that piece of data will cause the program to throw an exception.
 ##### Custom datatypes
@@ -154,6 +152,40 @@ Ideally, the structure definition for `pysim_simulation` would be such that not 
 
 as it will at least help you get most of the way there.
 
+### Object templates
+If you have an object of a certain type that you know you will be re-using (such as a specific COTS motor), it is better to add it to **templates** instead of re-writing the data for that object in each configuration file.
+
+Object templates are stored in various files in `./templates`, and all `.yaml` files within the directory are loaded into the YAML parser at load-time. This means that any type or template you define within `./templates` will also be available in your config file.
+
+It is important to note that all templates are loaded **after** `typedef.yaml`, so attempting to reference a template from within `typedef` will always throw an error. Also, referencing types from other template files is not recommended, as the order in which templates are loaded is **not guaranteed.**
+
+To create an object template, select a relevant file (`motors.yaml` for motors, for instance), or create a new file for a new category of object. Then, define the object as a YAML type using the `define` directive:
+
+```YAML
+define: &cool_srad_motor
+```
+
+Then, inherit from any already existing structure or add new fields as is seen fit:
+
+```YAML
+define: &cool_srad_motor
+	<<: *simulated_motor
+	impulse: 30000.0
+	motor_mass: 17.0
+	delay: 0
+	motor_lookup_file: "../lookup/srad_motor.csv"
+	cm: !numpy/array [0.3755, 0., 0.]
+```
+
+You may then use this template instead of overriding `*simulated_motor` in your configuration file:
+
+```YAML
+> in test_config.yaml
+
+...
+motor:
+	<<: *cool_srad_motor
+```
 ### Advanced: Adding custom data types
 To define a custom datatype, you must be able to retrieve the data given in the `.yaml` file (usually in string, sequence, or number form) and construct that data type with it.
 
