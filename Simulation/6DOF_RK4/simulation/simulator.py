@@ -29,7 +29,7 @@ class Simulator():
         p = y0[0] + v*dt + 0.5*a*dt**2
         return np.array([p, v, a, y0[3], y0[4], alpha])
 
-    def RK4(self, y0, dt, time_stamp, flap_ext=0, density_noise=False) -> np.ndarray:
+    def RK4(self, y0, dt, time_stamp, flap_ext=0, density_noise=False, parachute_drag_force) -> np.ndarray:
         '''Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
         Args:
             y0 (np.array): current state vector [6x3]

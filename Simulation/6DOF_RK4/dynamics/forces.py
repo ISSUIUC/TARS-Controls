@@ -7,6 +7,7 @@ Forces on rocket:
 '''
 import dynamics.motor as motor
 import environment.atmosphere as atmosphere
+import simulation.recovery_model as rec_model
 import properties.properties as prop
 import numpy as np
 import util.vectors as vct
@@ -65,7 +66,7 @@ class Forces:
         # wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
         wind_vector = self.atm.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
-        drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
+        drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext, rec_model.Cd_z)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
@@ -156,7 +157,7 @@ class Forces:
             
         return [0,0,0]
 
-    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext, parachute_drag_coef) -> np.ndarray:
+    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext, parachute_drag_coef = 0) -> np.ndarray:
         '''Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
         Args:
@@ -166,7 +167,6 @@ class Forces:
         Returns:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
-        print(np.shape(x_state))
         vel = vct.world_to_body(*x_state[2].copy(), x_state[1].copy() - wind_vector.copy())
         C_a,C_n,self.cp = self.get_Ca_Cn_Cp(x_state, alpha, rasaero, before_burnout, flap_ext)
         roll_aero = np.arctan2(x_state[1,2], x_state[1,1])
@@ -183,11 +183,11 @@ class Forces:
         # calculation is just in y
         parachute_diameter = 1 #m
         #parachute drag force equation 
-        parachute_drag_force = parachute_drag_coef * ((density)*((x_state[1][0]**2)/2)) * (((parachute_diameter/2)**2) * np.pi)
-
-        aero_force = -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*self.A, 
-                                    np.sign(vel[1])*vel[1]**2 * C_n_y*density*self.A_s, 
-                                    np.sign(vel[2])*vel[2]**2 * C_n_z*density*self.A_s])
+        parachute_drag_force = parachute_drag_coef * ((density)*((x_state[1][0]**2))) * (((parachute_diameter/2)**2) * np.pi)
+        
+        aero_force = -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*self.A_s, 
+                                    np.sign(vel[1])*vel[1]**2 * C_n_y*density*self.A_s,
+                                    np.sign(vel[2])*vel[2]**2 * C_n_z*density*self.A_s]) + 0.5 * np.array([parachute_drag_force, 0, 0])
         return aero_force
     
     def gravitational_force(self, altitude, time_stamp) -> np.ndarray:

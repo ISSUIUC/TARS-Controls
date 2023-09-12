@@ -184,6 +184,7 @@ def simulator(x0, dt) -> None:
     Kp, Ki, Kd = 0.0002, 0, 0
     controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
 
+    print("Launching rocket")
     # Idle stage
     while time_stamp < rocket.delay:
         time_stamp += dt
@@ -206,7 +207,7 @@ def simulator(x0, dt) -> None:
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
 
-    print("Ignition")
+    print(f"Ignition at {time_stamp}")
 
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
@@ -245,8 +246,10 @@ def simulator(x0, dt) -> None:
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
 
+    print (f"Apogee reached{time_stamp}")
 
-    #Recovery Loop <-- 1009     
+    #Recovery Loop <-- 1009    
+    # Activate parachute 
     while x[0, 0] >= 0:
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
@@ -268,14 +271,13 @@ def simulator(x0, dt) -> None:
 
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
 
-        #flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
-
-        #rocket.set_motor_mass(time_stamp)
-
         x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
+        print(type(flap_ext))
         time_stamp += dt
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+
+    print(f"Impacted Ground at {time_stamp}")
 
     t_end = time.time() - t_start
     print(f"Time: {t_end:.2f}")
