@@ -53,25 +53,25 @@ class Rocket:
 
     motor = None
     forces = None
+    sim_config = None
     
-    def __init__(self, cm_rocket=np.array([3.34-1.86, 0., 0.]), cm_motor=np.array([0.3755, 0., 0.]),impulse=9671.0,
-                 motor_mass=8.064, delay=60, motor_lookup_file='../lookup/m2500.csv',rocket_dry_mass=14.691,r_r=0.0508,l=3.34,
-                 max_ext_length=0.0178, atm=None):
-        self.cm_rocket = cm_rocket
-        self.cm_motor = cm_motor
+    def __init__(self, simulation_config, atm=None):
+        self.sim_config = simulation_config
+        self.cm_rocket = simulation_config["rocket"]["cm"]
+        self.cm_motor = simulation_config["motor"]["cm"]
 
-        self.impulse = impulse
-        self.motor_mass = motor_mass
-        self.delay = delay
-        self.motor_lookup_file = motor_lookup_file
+        self.impulse = simulation_config["motor"]["impulse"]
+        self.motor_mass = simulation_config["motor"]["motor_mass"]
+        self.delay = simulation_config["motor"]["delay"]
+        self.motor_lookup_file = simulation_config["motor"]["motor_lookup_file"]
 
-        self.rocket_dry_mass = rocket_dry_mass
+        self.rocket_dry_mass = simulation_config["rocket"]["dry_mass"]
         self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
-        self.r_r = r_r
-        self.l = l
+        self.r_r = simulation_config["rocket"]["radius"]
+        self.l = simulation_config["rocket"]["length"]
         self.A = math.pi * self.r_r ** 2
         self.A_s = 2 * self.r_r * self.l
-        self.max_ext_length = max_ext_length
+        self.max_ext_length = simulation_config["flaps"]["max_ext_length"]
         self.atm = atm
         
         # need to change motor and forces constructors to refer to properties from this class rather than properties file
@@ -91,6 +91,7 @@ class Rocket:
                                     self.A_s,
                                     self.rocket_dry_mass,
                                     self.motor,
+                                    simulation_config["rocket"]["rasaero_lookup_file"],
                                     self.atm)
 
     def set_motor_mass(self, timestamp):

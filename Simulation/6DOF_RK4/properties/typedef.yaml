@@ -1,0 +1,44 @@
+# This file defines all config types for automatic config validation. Adding a variable to a config
+# doesn't require a change to typedef, but it is a good practice to add required variables to typedef,
+# especially if not having that variable will raise an error.
+
+define: &unset _None # Print a warning if this field is unset.
+define: &optional _Ignore # Include this variable in the dictionary returned by the parser, but don't set a value.
+define: &unset_required _None:Required # Raise an error if this field is unset.
+
+define: &simulated_rocket
+  rasaero_lookup_file: *unset_required # File path for a Rasaero file for the rocket.
+  C_d: *unset_required # Temporary C_d constant (Coefficient of drag)
+  C_d_s: *unset_required # Side profile (Coefficient of drag for side profile)
+  length: *unset_required # m (Length of the rocket)
+  dry_mass: *unset_required # kg (Mass of the rocket without fuel)
+  radius: *unset_required # m (Radius of the rocket body)
+  cm: *unset_required # numpy/array (Center of mass of the rocket body)
+
+define: &simulated_motor
+  impulse: *unset_required # Ns (Impulse of the motor)
+  motor_mass: *unset_required  # Kg (Mass of the motor)
+  delay: *unset_required  # s (Delay between start of sim to launch (Allows kalman filter to converge))
+  motor_lookup_file: *unset_required # File path to the motor file (.csv)
+  cm: *unset_required # numpy/array (Center of mass of the motor)
+
+define: &simulated_body
+  cm: *unset_required # numpy/array (Center of mass of the rocket+motor assembly.)
+  cp: *unset_required # numpy/array (Center of pressure of the rocket+motor asssembly)
+
+define: &simulated_flaps
+  max_ext_spd: *unset_required # m/s (flap max extension speed)
+  max_ext_length: *unset_required # m (flap max estension length)
+
+define: &pysim_simulation
+  desired_apogee: *unset # m (Desired apogee for the rocket)
+  rocket: *simulated_rocket # simulated_rocket structure (The rocket used in the simulation)
+  motor: *simulated_motor # simulated_motor structure (The motor used in the simulation)
+  simulated_body: *simulated_body # simulated_body structure (Used to store CoM and CoP data)
+  sensors: *unset_required # No structure defined, but reminds user that sensors need to be set.
+  flaps: *simulated_flaps # simulated_flaps structure (Stores data about flap extension speeds/length)
+  meta:
+    output_file: *unset_required # File path for output file
+    monte_carlo_output_folder: *unset_required # File path for monte carlo outputs
+
+  

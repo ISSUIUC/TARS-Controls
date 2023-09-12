@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.abspath(
 import estimation.ekf as ekf
 import estimation.r_ekf as r_ekf
 import properties.properties as prop
+import properties.data_loader as dataloader
 import simulator as sim_class
 # import plotter.plotSIM as plotter
 import dynamics.sensors as sensors
@@ -18,6 +19,8 @@ import estimation.apogee_estimator as apg
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 import dynamics.controller as contr
+
+config = dataloader.config
 
 def append_to_array(array, x, time_stamp, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext):
     '''Append data to array
@@ -216,7 +219,7 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
 
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
 
-        flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+        flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
         # flap_ext will be passed by kalman filter
         rocket.set_motor_mass(time_stamp)
@@ -325,7 +328,7 @@ if __name__ == "__main__":
     target_size = 880
     samples = 30
     # Calculate nominal trajectory
-    output_folder = os.path.join(os.path.dirname(__file__), prop.monte_carlo_output_folder)
+    output_folder = os.path.join(os.path.dirname(__file__), config["meta"]["monte_carlo_output_folder"])
     run(x0, 
         dt, 
         samples, 

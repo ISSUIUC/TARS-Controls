@@ -1,6 +1,9 @@
 import numpy as np
 import properties.properties as prop
+import properties.data_loader as dataloader
 
+# Load desired config file
+config = dataloader.config
 
 class Controller():
     """Flap extension controller class for the rocket
@@ -39,10 +42,10 @@ class Controller():
             flap_ext = self.Kp * error_curr + self.Ki * self.error_sum + self.Kd * error_dt
             self.error_prev = error_curr
 
-            flap_ext += np.sign(flap_ext - self.prev_flap)*min(abs((flap_ext - self.prev_flap)/self.dt), prop.max_ext_spd)*self.dt
+            flap_ext += np.sign(flap_ext - self.prev_flap)*min(abs((flap_ext - self.prev_flap)/self.dt), config["flaps"]["max_ext_spd"])*self.dt
             
-            if (flap_ext > prop.max_ext_length):
-                flap_ext =  prop.max_ext_length
+            if (flap_ext > config["flaps"]["max_ext_length"]):
+                flap_ext =  config["flaps"]["max_ext_length"]
             elif (flap_ext < 0):
                 flap_ext = 0
                 
