@@ -156,7 +156,7 @@ class Forces:
             
         return [0,0,0]
 
-    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext, parachute_diameter) -> np.ndarray:
+    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext, parachute_drag_coef) -> np.ndarray:
         '''Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
         Args:
@@ -176,11 +176,15 @@ class Forces:
         # define parachute_drag
         # D = (Cd) * ((r * (V**2))/2) * A
         # A is the area of the parachute <--- get from recovery
-        # Cd assume constant 1.42 for now
-        # V = velocity <-- have
-        # r air density <-- changes with altitude?
+        # Cd assume constant 1.42 for now (Cd_z = 1.42)
+        # V = velocity <-- have --> for x direction which is through the nose of body, is x_state[1][0] or x[1][0]?
+        # r air density <-- IS DENSITY == AIR DENSITY
         # for now assume the parachute deploys at apogee
         # calculation is just in y
+        parachute_diameter = 1 #m
+        #parachute drag force equation 
+        parachute_drag_force = parachute_drag_coef * ((density)*((x_state[1][0]**2)/2)) * (((parachute_diameter/2)**2) * np.pi)
+
         aero_force = -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*self.A, 
                                     np.sign(vel[1])*vel[1]**2 * C_n_y*density*self.A_s, 
                                     np.sign(vel[2])*vel[2]**2 * C_n_z*density*self.A_s])
