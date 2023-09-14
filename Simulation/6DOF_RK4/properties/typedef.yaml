@@ -8,8 +8,6 @@ define: &unset_required _None:Required # Raise an error if this field is unset.
 
 define: &simulated_rocket
   rasaero_lookup_file: *unset_required # File path for a Rasaero file for the rocket.
-  C_d: *unset_required # Temporary C_d constant (Coefficient of drag)
-  C_d_s: *unset_required # Side profile (Coefficient of drag for side profile)
   length: *unset_required # m (Length of the rocket)
   dry_mass: *unset_required # kg (Mass of the rocket without fuel)
   radius: *unset_required # m (Radius of the rocket body)

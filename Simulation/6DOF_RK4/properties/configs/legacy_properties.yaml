@@ -3,8 +3,6 @@ desired_apogee: 4572
 rocket:
   <<: *simulated_rocket
   rasaero_lookup_file: "../lookup/RASAero.csv"
-  C_d: 0.5
-  C_d_s: 1.2
   length: 3.34
   dry_mass: 14.691
   radius: 0.0508

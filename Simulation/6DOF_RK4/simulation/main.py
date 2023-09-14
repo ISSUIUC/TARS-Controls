@@ -278,7 +278,7 @@ def simulator(x0, dt) -> None:
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
     t_end = time.time() - t_start
-    print(f"Time: {t_end:.2f}")
+    print(f"Simulation runtime (real-time): {t_end:.2f}s")
 
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))
