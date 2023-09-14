@@ -33,6 +33,10 @@ define: &simulated_flaps
 define: &simulated_recovery
   parachute_diameter: *unset_required # in (Diameter of the parachute used for rocket recovery)
   parachute_C_d: *unset_required # Coefficient of drag for the parachute
+  reefed_diameter: *unset_required # in (Diameter of parachute when it is reefed)
+  reefed_C_d: *unset_required # Coefficient of drag for the reefed parachute
+  reefing_deployment_altitude: *unset_required # ft (At what altitude should the parachute de-reef?)
+  
 
 define: &pysim_simulation
   desired_apogee: *unset # m (Desired apogee for the rocket)
