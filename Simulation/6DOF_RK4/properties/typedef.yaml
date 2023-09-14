@@ -30,6 +30,10 @@ define: &simulated_flaps
   max_ext_spd: *unset_required # m/s (flap max extension speed)
   max_ext_length: *unset_required # m (flap max estension length)
 
+define: &simulated_recovery
+  parachute_diameter: *unset_required # in (Diameter of the parachute used for rocket recovery)
+  parachute_C_d: *unset_required # Coefficient of drag for the parachute
+
 define: &pysim_simulation
   desired_apogee: *unset # m (Desired apogee for the rocket)
   rocket: *simulated_rocket # simulated_rocket structure (The rocket used in the simulation)
@@ -37,8 +41,7 @@ define: &pysim_simulation
   simulated_body: *simulated_body # simulated_body structure (Used to store CoM and CoP data)
   sensors: *unset_required # No structure defined, but reminds user that sensors need to be set.
   flaps: *simulated_flaps # simulated_flaps structure (Stores data about flap extension speeds/length)
+  recovery: *simulated_recovery # Recovery model used for this simulation
   meta:
     output_file: *unset_required # File path for output file
     monte_carlo_output_folder: *unset_required # File path for monte carlo outputs
-
-  
