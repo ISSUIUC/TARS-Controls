@@ -210,7 +210,7 @@ def simulator(x0, dt) -> None:
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
 
-    print("Ignition")
+    print("Ignition at", time_stamp)
 
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
@@ -248,7 +248,35 @@ def simulator(x0, dt) -> None:
         time_stamp += dt
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+    print("Apogee reached at", time_stamp)
 
+    while x[0, 0] >= 0:
+        # Get sensor data
+        baro_alt = sensors.get_barometer_data(x)
+        accel = sensors.get_accelerometer_data(x)
+        gyro = sensors.get_gyro_data(x)
+        bno_ang_pos = sensors.get_bno_orientation(x)
+
+        # Kalman Filter stuff goes here
+        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.update(bno_ang_pos, baro_alt,
+                             accel[0], accel[1], accel[2])
+
+        r_kalman_filter.priori()
+        r_kalman_filter.update(*gyro, *accel)
+
+        current_state = kalman_filter.get_state()
+        current_cov = kalman_filter.get_covariance()
+        current_state_r = r_kalman_filter.get_state()
+
+        apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
+
+        flap_ext = 0 #controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+
+        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
+        time_stamp += dt
+
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
     t_end = time.time() - t_start
     print(f"Time: {t_end:.2f}")
 
