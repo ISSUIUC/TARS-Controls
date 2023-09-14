@@ -29,12 +29,7 @@ sensors:
   bno:
     error: !eval 2.5/3
 recovery:
-  <<: *simulated_recovery
-  parachute_diameter: 36 # inches
-  parachute_C_d: 1.75
-  reefed_diameter: 12 # inches
-  reefed_C_d: 1.2
-  reefing_deployment_altitude: 2000
+  <<: *rec_stargazer1_s1
 meta:
   output_file: '../output/simulated_6dof.csv'
   monte_carlo_output_folder: '../output/monte_carlo'
