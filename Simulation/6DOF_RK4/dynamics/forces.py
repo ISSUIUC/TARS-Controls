@@ -189,10 +189,10 @@ class Forces:
 
         if parachute_state['deployed']:
             drag_coeff = config['recovery']['reefed_C_d']
-            diameter = config['recovery']['reefed_diameter'] * 0.0254 # Inches to meters
+            diameter = config['recovery']['reefed_diameter'] * prop.METERS_TO_INCHES # Inches to meters
             if(parachute_state['reefing_deployed']):
                 drag_coeff = config['recovery']['parachute_C_d']
-                diameter = config['recovery']['parachute_diameter'] * 0.0254 # Inches to meters
+                diameter = config['recovery']['parachute_diameter'] * prop.METERS_TO_INCHES # Inches to meters
             parachute_force = -0.5 * np.sign(x_state[1,0]) * x_state[1,0]**2 * drag_coeff * density * ((diameter/2)**2 * np.pi)
             parachute_force_body = vct.world_to_body(*x_state[2].copy(), parachute_force * np.array([1, 0, 0])) # Turn world space into body space
             

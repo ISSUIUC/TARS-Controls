@@ -12,4 +12,6 @@ m_e = 5.9722*10**24
 # radius of earth
 r_e = 6.3781*10**6
 
+METERS_TO_INCHES = 0.0254
+
 
