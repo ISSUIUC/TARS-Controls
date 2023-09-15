@@ -6,6 +6,7 @@ define: &rec_stargazer1_s1
   reefed_C_d: 0.97 # SG1 Stage 1 is not reefed.
   reefing_deployment_altitude: 0 # SG1 Stage 1 is not reefed.
   parachute_deploy_delay: 1
+  parachute_maximum_force: 1000 # N
 
 define: &rec_stargazer1_s2
   <<: *simulated_recovery
@@ -15,3 +16,14 @@ define: &rec_stargazer1_s2
   reefed_C_d: 0.7
   reefing_deployment_altitude: 2000
   parachute_deploy_delay: 1
+  parachute_maximum_force: 1000 # N
+
+define: &rec_intrepid3
+  <<: *simulated_recovery
+  parachute_diameter: 84 # inches
+  parachute_C_d: 0.97
+  reefed_diameter: 12 # inches
+  reefed_C_d: 0.7
+  reefing_deployment_altitude: 2000
+  parachute_deploy_delay: 1
+  parachute_maximum_force: 1000 # N

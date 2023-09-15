@@ -1,5 +1,6 @@
 <<: *pysim_simulation
 desired_apogee: 4572
+simulation_timestep: 0.01
 rocket:
   <<: *simulated_rocket
   rasaero_lookup_file: "../lookup/RASAero.csv"
@@ -27,7 +28,7 @@ sensors:
   bno:
     error: !eval 2.5/3
 recovery:
-  <<: *rec_stargazer1_s1
+  <<: *rec_intrepid3
 meta:
   output_file: '../output/simulated_6dof.csv'
   monte_carlo_output_folder: '../output/monte_carlo'

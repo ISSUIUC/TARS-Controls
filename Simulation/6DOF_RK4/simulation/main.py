@@ -92,7 +92,7 @@ sensor_dict = {
     "apogee_estimate": []
 }
 
-def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext):
+def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext, dt):
     # Append to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
     sensor_dict["imu_accel_x"].append(accel[0])
@@ -131,7 +131,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sim_dict["motor_mass"].append(motor_mass)
 
 
-def simulator(x0, dt) -> None:
+def simulator(x0) -> None:
     '''Method which handles running the simulation and logging sim data to dict
 
     Args:
@@ -146,6 +146,9 @@ def simulator(x0, dt) -> None:
         dt (float): time step between each iteration in simulation
 
     '''
+
+    dt = config['simulation_timestep']
+    dt_rec = config['recovery']['timestep']
 
     x = x0.copy()
     baro = 0
@@ -208,9 +211,11 @@ def simulator(x0, dt) -> None:
         current_covariance = kalman_filter.get_covariance()
         current_state_r = r_kalman_filter.get_state()
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
 
     print("Ignition at", time_stamp)
+
+    parachute = {'deployed': False, 'reefing_deployed': False}
 
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
@@ -244,13 +249,19 @@ def simulator(x0, dt) -> None:
 
         rocket.set_motor_mass(time_stamp)
 
-        x, alpha = sim.RK4(x, dt, time_stamp, False, flap_ext)
+        x, alpha = sim.RK4(x, dt, time_stamp, parachute, flap_ext)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext, dt)
     print("Apogee reached at", time_stamp)
+    apogee_timestamp = time_stamp
+    while x[0, 0] >= 0: # Recovery loop
+        # Temp parachute release delay
 
-    while x[0, 0] >= 0:
+        if(not parachute['deployed'] and (time_stamp-apogee_timestamp) > 1):
+            parachute['deployed'] = True
+            print("Drogue deployed at", time_stamp)
+
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
@@ -271,10 +282,10 @@ def simulator(x0, dt) -> None:
 
         flap_ext = 0 #controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
-        x, alpha = sim.RK4(x, dt, time_stamp, True, flap_ext)
-        time_stamp += dt
+        x, alpha = sim.RK4(x, dt_rec, time_stamp, parachute, flap_ext)
+        time_stamp += dt_rec
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, 0, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, 0, rocket.rocket_total_mass, rocket.motor_mass, flap_ext, dt_rec)
     t_end = time.time() - t_start
     print(f"Landed at {time_stamp:.2f}s (simulation-time)")
     print(f"Simulation runtime (real-time): {t_end:.2f}s")
@@ -283,8 +294,7 @@ def simulator(x0, dt) -> None:
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0]
-    dt = 0.01
-    simulator(x0, dt)
+    simulator(x0)
 
     print("Writing to file...")
 

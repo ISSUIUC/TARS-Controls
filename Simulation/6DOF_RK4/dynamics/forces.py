@@ -52,7 +52,7 @@ class Forces:
 
     
 
-    def get_force(self, x_state, flap_ext, time_stamp, parachute_deployed, density_noise=False) -> np.ndarray:
+    def get_force(self, x_state, flap_ext, time_stamp, parachute_state, density_noise=False) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
 
         Args:
@@ -72,7 +72,7 @@ class Forces:
         # wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
         wind_vector = self.atm.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
-        drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext, parachute_deployed)
+        drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext, parachute_state)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
@@ -163,7 +163,7 @@ class Forces:
             
         return [0,0,0]
 
-    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext, parachute_deployed) -> np.ndarray:
+    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext, parachute_state) -> np.ndarray:
         '''Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
         Args:
@@ -179,20 +179,25 @@ class Forces:
 
         C_n_y = np.abs(C_n * np.cos(roll_aero)) #TODO: Check with other values
         C_n_z = np.abs(C_n * np.sin(roll_aero)) #TODO: Check with other values
+
+        # aero_force = np.array([0., 0., 0.])
+
+        
         aero_force = -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*self.A, 
-                                    np.sign(vel[1])*vel[1]**2 * C_n_y*density*self.A_s, 
-                                    np.sign(vel[2])*vel[2]**2 * C_n_z*density*self.A_s])
-             
+                                        np.sign(vel[1])*vel[1]**2 * C_n_y*density*self.A_s, 
+                                        np.sign(vel[2])*vel[2]**2 * C_n_z*density*self.A_s])
 
-        print(x_state[1])
-        if parachute_deployed:
+        if parachute_state['deployed']:
             drag_coeff = config['recovery']['parachute_C_d']
-            diameter = config['recovery']['parachute_diameter']
-            parachute_force = 0.5 * vel[0]**2 * drag_coeff * density * ((diameter/2)**2 * np.pi) * np.array([1, 0, 0])
-            # aero_force += parachute_force
+            diameter = config['recovery']['parachute_diameter'] * 0.0254 # Inches to meters
+            parachute_force = -0.5 * np.sign(x_state[1,0])* x_state[1,0]**2 * drag_coeff * density * ((diameter/2)**2 * np.pi)
+            parachute_force_body = vct.world_to_body(*x_state[2].copy(), parachute_force * np.array([1, 0, 0])) # Turn world space into body space
             
-            #print(-0.5 * vel[0]**2 * drag_coeff * density * ((diameter/2)**2 * np.pi) * np.array([1, 0, 0]), vel[0])
-
+            if(parachute_force > config['recovery']['parachute_maximum_force']):
+                print("Parachute has broken! Continuing in freefall.")
+                parachute_state['deployed'] = False
+            else:
+                aero_force += parachute_force_body
 
         return aero_force
     

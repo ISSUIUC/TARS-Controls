@@ -19,8 +19,8 @@ class Simulator():
         self.forces = self.rocket.forces
         
     ### TEST PURPOSES ###
-    def newtonProp(self, y0, dt, time_stamp, parachute_deployed, flap_ext=0) -> np.ndarray:
-        temp = (self.forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp, parachute_deployed))
+    def newtonProp(self, y0, dt, time_stamp, parachute_state, flap_ext=0) -> np.ndarray:
+        temp = (self.forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp, parachute_state))
         a = temp[0]/self.rocket.rocket_total_mass
 
         moment = temp[1]
@@ -29,7 +29,7 @@ class Simulator():
         p = y0[0] + v*dt + 0.5*a*dt**2
         return np.array([p, v, a, y0[3], y0[4], alpha])
 
-    def RK4(self, y0, dt, time_stamp, parachute_deployed, flap_ext=0, density_noise=False) -> np.ndarray:
+    def RK4(self, y0, dt, time_stamp, parachute_state, flap_ext=0, density_noise=False) -> np.ndarray:
         '''Propogates State Matrix of rocket based on Runge-Kutta (RK4) Method
         Args:
             y0 (np.array): current state vector [6x3]
@@ -51,9 +51,9 @@ class Simulator():
         I_inv = self.rocket.I_inv(self.rocket.rocket_total_mass)
         k1_v = y0[2].copy()
 
-        k2_v,k2_av = self.step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext, parachute_deployed)
-        k3_v,k3_av = self.step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext, parachute_deployed)
-        k4_v,k4_av = self.step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext, parachute_deployed)
+        k2_v,k2_av = self.step_v(y0[0], y0[1] + (dt/2)*k1_v, y0[3], y0[4], dt/2, time_stamp, flap_ext, parachute_state)
+        k3_v,k3_av = self.step_v(y0[0], y0[1] + (dt/2)*k2_v, y0[3], y0[4], dt/2, time_stamp, flap_ext, parachute_state)
+        k4_v,k4_av = self.step_v(y0[0], y0[1] + dt*k3_v, y0[3], y0[4], dt, time_stamp, flap_ext, parachute_state)
 
         k2_v /= self.rocket.rocket_total_mass
         k3_v /= self.rocket.rocket_total_mass
@@ -82,7 +82,7 @@ class Simulator():
 
         ang_p = (y0[3] + (1/6)*(k1_ap+(2*k2_ap)+(2*k3_ap)+k4_ap)*dt)
 
-        temp,alpha = (self.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, parachute_deployed, density_noise=density_noise))
+        temp,alpha = (self.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, parachute_state, density_noise=density_noise))
         # print(time_stamp, y0[3], temp[0], temp[1])
         a = temp[0]/self.rocket.rocket_total_mass
 
@@ -104,7 +104,7 @@ class Simulator():
 
         return (y1-y0)/dt # return slope (velocity)
 
-    def step_v(self, pos, vel, ang_pos, ang_vel, dt, time_stamp, flap_ext, parachute_deployed):
+    def step_v(self, pos, vel, ang_pos, ang_vel, dt, time_stamp, flap_ext, parachute_state):
         '''Calculates slope of v over given delta t for state propogation
 
         Args:
@@ -117,4 +117,4 @@ class Simulator():
         Returns:
             (np.array): rate of change of velocity (acceleration) in form of state vector
         '''
-        return self.forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp, parachute_deployed)[0] # return slope times mass/inertia 
+        return self.forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp, parachute_state)[0] # return slope times mass/inertia 
