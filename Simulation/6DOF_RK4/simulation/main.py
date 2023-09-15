@@ -244,7 +244,7 @@ def simulator(x0, dt) -> None:
 
         rocket.set_motor_mass(time_stamp)
 
-        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
+        x, alpha = sim.RK4(x, dt, time_stamp, False, flap_ext)
         time_stamp += dt
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
@@ -269,16 +269,16 @@ def simulator(x0, dt) -> None:
         current_cov = kalman_filter.get_covariance()
         current_state_r = r_kalman_filter.get_state()
 
-        apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
-
         flap_ext = 0 #controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
-        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
+        x, alpha = sim.RK4(x, dt, time_stamp, True, flap_ext)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, 0, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
     t_end = time.time() - t_start
+    print(f"Landed at {time_stamp:.2f}s (simulation-time)")
     print(f"Simulation runtime (real-time): {t_end:.2f}s")
+    
 
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))

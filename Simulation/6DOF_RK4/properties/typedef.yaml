@@ -34,6 +34,7 @@ define: &simulated_recovery
   reefed_diameter: *unset_required # in (Diameter of parachute when it is reefed)
   reefed_C_d: *unset_required # Coefficient of drag for the reefed parachute
   reefing_deployment_altitude: *unset_required # ft (At what altitude should the parachute de-reef?)
+  parachute_deploy_delay: *unset_required # s (delay between reaching apogee and parachute deploy)
   
 
 define: &pysim_simulation
