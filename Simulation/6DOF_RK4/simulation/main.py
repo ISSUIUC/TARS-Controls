@@ -258,6 +258,10 @@ def simulator(x0) -> None:
     while x[0, 0] >= 0: # Recovery loop
         # Temp parachute release delay
 
+        if(not parachute['reefing_deployed'] and x[0,0] < config['recovery']['reefing_deployment_altitude']):
+            parachute['reefing_deployed'] = True
+            print("Main deployed at", time_stamp)
+
         if(not parachute['deployed'] and (time_stamp-apogee_timestamp) > 1):
             parachute['deployed'] = True
             print("Drogue deployed at", time_stamp)
