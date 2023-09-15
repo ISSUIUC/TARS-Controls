@@ -2,7 +2,7 @@ import numpy as np
 import plotly.graph_objects as go
 import pandas as pd 
 
-data = pd.read_csv('/Sensor Analysis/sensor_analysis.csv') ## --> analysis csv needs to be updated 
+## data = pd.read_csv('/Sensor Analysis/sensor_analysis.csv') ## --> analysis csv needs to be updated 
 
 # --> steps to perform for the analysis
 ## --> code corresponding to steps
@@ -13,13 +13,17 @@ data = pd.read_csv('/Sensor Analysis/sensor_analysis.csv') ## --> analysis csv n
 
 
 # (1) Import data and create a dictionary for the flight data 
-#
+
+# As an amendment to this to avoid multiple tabs opening at once, create a list
+## this list is defined as the sensors that you do want to use 
+
+#also trim the flight data
 
 def main():
-    arr = read_csv('sensor_analysis.csv')
-    arr_df = arr.values
-    arr_df = np.transpose(arr_df)
-    dict = {
+    arr = pd.read_csv("Sensor Analysis\sensor_analysis.csv")
+    arr_df = arr.values #changes to an array
+    # arr_df = np.transpose(arr_df)
+    dict_sensor = {
         "t":arr_df[:,0],
         "alt": arr_df[:,9],
         "highg_ax": arr_df[:,15],
@@ -47,29 +51,34 @@ def main():
 
     # (2) Plot the data via a LRQ / Plot statistcal model
 
-    for key in dict:
+    for key in dict_sensor:
         fig = go.Figure()
         ## Plotting of each dictionary entry
-        fig.add_trace(data=[go.Scatter(x=dict[key],y=arr_df[:,0],)])
-        m, b = np.polyfit(dict["t"], dict[key], 1)
+        fig.add_trace(go.Scatter(x=arr_df[:,0],y=dict_sensor[key],))
+
+        # changing to float because dictionary values are in object datatype
+
+        m,b = np.polyfit((dict_sensor["t"]).astype(float), (dict_sensor[key]).astype(float), 1)
         ## Line of best fit
-        polyfit = [m * x + b for x in dict["t"]]
-        fig.add_trace(go.Scatter(dict["t"], polyfit, mode = 'lines', name = 'polyfit'))
-        ## Finding r^2
-        corr_matrix = np.corrcoef(dict[key], polyfit)
+        polyfit1 = [m * x + b for x in dict_sensor["t"]]
+        fig.add_trace(go.Scatter(x=dict_sensor["t"], y=polyfit1, mode = 'lines', name = key))
+        #red line in the center 
+        # Finding r^2
+        corr_matrix = np.corrcoef(dict_sensor[key].astype(float), polyfit1)
         corr = corr_matrix[0,1]
         R_sq = corr**2
     
         print(R_sq)
         
         fig.add_annotation(
-            text=f'R² = {R_sq:.2f}',
-            x=1,  # Adjust the x and y coordinates as needed
-            y=4,
+             text=f'R² = {R_sq:.5f}',
+             x=3900000,  # Adjust the x and y coordinates as needed
+             y=4,
             showarrow=False,
-            font=dict(size=12),
+            font=dict(size=12)
         )
         fig.show()
+        ## use formula for sample standard deviation, create function to find standard deviation for the vars, subtract std dev factor times time from the data and see what there is
         
 
 ## assuming syntax for the line of best fit is identical to numpy
