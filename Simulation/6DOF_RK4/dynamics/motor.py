@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
-
+import sys
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 import properties.properties as prop
 
 
@@ -154,7 +156,7 @@ if __name__ == '__main__':
     # print(motor.get_thrust(0))
     # thrust = np.array([motor.get_thrust(t) for t in time], dtype=np.float64)
     thrust = np.array([motor.get_mass(t) for t in time], dtype=np.float64)
-    # print(thrust.shape)
+    print(thrust.shape)
     # print(time.shape)
     # print(thrust)
     # print(motor.lerp_(0.0, 1.0, 0.0, 1.0, 0.5))
