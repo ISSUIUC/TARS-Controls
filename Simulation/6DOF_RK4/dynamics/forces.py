@@ -201,7 +201,6 @@ class Forces:
 
         # aero_force = np.array([0., 0., 0.])
 
-        
         aero_force = -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*self.A, 
                                         np.sign(vel[1])*vel[1]**2 * C_n_y*density*self.A_s, 
                                         np.sign(vel[2])*vel[2]**2 * C_n_z*density*self.A_s])
@@ -209,10 +208,9 @@ class Forces:
         if parachute_state['deployed']:
             parachute_force = self.get_parachute_state(parachute_state, density, x_state[1,0], time_stamp)
             parachute_force_body = vct.world_to_body(*x_state[2].copy(), parachute_force * np.array([1, 0, 0])) # Turn world space into body space
-            
+
             if(parachute_force > config['recovery']['parachute_maximum_force']):
-                print("Parachute has broken! Continuing in freefall.")
-                print(parachute_force)
+                print(f"Parachute has broken! Continuing in freefall. Force: {parachute_force}")
                 parachute_state['deployed'] = False
             else:
                 aero_force += parachute_force_body

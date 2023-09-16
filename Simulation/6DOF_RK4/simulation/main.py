@@ -213,7 +213,7 @@ def simulator(x0) -> None:
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
 
-    print("Ignition at", time_stamp)
+    print("Ignition at {time_stamp}s")
 
     parachute = {'deployed': False, 'reefing_deployed': False}
 
@@ -253,7 +253,7 @@ def simulator(x0) -> None:
         time_stamp += dt
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext, dt)
-    print("Apogee reached at", time_stamp)
+    print("Apogee reached at {time_stamp}s")
     apogee_timestamp = time_stamp
     while x[0, 0] >= 0: # Recovery loop
         # Temp parachute release delay
@@ -261,12 +261,12 @@ def simulator(x0) -> None:
         if(not parachute['reefing_deployed'] and x[0,0] < config['recovery']['reefing_deployment_altitude']):
             parachute['reefing_deployed'] = True
             parachute['reef_deploy_time'] = time_stamp
-            print("Main deployed at", time_stamp)
+            print(f"Main deployed at {time_stamp}s; altitiude:{x[0,0]}m")
 
         if(not parachute['deployed'] and (time_stamp-apogee_timestamp) > 1):
             parachute['deployed'] = True
             parachute['deploy_time'] = time_stamp
-            print("Drogue deployed at", time_stamp)
+            print("Drogue deployed at", time_stamp, "s; altitiude:", x[0,0], "m")
 
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
