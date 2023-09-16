@@ -37,7 +37,8 @@ define: &simulated_recovery
   parachute_deploy_delay: *unset_required # s (delay between reaching apogee and parachute deploy)
   parachute_maximum_force: *unset_required # N (How much force can a parachute withstand before breaking?)
   timestep: 0.1 # s (Boost the speed of the simulation when doing recovery, default=0.1s).
-
+  parachute_expansion_time: *unset_required
+  parachute_c_k: *unset_required
 
 define: &pysim_simulation
   simulation_timestep: 0.01 # s (Timestep to run the simulation in, default=0.01s)

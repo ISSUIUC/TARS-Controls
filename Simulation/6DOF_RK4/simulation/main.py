@@ -260,10 +260,12 @@ def simulator(x0) -> None:
 
         if(not parachute['reefing_deployed'] and x[0,0] < config['recovery']['reefing_deployment_altitude']):
             parachute['reefing_deployed'] = True
+            parachute['reef_deploy_time'] = time_stamp
             print("Main deployed at", time_stamp)
 
         if(not parachute['deployed'] and (time_stamp-apogee_timestamp) > 1):
             parachute['deployed'] = True
+            parachute['deploy_time'] = time_stamp
             print("Drogue deployed at", time_stamp)
 
         # Get sensor data

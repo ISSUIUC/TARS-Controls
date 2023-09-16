@@ -50,8 +50,6 @@ class Forces:
         self.rasaero_file_location = os.path.join(os.path.dirname(__file__), rasaero_lookup_file)
         self.rasaero = pd.read_csv(self.rasaero_file_location)
 
-    
-
     def get_force(self, x_state, flap_ext, time_stamp, parachute_state, density_noise=False) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
 
@@ -72,7 +70,7 @@ class Forces:
         # wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
         wind_vector = self.atm.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
-        drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext, parachute_state)
+        drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext, parachute_state, time_stamp)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
@@ -162,8 +160,29 @@ class Forces:
                 return [Ca,Cn,np.array([Cp, 0.0, 0.0])]
             
         return [0,0,0]
+    
+    # Expand parachute size: Reference
+    # https://cdn.imagearchive.com/rocketryforum/data/attach/414/414538-7152718.pdf
+    # p is atmosphere density
+    # v is velocity of the rocket
+    # SC is the drag area of the full parachutes
+    # Fmax = 0.5 * p * v** 2 * SC * Ck
+    def get_parachute_state(self, parachute_state, density, velocity, time_stamp):
+        drag_coeff = config['recovery']['reefed_C_d']
+        diameter = config['recovery']['reefed_diameter'] * prop.METERS_TO_INCHES # Inches to meters
+        deploy_state = parachute_state['deploy_time']
+        chute_size = 0
+        if(parachute_state['reefing_deployed']):
+            chute_size = -0.5 * np.sign(velocity) * velocity**2 * drag_coeff * density * ((diameter/2)**2 * np.pi)
+            drag_coeff = config['recovery']['parachute_C_d']
+            deploy_state = parachute_state['reef_deploy_time']
+            diameter = config['recovery']['parachute_diameter'] * prop.METERS_TO_INCHES # Inches to meters
 
-    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext, parachute_state) -> np.ndarray:
+        parachute_time = [0, config['recovery']['parachute_expansion_time']]
+        parachute_forces = [chute_size, -0.5 * np.sign(velocity) * velocity**2 * drag_coeff * density * ((diameter/2)**2 * np.pi)]
+        return np.interp(time_stamp - deploy_state, parachute_time, parachute_forces)
+
+    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext, parachute_state, time_stamp) -> np.ndarray:
         '''Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
         Args:
@@ -188,12 +207,7 @@ class Forces:
                                         np.sign(vel[2])*vel[2]**2 * C_n_z*density*self.A_s])
 
         if parachute_state['deployed']:
-            drag_coeff = config['recovery']['reefed_C_d']
-            diameter = config['recovery']['reefed_diameter'] * prop.METERS_TO_INCHES # Inches to meters
-            if(parachute_state['reefing_deployed']):
-                drag_coeff = config['recovery']['parachute_C_d']
-                diameter = config['recovery']['parachute_diameter'] * prop.METERS_TO_INCHES # Inches to meters
-            parachute_force = -0.5 * np.sign(x_state[1,0]) * x_state[1,0]**2 * drag_coeff * density * ((diameter/2)**2 * np.pi)
+            parachute_force = self.get_parachute_state(parachute_state, density, x_state[1,0], time_stamp)
             parachute_force_body = vct.world_to_body(*x_state[2].copy(), parachute_force * np.array([1, 0, 0])) # Turn world space into body space
             
             if(parachute_force > config['recovery']['parachute_maximum_force']):
