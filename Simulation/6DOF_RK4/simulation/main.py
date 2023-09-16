@@ -253,7 +253,7 @@ def simulator(x0) -> None:
         time_stamp += dt
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext, dt)
-    print("Apogee reached at {time_stamp}s")
+    print("Apogee reached at", time_stamp, "s")
     apogee_timestamp = time_stamp
     while x[0, 0] >= 0: # Recovery loop
         # Temp parachute release delay

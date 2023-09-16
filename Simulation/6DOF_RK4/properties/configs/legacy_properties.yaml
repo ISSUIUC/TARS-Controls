@@ -30,7 +30,7 @@ sensors:
 recovery:
   <<: *rec_intrepid3
   parachute_maximum_force: 5000 # N
-  timestep: 0.05
+  timestep: 0.1
 meta:
   output_file: '../output/simulated_6dof.csv'
   monte_carlo_output_folder: '../output/monte_carlo'

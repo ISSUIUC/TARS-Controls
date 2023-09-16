@@ -70,10 +70,10 @@ class Forces:
         # wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
         wind_vector = self.atm.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
-        drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext, parachute_state, time_stamp)
+        drag, parachute_drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext, parachute_state, time_stamp)
         grav = self.gravitational_force(alt, time_stamp)
-        force = vct.body_to_world(*x_state[2],thrust + drag) + grav
-        moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
+        force = vct.body_to_world(*x_state[2],thrust + drag + parachute_drag) + grav
+        moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag, parachute_drag))
         # print(self.aerodynamic_moment(drag))
         return np.array([force, moment]), alpha
 
@@ -199,11 +199,12 @@ class Forces:
         C_n_y = np.abs(C_n * np.cos(roll_aero)) #TODO: Check with other values
         C_n_z = np.abs(C_n * np.sin(roll_aero)) #TODO: Check with other values
 
-        # aero_force = np.array([0., 0., 0.])
+        aero_force_parachute = np.array([0., 0., 0.])
 
         aero_force = -0.5*np.array([np.sign(vel[0])*vel[0]**2 * C_a*density*self.A, 
                                         np.sign(vel[1])*vel[1]**2 * C_n_y*density*self.A_s, 
                                         np.sign(vel[2])*vel[2]**2 * C_n_z*density*self.A_s])
+
 
         if parachute_state['deployed']:
             parachute_force = self.get_parachute_state(parachute_state, density, x_state[1,0], time_stamp)
@@ -213,9 +214,9 @@ class Forces:
                 print(f"Parachute has broken! Continuing in freefall. Force: {parachute_force}")
                 parachute_state['deployed'] = False
             else:
-                aero_force += parachute_force_body
+                aero_force_parachute = parachute_force_body
 
-        return aero_force
+        return aero_force, aero_force_parachute
     
     def gravitational_force(self, altitude, time_stamp) -> np.ndarray:
         '''Calculates gravitational force acting on rocket based on altitude
@@ -233,8 +234,9 @@ class Forces:
         # return np.array([-9.81*total_mass, 0, 0])
         return -np.array([(prop.G*prop.m_e*total_mass)/((prop.r_e+altitude)**2), 0, 0])
 
-    def aerodynamic_moment(self, aerodynamic_force) -> np.ndarray:
+    def aerodynamic_moment(self, aerodynamic_force, parachute_force) -> np.ndarray:
         aerodynamic_moment = np.cross(self.cp - self.motor.cm, aerodynamic_force)
+        aerodynamic_moment += np.cross(np.array([1.75, 0., 0.]) - self.cm, parachute_force)
         return aerodynamic_moment
         
     def get_alpha(self, x_state, wind_vector) -> float:
