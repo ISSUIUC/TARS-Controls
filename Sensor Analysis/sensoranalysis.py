@@ -277,6 +277,7 @@ def stddev(t1, t2,time_a2,sensorkey2):
     keyarray = sensorkey2
     slicedkey = keyarray[0:t2]
     return (statistics.stdev(slicedkey))
+
 def stddev_plot(time_a,sensorkey,t_1,t_2):
     index1 = 0
     index2 = 0
