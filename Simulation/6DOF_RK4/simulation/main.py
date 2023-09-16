@@ -213,7 +213,7 @@ def simulator(x0) -> None:
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
 
-    print("Ignition at {time_stamp}s")
+    print("Ignition at {}s".format(time_stamp))
 
     parachute = {'deployed': False, 'reefing_deployed': False}
 
@@ -263,7 +263,7 @@ def simulator(x0) -> None:
             parachute['reef_deploy_time'] = time_stamp
             print(f"Main deployed at {time_stamp}s; altitiude:{x[0,0]}m")
 
-        if(not parachute['deployed'] and (time_stamp-apogee_timestamp) > 1):
+        if(not parachute['deployed'] and (time_stamp-apogee_timestamp) > config['recovery']['parachute_deploy_delay']):
             parachute['deployed'] = True
             parachute['deploy_time'] = time_stamp
             print("Drogue deployed at", time_stamp, "s; altitiude:", x[0,0], "m")
