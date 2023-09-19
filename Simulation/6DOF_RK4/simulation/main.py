@@ -215,9 +215,13 @@ def simulator(x0, dt) -> None:
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
     burnout = False
+    apogee = False
+    drogue = False
+    main_chute = False
     t_start = time.time()
     motor.ignite(time_stamp)
 
+    # while loop only runs if start = true or velocity in x-dir >= 0
     while x[1, 0] >= 0 or start:
         if start:
             event = 1  # event value for launch
@@ -225,6 +229,10 @@ def simulator(x0, dt) -> None:
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
+        # state update (burnout)
+        if (accel <= 9.81):
+            burnout = True
+        
         gyro = sensors.get_gyro_data(x)
         bno_ang_pos = sensors.get_bno_orientation(x)
 
@@ -248,7 +256,7 @@ def simulator(x0, dt) -> None:
 
         x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
         time_stamp += dt
-
+        
         addToDict(x, event, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
 
     t_end = time.time() - t_start
