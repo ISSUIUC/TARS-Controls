@@ -159,7 +159,7 @@ def simulator(x0) -> None:
     x = x0.copy()
     baro = 0
     bno_ang_pos = 0
-    event = 0   # event value for prelaunch 
+    event = 0   # event value for prelaunch
     
     len_buffer = 30
     for i in range(len_buffer):
