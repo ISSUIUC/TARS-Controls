@@ -2,7 +2,7 @@ import numpy as np
 import plotly.graph_objects as go
 import pandas as pd 
 import statistics
-
+# stddev(t1, t2,time_a2,sensorkey2)
 # program logic - 
 
 ## data = pd.read_csv('/Sensor Analysis/sensor_analysis.csv') ## --> analysis csv needs to be updated 
@@ -62,13 +62,13 @@ def main():
     # (2) Plot the data via a LRQ / Plot statistcal model
 
     for key in dict_sensor:
-        stddev_plot(arr_df[:,0],dict_sensor[key])
+        std_plot, time_plot = stddev_plot(arr_df[:,0],dict_sensor[key])
         fig = go.Figure()
         ## Plotting of each dictionary entry
         fig.add_trace(go.Scatter(x=arr_df[:,0],y=dict_sensor[key],))
         
         ## Plotting Standard deviation
-        fig.add_trace(go.Scatter(x=std_plot,y=time_plot,name = std_dev))
+        fig.add_trace(go.Scatter(x=time_plot,y=std_plot,name = 'std_dev'))
         # changing to float because dictionary values are in object datatype
 
         m,b = np.polyfit((dict_sensor["t"]).astype(float), (dict_sensor[key]).astype(float), 1)
@@ -119,14 +119,11 @@ def main():
 ## plt.plot(x, a*x +  b, and then customizations based on how you want the line to look)
 
 def stddev(t1, t2,time_a2,sensorkey2):
-            # create the array from index t1 to t2 
-            tarray = []
-            keyarray = []
-            # for t in range(t1,t2):
-            #    tarray = tarray.append(time_a2)   
-            keyarray = sensorkey2
-            slicedkey = keyarray[t1:t2]
-            return (statistics.stdev(slicedkey))
+    # for t in range(t1,t2):
+    #    tarray = tarray.append(time_a2)   
+    keyarray = sensorkey2
+    slicedkey = keyarray[t1:t2]
+    return (statistics.stdev(slicedkey))
 def stddev_plot(time_a,sensorkey):
     timearray = time_a
     std_plot = []
@@ -134,8 +131,8 @@ def stddev_plot(time_a,sensorkey):
     for i in range(0,len(timearray)-10):
         t1 = i
         t2 = i+10 
-        std_plot = std_plot.append(stddev(t1,t2,time_a,sensorkey))
-        time_plot = time_plot.append((t1+t2)/2)
+        std_plot.append(stddev(t1,t2,time_a,sensorkey))
+        time_plot.append((timearray[t1]+timearray[t2])/2)
     
     return (std_plot,time_plot)
 
