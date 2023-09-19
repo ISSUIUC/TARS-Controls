@@ -2,6 +2,7 @@ import numpy as np
 import plotly.graph_objects as go
 import pandas as pd 
 import statistics
+from plotly.subplots import make_subplots
 # stddev(t1, t2,time_a2,sensorkey2)
 # program logic - 
 
@@ -31,28 +32,28 @@ def main():
     # arr_df = np.transpose(arr_df)
     dict_sensor = {
         "t":arr_df[:,0],
-        #"alt": arr_df[:,9],
-        #"highg_ax": arr_df[:,15],
-        #"highg_ay": arr_df[:,16],
-        #"highg_az": arr_df[:,17],
+        "alt": arr_df[:,9],
+        "highg_ax": arr_df[:,15],
+        "highg_ay": arr_df[:,16],
+        "highg_az": arr_df[:,17],
         "gx": arr_df[:,4],
-        #"gy": arr_df[:,5],
-        #"gz": arr_df[:,6],
-        #"bno_ax": arr_df[:,20],
-        #"bno_ay": arr_df[:,21],
-        #"bno_az": arr_df[:,22],
-        #"bno_gx": arr_df[:,23],
-        #"bno_gy": arr_df[:,24],
-        #"bno_gz": arr_df[:,25],
-        #"bno_mx": arr_df[:,26],
-        #"bno_my": arr_df[:,27],
-        #"bno_mz": arr_df[:,28],
-        #"magnet_mx": arr_df[:,32],
-        #"magnet_my": arr_df[:,33],
-        #"magnet_mz": arr_df[:,34]
-        # "bno_pitch": [arr_df[:,29]],
-        # "bno_roll": [arr_df[:,30]],
-        # "bno_yaw": [arr_df[:,31]],
+        "gy": arr_df[:,5],
+        "gz": arr_df[:,6],
+        "bno_ax": arr_df[:,20],
+        "bno_ay": arr_df[:,21],
+        "bno_az": arr_df[:,22],
+        "bno_gx": arr_df[:,23],
+        "bno_gy": arr_df[:,24],
+        "bno_gz": arr_df[:,25],
+        "bno_mx": arr_df[:,26],
+        "bno_my": arr_df[:,27],
+        "bno_mz": arr_df[:,28],
+        "magnet_mx": arr_df[:,32],
+        "magnet_my": arr_df[:,33],
+        "magnet_mz": arr_df[:,34],
+        "bno_pitch": arr_df[:,29],
+        "bno_roll": arr_df[:,30],
+        "bno_yaw": arr_df[:,31],
     }
     
     ## create a for loop to set t1 and t2 for whole value of times throughout launch
@@ -60,21 +61,23 @@ def main():
     ## add all std dev to an array
     ## plot array on graph
     # (2) Plot the data via a LRQ / Plot statistcal model
-
+    fig = make_subplots(rows = len(dict_sensor), cols = 1)
+    count = 0
     for key in dict_sensor:
+        count = count + 1
         std_plot, time_plot = stddev_plot(arr_df[:,0],dict_sensor[key])
-        fig = go.Figure()
+        # fig = go.Figure()
         ## Plotting of each dictionary entry
-        fig.add_trace(go.Scatter(x=arr_df[:,0],y=dict_sensor[key],))
+        fig.add_trace(go.Scatter(x=arr_df[:,0],y=dict_sensor[key], name=''),row=count,col=1)
         
         ## Plotting Standard deviation
-        fig.add_trace(go.Scatter(x=time_plot,y=std_plot,name = 'std_dev'))
+        fig.add_trace(go.Scatter(x=time_plot,y=std_plot,name = 'std_dev'),row=count,col=1)
         # changing to float because dictionary values are in object datatype
 
         m,b = np.polyfit((dict_sensor["t"]).astype(float), (dict_sensor[key]).astype(float), 1)
         ## Line of best fit
         polyfit1 = [m * x + b for x in dict_sensor["t"]]
-        fig.add_trace(go.Scatter(x=dict_sensor["t"], y=polyfit1, mode = 'lines', name = key))
+        fig.add_trace(go.Scatter(x=dict_sensor["t"], y=polyfit1, mode = 'lines', name = key),row=count,col=1)
         #red line in the center 
         # Finding r^2
         corr_matrix = np.corrcoef(dict_sensor[key].astype(float), polyfit1)
@@ -87,9 +90,7 @@ def main():
         
         ### Standard Deviation Function- for a certain time range 
         
-
         
-        print(R_sq)
         std_sample = statistics.stdev(dict_sensor[key])
         fig.add_annotation(
             text=f'<b> σ = {std_sample:.5f}</b>',
@@ -97,18 +98,23 @@ def main():
             y = 4,
             showarrow=False,
             font=dict(size=16,color="black"),
-            
+            row=count,
+            col=1,
         )
         fig.add_annotation(
              text=f'<b>R² = {R_sq:.5f}</b>',
              x=3900000,  # Adjust the x and y coordinates as needed
              y=4,
             showarrow=False,
-            font=dict(size=16,color="black")
+            font=dict(size=16,color="black"),
+            row=count,
+            col=1,
         )
-        fig.show()
+        # fig.show()
         ## use formula for sample standard deviation, create function to find standard deviation for the vars, subtract std dev factor times time from the data and see what there is
-        
+    fig['layout'].update(height= 5000, width=1500,
+                     title='subplot')
+    fig.show()   
 
 ## assuming syntax for the line of best fit is identical to numpy
 
