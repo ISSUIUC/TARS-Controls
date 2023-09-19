@@ -26,7 +26,7 @@ class Motor():
         # print(self.thrust_data["Thrust (N)"].dtype)
         self.total_impulse = impulse
         self.total_mass = mass
-        self.current_mass = mass
+        self.current_mass = mass 
         self.coast_time = delay
         self.alignment = np.array([0, 0])
         self.start_time = delay
