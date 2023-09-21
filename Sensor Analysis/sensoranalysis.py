@@ -3,6 +3,13 @@ import plotly.graph_objects as go
 import pandas as pd 
 import statistics
 from plotly.subplots import make_subplots
+## Notes:
+# Hover over line of best fit to see what is being plotted without having to read the legend on the side
+# Comment out the dictionary components you dont need if you want to see a particular graph closer up
+# If you do this, you may need to resize the plots at the bottom of main()
+# You may need to trim the flight data if you really want to use general r^2, line of best fit, or general std dev value
+
+
 # stddev(t1, t2,time_a2,sensorkey2)
 # program logic - 
 
@@ -113,7 +120,7 @@ def main():
         # fig.show()
         ## use formula for sample standard deviation, create function to find standard deviation for the vars, subtract std dev factor times time from the data and see what there is
     fig['layout'].update(height= 5000, width=1500,
-                     title='subplot')
+                     title='Sensor Data')
     fig.show()   
 
 ## assuming syntax for the line of best fit is identical to numpy
@@ -132,14 +139,18 @@ def stddev(t1, t2,time_a2,sensorkey2):
     return (statistics.stdev(slicedkey))
 def stddev_plot(time_a,sensorkey):
     timearray = time_a
+    # could probably be optimized with numpy arrays if runtime becomes a problem
     std_plot = []
     time_plot = []
     for i in range(0,len(timearray)-10):
+        # choose t1 and t2 to move across the data set and find a std dev for each interval that will then be
+        # plotted as a continuous function
         t1 = i
         t2 = i+10 
         std_plot.append(stddev(t1,t2,time_a,sensorkey))
+        # time associated with std dev calculation is in between the two times used for the individual std dev calculation
         time_plot.append((timearray[t1]+timearray[t2])/2)
-    
+    ## returns array of standard deviation measurements and the times corresponding to them
     return (std_plot,time_plot)
 
 
