@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 import shutil
+import numpy.linalg as la
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -230,14 +231,26 @@ def simulator(x0, dt) -> None:
             event = 1  # event value for launch
             start = False
         
+        prev_alt = -1 #initializing altitude for apogee comparison 
+
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
+       
         # state update (burnout)
-        if (abs(vct.body_to_world(*current_state_r[0:3], accel)[0]) <= 9.81):
+        if (la.norm(motor.get_thrust(time_stamp)) == 0):
             #print('Burnout at {}'.format(time_stamp))
             burnout = True
-        
+            event = 2 # event value for burnout
+    
+        #state update (apogee)
+        if (x[0,0] <= prev_alt):
+            apogee = True
+            event = 3 # event value for apogee
+        else:
+            prev_alt = x[0,0] # updating prev_alt to be the current altitude
+
+
         gyro = sensors.get_gyro_data(x)
         bno_ang_pos = sensors.get_bno_orientation(x)
 
@@ -280,6 +293,7 @@ if __name__ == '__main__':
     for point in range(len(sim_dict["time"])):
         cur_point = []
         cur_point.append(str(sim_dict["time"][point]))
+        cur_point.append(str(str(sim_dict["event"][point])))
         cur_point += list(map(str, sim_dict["pos"][point]))
         cur_point += list(map(str, sim_dict["vel"][point]))
         cur_point += list(map(str, sim_dict["accel"][point]))
@@ -310,13 +324,12 @@ if __name__ == '__main__':
         cur_point += map(str, list(kalman_dict["rx"][point]))
         cur_point += map(str, list(kalman_dict["ry"][point]))
         cur_point += map(str, list(kalman_dict["rz"][point]))
-        cur_point.append(str(str(sim_dict["event"][point])))
 
         record.append(cur_point)
     print
 
     output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
     with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z,event\n")
+        f.write("time,event,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
