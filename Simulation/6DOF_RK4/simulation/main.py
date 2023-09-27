@@ -231,8 +231,6 @@ def simulator(x0, dt) -> None:
             event = 1  # event value for launch
             start = False
         
-        prev_alt = -1 #initializing altitude for apogee comparison 
-
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
@@ -244,7 +242,7 @@ def simulator(x0, dt) -> None:
             event = 2 # event value for burnout
     
         #state update (apogee)
-        if (x[0,0] <= prev_alt):
+        if (x[1,0] <= 0 and burnout):
             apogee = True
             event = 3 # event value for apogee
         else:
