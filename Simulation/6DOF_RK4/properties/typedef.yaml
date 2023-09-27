@@ -5,15 +5,19 @@
 define: &unset _None # Print a warning if this field is unset.
 define: &optional _Ignore # Include this variable in the dictionary returned by the parser, but don't set a value.
 define: &unset_required _None:Required # Raise an error if this field is unset.
+define: &OUTDATED_CONFIG
+  _additional_state_0: _Outdated_config
 
-define: &simulated_rocket
+define: &simulated_rocket_body
   rasaero_lookup_file: *unset_required # File path for a Rasaero file for the rocket.
   C_d: *unset_required # Temporary C_d constant (Coefficient of drag)
   C_d_s: *unset_required # Side profile (Coefficient of drag for side profile)
   length: *unset_required # m (Length of the rocket)
   dry_mass: *unset_required # kg (Mass of the rocket without fuel)
   radius: *unset_required # m (Radius of the rocket body)
-  cm: *unset_required # numpy/array (Center of mass of the rocket body)
+  structure_cm: *unset_required # numpy/array (Center of mass of the rocket body)
+  combined_cm: *unset_required # numpy/array (Center of mass of the rocket+motor assembly.)
+  combined_cp: *unset_required # numpy/array (Center of pressure of the rocket+motor asssembly)
 
 define: &simulated_motor
   impulse: *unset_required # Ns (Impulse of the motor)
@@ -22,23 +26,23 @@ define: &simulated_motor
   motor_lookup_file: *unset_required # File path to the motor file (.csv)
   cm: *unset_required # numpy/array (Center of mass of the motor)
 
-define: &simulated_body
-  cm: *unset_required # numpy/array (Center of mass of the rocket+motor assembly.)
-  cp: *unset_required # numpy/array (Center of pressure of the rocket+motor asssembly)
 
 define: &simulated_flaps
   max_ext_spd: *unset_required # m/s (flap max extension speed)
   max_ext_length: *unset_required # m (flap max estension length)
 
-define: &pysim_simulation
-  desired_apogee: *unset # m (Desired apogee for the rocket)
-  rocket: *simulated_rocket # simulated_rocket structure (The rocket used in the simulation)
+define: &simulated_stage
+  rocket_body: *simulated_rocket_body # simulated_rocket_body structure (The data about the structure of the rocket body (SDA data))
   motor: *simulated_motor # simulated_motor structure (The motor used in the simulation)
-  simulated_body: *simulated_body # simulated_body structure (Used to store CoM and CoP data)
   sensors: *unset_required # No structure defined, but reminds user that sensors need to be set.
   flaps: *simulated_flaps # simulated_flaps structure (Stores data about flap extension speeds/length)
+
+define: &simulated_rocket
+  stages: *unset_required # simulated_stage[] (List of stages for this rocket, first item in list is first stage.)
+
+define: &pysim_simulation
+  desired_apogee: *unset # m (Desired apogee for the rocket)
+  rocket: *simulated_rocket # simulated_rocket structure (The rocket and stages used in the simulation)
   meta:
     output_file: *unset_required # File path for output file
     monte_carlo_output_folder: *unset_required # File path for monte carlo outputs
-
-  

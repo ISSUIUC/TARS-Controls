@@ -42,13 +42,19 @@ import time
 import estimation.apogee_estimator as apg
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
-import dynamics.controller as contr
+# import dynamics.controller as contr SG1 onward does not use TARSIII controls
 
 # Load desired config file
 config = dataloader.config
 
 atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
-rocket = rocket_model.Rocket(config, atm=atm)
+
+
+
+# rocket = rocket_model.Rocket(config, atm=atm)
+rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
+
+
 motor = rocket.motor
 sim = sim_class.Simulator(atm=atm, rocket=rocket)
 sim_dict = {
@@ -150,23 +156,25 @@ def simulator(x0, dt) -> None:
     x = x0.copy()
     baro = 0
     bno_ang_pos = 0
+
+    sensor_config = rocket.stage_config['sensors']
     
     len_buffer = 30
     for i in range(len_buffer):
-        baro+=sensors.get_barometer_data(x)
-        bno_ang_pos+=sensors.get_bno_orientation(x)
+        baro+=sensors.get_barometer_data(x, sensor_config)
+        bno_ang_pos+=sensors.get_bno_orientation(x, sensor_config)
 
     baro_avg = baro/len_buffer
     bno_ang_pos_avg = bno_ang_pos/len_buffer
 
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-    accel = sensors.get_accelerometer_data(x)
+    accel = sensors.get_accelerometer_data(x, sensor_config)
     x_data = []
     y_data = []
     z_data = []
     for i in range(10):
-        reading = sensors.get_accelerometer_data(x)
+        reading = sensors.get_accelerometer_data(x, sensor_config)
         x_data.append(reading[0])
         y_data.append(reading[1])
         z_data.append(reading[2])
@@ -184,17 +192,17 @@ def simulator(x0, dt) -> None:
     time_stamp = 0
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, config)
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, rocket.stage_config)
     Kp, Ki, Kd = 0.0002, 0, 0
-    controller = contr.Controller(Kp, Ki, Kd, dt, config["desired_apogee"])
+    # controller = contr.Controller(Kp, Ki, Kd, dt, config["desired_apogee"])
 
     # Idle stage
     while time_stamp < rocket.delay:
         time_stamp += dt
-        baro_alt = sensors.get_barometer_data(x)
-        accel = sensors.get_accelerometer_data(x)
-        gyro = sensors.get_gyro_data(x)
-        bno_ang_pos = sensors.get_bno_orientation(x)
+        baro_alt = sensors.get_barometer_data(x, sensor_config)
+        accel = sensors.get_accelerometer_data(x, sensor_config)
+        gyro = sensors.get_gyro_data(x, sensor_config)
+        bno_ang_pos = sensors.get_bno_orientation(x, sensor_config)
 
         kalman_filter.priori()
         kalman_filter.update(bno_ang_pos, baro_alt,
@@ -221,10 +229,10 @@ def simulator(x0, dt) -> None:
         if start:
             start = False
         # Get sensor data
-        baro_alt = sensors.get_barometer_data(x)
-        accel = sensors.get_accelerometer_data(x)
-        gyro = sensors.get_gyro_data(x)
-        bno_ang_pos = sensors.get_bno_orientation(x)
+        baro_alt = sensors.get_barometer_data(x, sensor_config)
+        accel = sensors.get_accelerometer_data(x, sensor_config)
+        gyro = sensors.get_gyro_data(x, sensor_config)
+        bno_ang_pos = sensors.get_bno_orientation(x, sensor_config)
 
         # Kalman Filter stuff goes here
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
@@ -240,14 +248,14 @@ def simulator(x0, dt) -> None:
 
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
 
-        flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+        # flap_ext = controller.get_flap_extension(time_stamp > rocket.stage_config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
         rocket.set_motor_mass(time_stamp)
 
-        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
+        x, alpha = sim.RK4(x, dt, time_stamp, 0)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0)
 
     t_end = time.time() - t_start
     print(f"Time: {t_end:.2f}")

@@ -9,69 +9,29 @@ import dynamics.motor as motor
 import dynamics.forces as forces
 
 class Rocket:
-
-    # Center of mass of entire body
-    cm = np.array([3.34-2.31, 0., 0.])
-    cp = np.array([3.34-2.71, 0., 0.])
-    # Center of mass of rocket without motor
-    cm_rocket = np.array([3.34-1.86, 0., 0.])
-    # Center of mass of the motor
-    cm_motor = np.array([0.3755, 0., 0.])
-
-    # Motor Properties M2500:
-    impulse = 9671.0  # Ns
-    motor_mass = 8.064  # Kg
-    delay = 60  # s
-    motor_lookup_file = '../lookup/m2500.csv'
-
-    # # Motor Properties N5800:
-    # impulse = 20145.7 # Ns
-    # motor_mass = 14.826 # Kg
-    # delay = 0 # s
-    # motor_lookup_file = '../lookup/n5800.csv'
-
-    # # Motor Properties N2540:
-    # impulse = 17907 # Ns
-    # motor_mass = 10.700 # Kg
-    # delay = 0 # s
-    # motor_lookup_file = '../lookup/n2540.csv'
-
-    # rocket mass w/out motor
-    rocket_dry_mass = 14.691
-    # rocket mass with motor
-    rocket_total_mass = rocket_dry_mass + motor_mass
-    # radius of rocket
-    r_r = 0.0508
-    # length of rocket
-    l = 3.34
-    # area w/out flaps
-    A = math.pi*r_r**2
-    # side profile area
-    A_s = 2*r_r*l
-    # flap max estension length (m)
-    max_ext_length = .0178
-
     motor = None
     forces = None
-    sim_config = None
+    stage_config = None
     
-    def __init__(self, simulation_config, atm=None):
-        self.sim_config = simulation_config
-        self.cm_rocket = simulation_config["rocket"]["cm"]
-        self.cm_motor = simulation_config["motor"]["cm"]
+    def __init__(self, stage_config, atm=None):
+        self.stage_config = stage_config
+        self.cm_rocket = stage_config["rocket_body"]["structure_cm"]
+        self.cm_motor = stage_config["motor"]["cm"]
+        self.cm = stage_config["rocket_body"]["combined_cm"]
+        self.cp = stage_config["rocket_body"]["combined_cp"]
 
-        self.impulse = simulation_config["motor"]["impulse"]
-        self.motor_mass = simulation_config["motor"]["motor_mass"]
-        self.delay = simulation_config["motor"]["delay"]
-        self.motor_lookup_file = simulation_config["motor"]["motor_lookup_file"]
+        self.impulse = stage_config["motor"]["impulse"]
+        self.motor_mass = stage_config["motor"]["motor_mass"]
+        self.delay = stage_config["motor"]["delay"]
+        self.motor_lookup_file = stage_config["motor"]["motor_lookup_file"]
 
-        self.rocket_dry_mass = simulation_config["rocket"]["dry_mass"]
+        self.rocket_dry_mass = stage_config["rocket_body"]["dry_mass"]
         self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
-        self.r_r = simulation_config["rocket"]["radius"]
-        self.l = simulation_config["rocket"]["length"]
+        self.r_r = stage_config["rocket_body"]["radius"]
+        self.l = stage_config["rocket_body"]["length"]
         self.A = math.pi * self.r_r ** 2
         self.A_s = 2 * self.r_r * self.l
-        self.max_ext_length = simulation_config["flaps"]["max_ext_length"]
+        self.max_ext_length = stage_config["flaps"]["max_ext_length"]
         self.atm = atm
         
         # need to change motor and forces constructors to refer to properties from this class rather than properties file
@@ -91,7 +51,7 @@ class Rocket:
                                     self.A_s,
                                     self.rocket_dry_mass,
                                     self.motor,
-                                    simulation_config["rocket"]["rasaero_lookup_file"],
+                                    stage_config["rocket_body"]["rasaero_lookup_file"],
                                     self.atm)
 
     def set_motor_mass(self, timestamp):
@@ -103,7 +63,7 @@ class Rocket:
         self.motor_mass = self.motor.get_mass(timestamp)
         self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
         
-    def I(self, total_mass=rocket_total_mass): 
+    def I(self, total_mass): 
         """Returns the inertia matrix of the rocket
         
         Args:
@@ -117,7 +77,7 @@ class Rocket:
                                        (total_mass/12) * (self.l**2 + 3*self.r_r**2)])
 
     
-    def I_inv(self, total_mass=rocket_total_mass): 
+    def I_inv(self, total_mass): 
         """Returns the inverse of the inertia matrix of the rocket
         
         Args:

@@ -17,12 +17,16 @@ def rec_validate_config_section(traceback, cfg_section):
       # propagate recursion
       for field in cfg_section.keys():
         rec_validate_config_section(traceback+"."+field, cfg_section[field])
+    elif (type(cfg_section) is list):
+       for ind, listitem in enumerate(cfg_section):
+          rec_validate_config_section(traceback+f"[{ind}]", listitem)
     else:
         if type(cfg_section) is str and cfg_section == "_None":
             print("PySim Configuration WARN: " + traceback + " is inherited from a structure but has an unset value.")
         if type(cfg_section) is str and cfg_section == "_None:Required":
             raise ConfigurationException("PySim Configuration ERR: " + traceback + " is inherited from a structure but has an unset:required value.")
-
+        if type(cfg_section) is str and cfg_section == "_Outdated_config":
+            raise ConfigurationException("PySim Configuration ERR: The configuration file loaded was marked with the OUTDATED_CONFIG flag, and the simulation will crash if it continues with this config. Please select a different configuration file.")
 def validate_config(parsed_yaml):
    # Top level for config validation
    sections = parsed_yaml.keys()
@@ -62,9 +66,10 @@ def load_config(config_path):
     # Append the config file to the typedef header
     raw_yaml += "\n" + cfg_raw.read()
  
-  yaml_content = yaml.load(raw_yaml, Loader=get_loader()) # PyYaml parser
+  yaml_content = list(yaml.load_all(raw_yaml, Loader=get_loader()))[0] # PyYaml parser
   validate_config(yaml_content)
   del yaml_content['define'] # Remove header data from file, leaves only config data.
+  print("PySim Configuration loaded with no fatal errors.")
   return yaml_content
 
 config = load_config(prop.sim_config)

@@ -26,10 +26,10 @@ class Apogee:
     rasaero_file_location = ""
     rasaero = None
     rocket = None
-    simulator_config = None
+    stage_config = None
     
-    def __init__(self, state, dt, a, b, n, atm, simulator_config):
-        self.rasaero_file_location = os.path.join(os.path.dirname(__file__), simulator_config["rocket"]["rasaero_lookup_file"])
+    def __init__(self, state, dt, a, b, n, atm, stage_config):
+        self.rasaero_file_location = os.path.join(os.path.dirname(__file__), stage_config['rocket_body']['rasaero_lookup_file'])
         self.rasaero = pd.read_csv(self.rasaero_file_location)
         self.state = state[:3][0].copy()
         self.dt = dt
@@ -37,8 +37,8 @@ class Apogee:
         self.c, self.x_interpolate = self.calc_spline_coefficients(a, b, n)
         self.n = n
         self.atm = atm
-        self.simulator_config = simulator_config
-        self.rocket = rocket_model.Rocket(self.simulator_config)
+        self.stage_config = stage_config
+        self.rocket = rocket_model.Rocket(self.stage_config)
     
     def set_params(self, state):
         '''Reset the state vector to the current state of the rocket
