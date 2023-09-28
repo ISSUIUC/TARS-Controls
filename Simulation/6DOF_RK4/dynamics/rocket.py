@@ -86,10 +86,6 @@ class Rocket:
             Only used for upper stages, don't use for base stage
             use set_motor_mass for base stage
         
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 5ccccb075974e2c167e40c658fb20bab699bc160
         Args:
             timestamp (float): Time in seconds
         
@@ -109,13 +105,7 @@ class Rocket:
         """
         return self.motor
     
-    def I(self, total_mass=rocket_total_mass) -> np.ndarray: 
-<<<<<<< HEAD
-=======
     def I(self, total_mass): 
->>>>>>> e1e3d90eb4620d80b651f03b0ddbb408b69b8e50
-=======
->>>>>>> 5ccccb075974e2c167e40c658fb20bab699bc160
         """Returns the inertia matrix of the rocket
         
         Args:
@@ -129,15 +119,8 @@ class Rocket:
                                        (total_mass/12) * (self.l**2 + 3*self.r_r**2)])
 
     
-<<<<<<< HEAD
-<<<<<<< HEAD
-    def I_inv(self, total_mass=rocket_total_mass) -> np.ndarray: 
-=======
-    def I_inv(self, total_mass): 
->>>>>>> e1e3d90eb4620d80b651f03b0ddbb408b69b8e50
-=======
-    def I_inv(self, total_mass=rocket_total_mass) -> np.ndarray: 
->>>>>>> 5ccccb075974e2c167e40c658fb20bab699bc160
+
+    def I_inv(self, total_mass) -> np.ndarray: 
         """Returns the inverse of the inertia matrix of the rocket
         
         Args:
