@@ -7,19 +7,20 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import environment.atmosphere as atmosphere
 import dynamics.motor as motor
-from motor import Motor
+from dynamics.motor import Motor
 import dynamics.forces as forces
-from rocket import Rocket
 
 class Rocket:
     motor = None
     forces = None
     stage_config = None
     
-    def __init__(self, simulation_config, atm:atmosphere.Atmosphere=None, stages:list[Rocket]=None):
-        self.sim_config = simulation_config
-        self.cm_rocket = simulation_config["rocket"]["cm"]
-        self.cm_motor = simulation_config["motor"]["cm"]
+    def __init__(self, stage_config, atm:atmosphere.Atmosphere=None, stages:list=None):
+        self.stage_config = stage_config
+        self.cm_rocket = stage_config["rocket_body"]["structure_cm"]
+        self.cm_motor = stage_config["motor"]["cm"]
+        self.cm = stage_config['rocket_body']['combined_cm']
+        self.cp = stage_config['rocket_body']['combined_cp']
 
         self.impulse = stage_config["motor"]["impulse"]
         self.motor_mass = stage_config["motor"]["motor_mass"]
