@@ -15,7 +15,7 @@ class Controller():
         timestep (float): timestep in seconds
         des_apogee (float): desired apogee in meters
     """
-    def __init__(self, Kp, Ki, Kd, timestep, des_apogee):
+    def __init__(self, Kp, Ki, Kd, timestep, des_apogee, stage_config):
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
@@ -24,6 +24,7 @@ class Controller():
         self.dt = timestep
         self.des_apogee = des_apogee
         self.prev_flap = 0
+        self.stage_config = stage_config
 
     def get_flap_extension(self, control, pred_apogee):
         """Returns the flap extension in meters given the predicted apogee in meters
@@ -42,10 +43,10 @@ class Controller():
             flap_ext = self.Kp * error_curr + self.Ki * self.error_sum + self.Kd * error_dt
             self.error_prev = error_curr
 
-            flap_ext += np.sign(flap_ext - self.prev_flap)*min(abs((flap_ext - self.prev_flap)/self.dt), config["flaps"]["max_ext_spd"])*self.dt
+            flap_ext += np.sign(flap_ext - self.prev_flap)*min(abs((flap_ext - self.prev_flap)/self.dt), self.stage_config["flaps"]["max_ext_spd"])*self.dt
             
-            if (flap_ext > config["flaps"]["max_ext_length"]):
-                flap_ext =  config["flaps"]["max_ext_length"]
+            if (flap_ext > self.stage_config["flaps"]["max_ext_length"]):
+                flap_ext =  self.stage_config["flaps"]["max_ext_length"]
             elif (flap_ext < 0):
                 flap_ext = 0
                 
