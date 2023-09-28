@@ -16,12 +16,10 @@ class Rocket:
     forces = None
     stage_config = None
     
-    def __init__(self, stage_config, atm=None, stages:list[Rocket]=None):
-        self.stage_config = stage_config
-        self.cm_rocket = stage_config["rocket_body"]["structure_cm"]
-        self.cm_motor = stage_config["motor"]["cm"]
-        self.cm = stage_config["rocket_body"]["combined_cm"]
-        self.cp = stage_config["rocket_body"]["combined_cp"]
+    def __init__(self, simulation_config, atm:atmosphere.Atmosphere=None, stages:list[Rocket]=None):
+        self.sim_config = simulation_config
+        self.cm_rocket = simulation_config["rocket"]["cm"]
+        self.cm_motor = simulation_config["motor"]["cm"]
 
         self.impulse = stage_config["motor"]["impulse"]
         self.motor_mass = stage_config["motor"]["motor_mass"]
@@ -89,6 +87,9 @@ class Rocket:
             use set_motor_mass for base stage
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5ccccb075974e2c167e40c658fb20bab699bc160
         Args:
             timestamp (float): Time in seconds
         
@@ -109,9 +110,12 @@ class Rocket:
         return self.motor
     
     def I(self, total_mass=rocket_total_mass) -> np.ndarray: 
+<<<<<<< HEAD
 =======
     def I(self, total_mass): 
 >>>>>>> e1e3d90eb4620d80b651f03b0ddbb408b69b8e50
+=======
+>>>>>>> 5ccccb075974e2c167e40c658fb20bab699bc160
         """Returns the inertia matrix of the rocket
         
         Args:
@@ -126,10 +130,14 @@ class Rocket:
 
     
 <<<<<<< HEAD
+<<<<<<< HEAD
     def I_inv(self, total_mass=rocket_total_mass) -> np.ndarray: 
 =======
     def I_inv(self, total_mass): 
 >>>>>>> e1e3d90eb4620d80b651f03b0ddbb408b69b8e50
+=======
+    def I_inv(self, total_mass=rocket_total_mass) -> np.ndarray: 
+>>>>>>> 5ccccb075974e2c167e40c658fb20bab699bc160
         """Returns the inverse of the inertia matrix of the rocket
         
         Args:
