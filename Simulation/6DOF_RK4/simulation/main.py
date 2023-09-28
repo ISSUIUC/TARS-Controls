@@ -49,93 +49,11 @@ config = dataloader.config
 
 atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 
-
-
 # rocket = rocket_model.Rocket(config, atm=atm)
 rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
 
-
 motor = rocket.motor
 sim = sim_class.Simulator(atm=atm, rocket=rocket)
-sim_dict = {
-    "pos": [],
-    "vel": [],
-    "accel": [],
-    "ang_pos": [],
-    "ang_vel": [],
-    "ang_accel": [],
-    "alpha": [],
-    "flap_ext": [],
-    "rocket_total_mass": [],
-    "motor_mass": [],
-    "time": [],
-}
-
-kalman_dict = {
-    "x": [],
-    "y": [],
-    "z": [],
-    "cov_x": [],
-    "cov_y": [],
-    "cov_z": [],
-    "rx": [],
-    "ry": [],
-    "rz": [],
-    "time": []
-}
-
-sensor_dict = {
-    "baro_alt": [],
-    "imu_accel_x": [],
-    "imu_accel_y": [],
-    "imu_accel_z": [],
-    "imu_ang_pos_x": [],
-    "imu_ang_pos_y": [],
-    "imu_ang_pos_z": [],
-    "imu_gyro_x": [],
-    "imu_gyro_y": [],
-    "imu_gyro_z": [],
-    "apogee_estimate": []
-}
-
-def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext):
-    # Append to sensor_dict
-    sensor_dict["baro_alt"].append(baro_alt)
-    sensor_dict["imu_accel_x"].append(accel[0])
-    sensor_dict["imu_accel_y"].append(accel[1])
-    sensor_dict["imu_accel_z"].append(accel[2])
-    sensor_dict["imu_ang_pos_x"].append(bno_ang_pos[0])
-    sensor_dict["imu_ang_pos_y"].append(bno_ang_pos[1])
-    sensor_dict["imu_ang_pos_z"].append(bno_ang_pos[2])
-    sensor_dict["imu_gyro_x"].append(gyro[0])
-    sensor_dict["imu_gyro_y"].append(gyro[1])
-    sensor_dict["imu_gyro_z"].append(gyro[2])
-    sensor_dict["apogee_estimate"].append(apogee_estimation)
-
-    kalman_dict["x"].append(kalman_filter[0:3])
-    kalman_dict["y"].append(kalman_filter[3:6])
-    kalman_dict["z"].append(kalman_filter[6:9])
-    kalman_dict["cov_x"].append(kf_cov[0:3])
-    kalman_dict["cov_y"].append(kf_cov[3:6])
-    kalman_dict["cov_z"].append(kf_cov[6:9])
-    kalman_dict["rx"].append(kalman_filter_r[0:3])
-    kalman_dict["ry"].append(kalman_filter_r[3:6])
-    kalman_dict["rz"].append(kalman_filter_r[6:9])
-
-    # Update Simulator Log
-    sim_dict["pos"].append(x[0])
-    sim_dict["vel"].append(x[1])
-    sim_dict["accel"].append(x[2])
-    sim_dict["ang_pos"].append(x[3])
-    sim_dict["ang_vel"].append(x[4])
-    sim_dict["ang_accel"].append(x[5])
-    sim_dict["time"].append(sim_dict["time"][-1] +
-                            dt if len(sim_dict["time"]) > 0 else 0)
-    sim_dict["flap_ext"].append(flap_ext)                    
-    sim_dict["alpha"].append(alpha)
-    sim_dict["rocket_total_mass"].append(rocket_total_mass)
-    sim_dict["motor_mass"].append(motor_mass)
-
 
 def simulator(x0, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
@@ -216,7 +134,7 @@ def simulator(x0, dt) -> None:
         current_covariance = kalman_filter.get_covariance()
         current_state_r = r_kalman_filter.get_state()
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
+        rocket.add_to_dict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
 
     print("Ignition")
 
@@ -255,7 +173,7 @@ def simulator(x0, dt) -> None:
         x, alpha = sim.RK4(x, dt, time_stamp, 0)
         time_stamp += dt
 
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0)
+        rocket.add_to_dict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
 
     t_end = time.time() - t_start
     print(f"Time: {t_end:.2f}")
@@ -268,43 +186,7 @@ if __name__ == '__main__':
 
     print("Writing to file...")
 
-    record = []
-    for point in range(len(sim_dict["time"])):
-        cur_point = []
-        cur_point.append(str(sim_dict["time"][point]))
-        cur_point += list(map(str, sim_dict["pos"][point]))
-        cur_point += list(map(str, sim_dict["vel"][point]))
-        cur_point += list(map(str, sim_dict["accel"][point]))
-        cur_point += list(map(str, sim_dict["ang_pos"][point]))
-        cur_point += list(map(str, sim_dict["ang_vel"][point]))
-        cur_point += list(map(str, sim_dict["ang_accel"][point]))
-        cur_point += map(str, list([sim_dict["alpha"][point]]))
-        cur_point += map(str, list([sim_dict["rocket_total_mass"][point]]))
-        cur_point += map(str, list([sim_dict["motor_mass"][point]]))
-        cur_point += map(str, list([sim_dict["flap_ext"][point]]))
-        cur_point += map(str, list([sensor_dict["baro_alt"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_accel_x"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_accel_y"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_accel_z"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_ang_pos_x"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_ang_pos_y"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_ang_pos_z"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_gyro_x"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
-        cur_point += map(str, list([sensor_dict["apogee_estimate"][point]]))
-        cur_point += map(str, list(kalman_dict["x"][point]))
-        cur_point += map(str, list(kalman_dict["y"][point]))
-        cur_point += map(str, list(kalman_dict["z"][point]))
-        cur_point += map(str, list(kalman_dict["cov_x"][point]))
-        cur_point += map(str, list(kalman_dict["cov_y"][point]))
-        cur_point += map(str, list(kalman_dict["cov_z"][point]))
-        cur_point += map(str, list(kalman_dict["rx"][point]))
-        cur_point += map(str, list(kalman_dict["ry"][point]))
-        cur_point += map(str, list(kalman_dict["rz"][point]))
-
-        record.append(cur_point)
-
+    record = rocket.to_csv()
     output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     with open(output_file, 'w') as f:
         f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
