@@ -36,7 +36,6 @@ from plotly.subplots import make_subplots
 def main():
     arr = pd.read_csv("Sensor Analysis\sensor_analysis.csv")
     arr_df = arr.values #changes to an array
-    # arr_df = np.transpose(arr_df)
     dict_sensor = {
         "t":arr_df[:,0],
         "alt": arr_df[:,9],
@@ -62,7 +61,8 @@ def main():
         "bno_roll": arr_df[:,30],
         "bno_yaw": arr_df[:,31],
     }
-    
+    t1 = input(f"What time do you want to start({arr_df[0,0]} to {arr_df[-1,0]})?: ")
+    t2 = input(f"What time do you want to stop({arr_df[0,0]} to {arr_df[-1,0]})?: ")
     ## create a for loop to set t1 and t2 for whole value of times throughout launch
     ## find std dev for each t1 to t2 set
     ## add all std dev to an array
@@ -72,22 +72,21 @@ def main():
     count = 0
     for key in dict_sensor:
         count = count + 1
-        std_plot, time_plot = stddev_plot(arr_df[:,0],dict_sensor[key])
+        std_plot, time_plot, data_plot = stddev_plot(arr_df[:,0],dict_sensor[key],t1,t2)
         # fig = go.Figure()
         ## Plotting of each dictionary entry
-        fig.add_trace(go.Scatter(x=arr_df[:,0],y=dict_sensor[key], name=''),row=count,col=1)
+        fig.add_trace(go.Scatter(x=time_plot,y=data_plot, name='raw data: ' + key),row=count,col=1)
         
         ## Plotting Standard deviation
-        fig.add_trace(go.Scatter(x=time_plot,y=std_plot,name = 'std_dev'),row=count,col=1)
+        fig.add_trace(go.Scatter(x=time_plot,y=std_plot,name = 'std_dev: ' + key),row=count,col=1)
         # changing to float because dictionary values are in object datatype
-
-        m,b = np.polyfit((dict_sensor["t"]).astype(float), (dict_sensor[key]).astype(float), 1)
+        m,b = np.polyfit((time_plot).astype(float), (data_plot[0:len(time_plot)]).astype(float), 1)
         ## Line of best fit
-        polyfit1 = [m * x + b for x in dict_sensor["t"]]
-        fig.add_trace(go.Scatter(x=dict_sensor["t"], y=polyfit1, mode = 'lines', name = key),row=count,col=1)
+        polyfit1 = [m * x + b for x in time_plot]
+        fig.add_trace(go.Scatter(x=time_plot, y=polyfit1, mode = 'lines', name = 'best fit: ' + key),row=count,col=1)
         #red line in the center 
         # Finding r^2
-        corr_matrix = np.corrcoef(dict_sensor[key].astype(float), polyfit1)
+        corr_matrix = np.corrcoef(data_plot[0:len(time_plot)].astype(float), polyfit1)
         corr = corr_matrix[0,1]
         R_sq = corr**2
 
@@ -98,11 +97,15 @@ def main():
         ### Standard Deviation Function- for a certain time range 
         
         
-        std_sample = statistics.stdev(dict_sensor[key])
+        std_sample = statistics.stdev(data_plot)
+        if (max(data_plot)/2 > 1):
+            y_val = max(data_plot)/2
+        else:
+            y_val = 2
         fig.add_annotation(
             text=f'<b> σ = {std_sample:.5f}</b>',
-            x = 4100000,
-            y = 4,
+            x = (time_plot[0]+time_plot[-1])/2,
+            y = y_val,
             showarrow=False,
             font=dict(size=16,color="black"),
             row=count,
@@ -110,8 +113,8 @@ def main():
         )
         fig.add_annotation(
              text=f'<b>R² = {R_sq:.5f}</b>',
-             x=3900000,  # Adjust the x and y coordinates as needed
-             y=4,
+             x=(time_plot[0]+time_plot[-1])/2,  # Adjust the x and y coordinates as needed
+             y=0,
             showarrow=False,
             font=dict(size=16,color="black"),
             row=count,
@@ -137,21 +140,30 @@ def stddev(t1, t2,time_a2,sensorkey2):
     keyarray = sensorkey2
     slicedkey = keyarray[t1:t2]
     return (statistics.stdev(slicedkey))
-def stddev_plot(time_a,sensorkey):
-    timearray = time_a
+def stddev_plot(time_a,sensorkey,t_1,t_2):
+    index1 = 0
+    index2 = 0
+    for j in range(0,len(time_a)):
+        if (int(time_a[j]) - int(t_1) <= 100):
+            index1 = j
+        if (int(time_a[j]) - int(t_2) <= 100):
+            index2 = j
+    timearray = time_a[index1:index2]
+    keyarray = sensorkey[index1:index2]
     # could probably be optimized with numpy arrays if runtime becomes a problem
-    std_plot = []
-    time_plot = []
-    for i in range(0,len(timearray)-10):
+    std_plot = np.zeros(len(timearray)-50)
+    time_plot = np.zeros(len(timearray)-50)
+    for i in range(0,len(timearray)-50):
         # choose t1 and t2 to move across the data set and find a std dev for each interval that will then be
         # plotted as a continuous function
         t1 = i
-        t2 = i+10 
-        std_plot.append(stddev(t1,t2,time_a,sensorkey))
+        t2 = i+50 
+        std_plot[i]=(stddev(t1,t2,time_a,sensorkey))
         # time associated with std dev calculation is in between the two times used for the individual std dev calculation
-        time_plot.append((timearray[t1]+timearray[t2])/2)
+        time_plot[i]=((timearray[t1]+timearray[t2])/2)
+        
     ## returns array of standard deviation measurements and the times corresponding to them
-    return (std_plot,time_plot)
+    return (std_plot,time_plot,keyarray)
 
 
 if (__name__ == "__main__"):
