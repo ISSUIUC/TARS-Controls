@@ -45,9 +45,12 @@ import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 import dynamics.controller as contr
 import util.vectors as vct
+<<<<<<< HEAD
 
 # Load desired config file
 config = dataloader.config
+=======
+>>>>>>> 2d27bfe23abb408a3c8fa375d1890638eb19d720
 
 atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 rocket = rocket_model.Rocket(config, atm=atm)
@@ -134,6 +137,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sim_dict["rocket_total_mass"].append(rocket_total_mass)
     sim_dict["motor_mass"].append(motor_mass)
 
+<<<<<<< HEAD
     # Append to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
     sensor_dict["imu_accel_x"].append(accel[0])
@@ -146,6 +150,10 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sensor_dict["imu_gyro_y"].append(gyro[1])
     sensor_dict["imu_gyro_z"].append(gyro[2])
     sensor_dict["apogee_estimate"].append(apogee_estimation)
+=======
+def add_event(event):
+    sim_dict["event"].append(event)
+>>>>>>> 2d27bfe23abb408a3c8fa375d1890638eb19d720
 
     kalman_dict["x"].append(kalman_filter[0:3])
     kalman_dict["y"].append(kalman_filter[3:6])
@@ -256,7 +264,12 @@ def simulator(x0) -> None:
         current_covariance = kalman_filter.get_covariance()
         current_state_r = r_kalman_filter.get_state()
 
+<<<<<<< HEAD
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
+=======
+
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
+>>>>>>> 2d27bfe23abb408a3c8fa375d1890638eb19d720
         add_event(event)
 
     parachute = {'deployed': False, 'reefing_deployed': False}
@@ -276,6 +289,7 @@ def simulator(x0) -> None:
             event = 1  # event value for launch
             start = False
         
+<<<<<<< HEAD
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
@@ -335,9 +349,26 @@ def simulator(x0) -> None:
             parachute['deploy_time'] = time_stamp
             print("Drogue deployed at", time_stamp, "s; altitiude:", x[0,0], "m")
 
+=======
+>>>>>>> 2d27bfe23abb408a3c8fa375d1890638eb19d720
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
+       
+        # state update (burnout)
+        if (la.norm(motor.get_thrust(time_stamp)) == 0):
+            #print('Burnout at {}'.format(time_stamp))
+            burnout = True
+            event = 2 # event value for burnout
+    
+        #state update (apogee)
+        if (x[1,0] <= 0 and burnout):
+            apogee = True
+            event = 3 # event value for apogee
+        else:
+            prev_alt = x[0,0] # updating prev_alt to be the current altitude
+
+
         gyro = sensors.get_gyro_data(x)
         bno_ang_pos = sensors.get_bno_orientation(x)
 
@@ -355,8 +386,20 @@ def simulator(x0) -> None:
 
         flap_ext = 0 #controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
+<<<<<<< HEAD
         x, alpha = sim.RK4(x, dt_rec, time_stamp, parachute, flap_ext)
         time_stamp += dt_rec
+=======
+        flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+
+        rocket.set_motor_mass(time_stamp)
+
+        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
+        time_stamp += dt
+        
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
+        add_event(event)
+>>>>>>> 2d27bfe23abb408a3c8fa375d1890638eb19d720
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, 0, rocket.rocket_total_mass, rocket.motor_mass, flap_ext, dt_rec)
         add_event(event)
@@ -377,7 +420,11 @@ if __name__ == '__main__':
     for point in range(len(sim_dict["event"])): #known issue = event only goes up to around 110s and stops.
         cur_point = []
         cur_point.append(str(sim_dict["time"][point]))
+<<<<<<< HEAD
         cur_point.append(str(sim_dict["event"][point]))
+=======
+        cur_point.append(str(str(sim_dict["event"][point])))
+>>>>>>> 2d27bfe23abb408a3c8fa375d1890638eb19d720
         cur_point += list(map(str, sim_dict["pos"][point]))
         cur_point += list(map(str, sim_dict["vel"][point]))
         cur_point += list(map(str, sim_dict["accel"][point]))
