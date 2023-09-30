@@ -5,9 +5,9 @@ import statistics
 from plotly.subplots import make_subplots
 ## Notes:
 # Hover over line of best fit to see what is being plotted without having to read the legend on the side
+# Click in the legend on the side to find a specific plot
 # Comment out the dictionary components you dont need if you want to see a particular graph closer up
 # If you do this, you may need to resize the plots at the bottom of main()
-# You may need to trim the flight data if you really want to use general r^2, line of best fit, or general std dev value
 
 
 # stddev(t1, t2,time_a2,sensorkey2)
@@ -61,17 +61,18 @@ def main():
         "bno_roll": arr_df[:,30],
         "bno_yaw": arr_df[:,31],
     }
+    # preliminary time values to start the while loops
     t1 = -999
     t2 = -999
-    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (arr_df[0,0] > t1) or (arr_df[-1,0] < t2)):
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (arr_df[0,0] > t1) or (arr_df[-1,0] < t2)): #checking if time values are out of bounds or not of int type
         try:
             t1 = int(input(f"What time do you want to start({arr_df[0,0]} to {arr_df[-1,0]})?: "))
-        except Exception:
+        except Exception: # having the while loop run again if an integer is not entered
             pass
-    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999 or (arr_df[0,0] > t1) or (arr_df[-1,0] < t2)):
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999 or (arr_df[0,0] > t1) or (arr_df[-1,0] < t2)): #checking if time values are out of bounds or not of int type
         try:
             t2 = int(input(f"What time do you want to stop({arr_df[0,0]} to {arr_df[-1,0]})?: "))
-        except Exception:
+        except Exception: # having the while loop run again if an integer is not entered
             pass
     ## create a for loop to set t1 and t2 for whole value of times throughout launch
     ## find std dev for each t1 to t2 set
@@ -108,6 +109,7 @@ def main():
         
         
         std_sample = statistics.stdev(data_plot)
+        ## adding r^2 and std deviation onto the graph
         if (max(data_plot)/2 > 1):
             y_val = max(data_plot)/2
         else:
@@ -160,7 +162,6 @@ def stddev_plot(time_a,sensorkey,t_1,t_2):
             index2 = j
     timearray = time_a[index1:index2]
     keyarray = sensorkey[index1:index2]
-    # could probably be optimized with numpy arrays if runtime becomes a problem
     std_plot = np.zeros(len(timearray)-50)
     time_plot = np.zeros(len(timearray)-50)
     for i in range(0,len(timearray)-50):
