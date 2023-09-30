@@ -61,8 +61,18 @@ def main():
         "bno_roll": arr_df[:,30],
         "bno_yaw": arr_df[:,31],
     }
-    t1 = input(f"What time do you want to start({arr_df[0,0]} to {arr_df[-1,0]})?: ")
-    t2 = input(f"What time do you want to stop({arr_df[0,0]} to {arr_df[-1,0]})?: ")
+    t1 = -999
+    t2 = -999
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (arr_df[0,0] > t1) or (arr_df[-1,0] < t2)):
+        try:
+            t1 = int(input(f"What time do you want to start({arr_df[0,0]} to {arr_df[-1,0]})?: "))
+        except Exception:
+            pass
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999 or (arr_df[0,0] > t1) or (arr_df[-1,0] < t2)):
+        try:
+            t2 = int(input(f"What time do you want to stop({arr_df[0,0]} to {arr_df[-1,0]})?: "))
+        except Exception:
+            pass
     ## create a for loop to set t1 and t2 for whole value of times throughout launch
     ## find std dev for each t1 to t2 set
     ## add all std dev to an array
