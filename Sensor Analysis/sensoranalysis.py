@@ -165,16 +165,16 @@ def main():
     count1 = 0
     for j in dict_sensor:
         # appending only titles of things to be graphed (no time or has data columns)
-        if j!="has_lowG_data" and j!="lowG_data.timeStamp_lowG" and j!="has_highG_data" and j!="has_gps_data" and j!="has_barometer_data"and j!="has_kalman_data"and j!="has_rocketState_data"and j!="has_flap_data"and j!="has_voltage_data"and j!="has_orientation_data"and j!="has_magnetometer_data"and j!="highG_data.timeStamp_highG"and j!="gps_data.timeStamp_GPS"and j!="barometer_data.timeStamp_barometer"and j!="kalman_data.timeStamp_state"and j!="rocketState_data.timestamp"and j!="flap_data.timeStamp_flaps"and j!="voltage_data.timestamp"and j!="has_gas_data"and j!="orientation_data.timeStamp_orientation"and j!="magnetometer_data.timestamp"and j!="gas_data.timestamp":
+        if j !="has_lowG_data" and j !="lowG_data.timeStamp_lowG" and j !="has_highG_data" and j!="has_gps_data" and j !="has_barometer_data"and j !="has_kalman_data"and j !="has_rocketState_data"and j!="has_flap_data"and j!="has_voltage_data"and j!="has_orientation_data"and j!="has_magnetometer_data"and j!="highG_data.timeStamp_highG"and j!="gps_data.timeStamp_GPS"and j!="barometer_data.timeStamp_barometer"and j!="kalman_data.timeStamp_state"and j!="rocketState_data.timestamp"and j!="flap_data.timeStamp_flaps"and j!="voltage_data.timestamp"and j!="has_gas_data"and j!="orientation_data.timeStamp_orientation"and j!="magnetometer_data.timestamp"and j!="gas_data.timestamp":
             titles.append(j)
-            count1+=count1
+            count1 += count1
     fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles)
     count = 0
     count2 = 0
     for key in dict_sensor:
         count2 = count2 + 1
         # plotting only columns that contain important data
-        if key!="has_lowG_data" and key!="lowG_data.timeStamp_lowG" and key!="has_highG_data" and key!="has_gps_data" and key!="has_barometer_data"and key!="has_kalman_data"and key!="has_rocketState_data"and key!="has_flap_data"and key!="has_voltage_data"and key!="has_orientation_data"and key!="has_magnetometer_data"and key!="highG_data.timeStamp_highG"and key!="gps_data.timeStamp_GPS"and key!="barometer_data.timeStamp_barometer"and key!="kalman_data.timeStamp_state"and key!="rocketState_data.timestamp"and key!="flap_data.timeStamp_flaps"and key!="voltage_data.timestamp"and key!="has_gas_data"and key!="orientation_data.timeStamp_orientation"and key!="magnetometer_data.timestamp"and key!="gas_data.timestamp":
+        if key !="has_lowG_data" and key !="lowG_data.timeStamp_lowG" and key !="has_highG_data" and key!="has_gps_data" and key!="has_barometer_data"and key!="has_kalman_data"and key!="has_rocketState_data"and key!="has_flap_data"and key!="has_voltage_data"and key!="has_orientation_data"and key!="has_magnetometer_data"and key!="highG_data.timeStamp_highG"and key!="gps_data.timeStamp_GPS"and key!="barometer_data.timeStamp_barometer"and key!="kalman_data.timeStamp_state"and key!="rocketState_data.timestamp"and key!="flap_data.timeStamp_flaps"and key!="voltage_data.timestamp"and key!="has_gas_data"and key!="orientation_data.timeStamp_orientation"and key!="magnetometer_data.timestamp"and key!="gas_data.timestamp":
             count = count + 1
             if (count2 <= 7):
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,7],dict_sensor[key],t1,t2)
