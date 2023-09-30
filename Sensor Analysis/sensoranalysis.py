@@ -79,7 +79,12 @@ def main():
     ## add all std dev to an array
     ## plot array on graph
     # (2) Plot the data via a LRQ / Plot statistcal model
-    fig = make_subplots(rows = len(dict_sensor), cols = 1)
+    titles = []
+    count1 = 0
+    for j in dict_sensor:
+        titles.append(j)
+        count1+=count1
+    fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles)
     count = 0
     for key in dict_sensor:
         count = count + 1
