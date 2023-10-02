@@ -50,13 +50,13 @@ config = dataloader.config
 # Runs simulation for the specific component of the rocket
 class Simulation:
     # dt can be dynamic in the future, so we need to 
-    def __init__(self, rocket, motor, dt, x0, timestamp=0):
+    def __init__(self, rocket, motor, dt, x0, time_stamp=0):
         self.rocket = rocket
         self.motor = motor
         self.dt = dt
         self.x0 = x0.copy()
         self.baro = 0
-        self.timestamp = timestamp
+        self.time_stamp = time_stamp
         self.sensor_config = rocket.stage_config['sensors']
         self.init_kalman_filters()
 
@@ -84,12 +84,53 @@ class Simulation:
         yaw = np.arctan2(-ax,-ay) + np.pi/2
         self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
 
-    def pad_waiting(self):
-        # The different loops for the code
-        pass
+    def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
+        self.kalman_filter.priori()
+        self.kalman_filter.update(bno_ang_pos, baro_alt,
+                            accel[0], accel[1], accel[2])
+        
+        self.r_kalman_filter.priori()
+        self.r_kalman_filter.update(*gyro, *accel)
+
+        self.kalman_filter.reset_lateral_pos()
+    
+    def time_step(self):
+        self.time_stamp += self.dt
 
     def idle_stage(self):
-        pass
+        while self.time_stamp < rocket.delay:
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman()
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
+            rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
+            self.time_step()
+
+    def in_flight(self):
+        print("Ignition")
+        t_start = time.time()
+        self.motor.ignite(self.time_stamp)
+        has_burnedout = False
+        while x[1, 0] >= 0 or start:
+            if start:
+                start = False
+            # Get sensor data
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman()
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
+            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+
+            rocket.set_motor_mass(self.time_stamp)
+            if rocket.is_motor_burnout(self.time_stamp) and not has_burnout:
+                print("Burnout at " + str(self.time_stamp) + " seconds")
+                has_burnedout = True
+
+            x, alpha = sim.RK4(x, dt, self.time_stamp, 0)
+
+            rocket.add_to_dict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
+            self.time_step()     
+        print("Rocket hit apogee at " + str(self.time_stamp) + " seconds")
 
     # Function to retrive all sensor data
     def get_sensor_data(self):
@@ -104,8 +145,6 @@ class Simulation:
         current_state_r = self.r_kalman_filter.get_state()
         return (current_state, current_cov, current_state_r)
 
-def sim(x0, rocket, motor, dt):
-    si = Simulation()
 def simulator(x0, rocket, motor, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
 
@@ -196,7 +235,7 @@ def simulator(x0, rocket, motor, dt) -> None:
         bno_ang_pos = sensors.get_bno_orientation(x, sensor_config)
 
         # Kalman Filter stuff goes here
-        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.priori()
         kalman_filter.update(bno_ang_pos, baro_alt,
                              accel[0], accel[1], accel[2])
 

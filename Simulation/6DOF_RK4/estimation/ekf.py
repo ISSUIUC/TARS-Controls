@@ -52,7 +52,7 @@ class KalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-    def priori(self, u=0):
+    def priori(self):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
             But basically predicts step

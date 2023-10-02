@@ -62,7 +62,7 @@ class KalmanFilter_R:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]])
 
-    def priori(self, u=0):
+    def priori(self):
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 

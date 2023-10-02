@@ -105,7 +105,10 @@ class Rocket:
         """
         self.motor_mass = self.motor.get_mass(timestamp)
         self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
-        
+    
+    def is_motor_burnout(self, timestamp):
+        return self.motor.burnout(timestamp)
+
     def I(self, total_mass): 
         """Returns the inertia matrix of the rocket
         
