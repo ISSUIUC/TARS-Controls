@@ -47,15 +47,66 @@ import environment.atmosphere as atmosphere
 # Load desired config file
 config = dataloader.config
 
-atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
+# Runs simulation for the specific component of the rocket
+class Simulation:
+    # dt can be dynamic in the future, so we need to 
+    def __init__(self, rocket, motor, dt, x0, timestamp=0):
+        self.rocket = rocket
+        self.motor = motor
+        self.dt = dt
+        self.x0 = x0.copy()
+        self.baro = 0
+        self.timestamp = timestamp
+        self.sensor_config = rocket.stage_config['sensors']
+        self.init_kalman_filters()
 
-# rocket = rocket_model.Rocket(config, atm=atm)
-rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
+    def init_kalman_filters(self):
+        # TODO: Init with previous rocket data
+        self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, rocket.stage_config)
+        # TODO: init this data with the previous rocket becuase of staging
+        x_data = []
+        y_data = []
+        z_data = []
+        for i in range(10):
+            reading = sensors.get_accelerometer_data(self.x0, self.sensor_config)
+            x_data.append(reading[0])
+            y_data.append(reading[1])
+            z_data.append(reading[2])
 
-motor = rocket.motor
-sim = sim_class.Simulator(atm=atm, rocket=rocket)
+        accel_tracker = np.array([])
 
-def simulator(x0, dt) -> None:
+        ax = sum(x_data)/len(x_data)
+        ay = sum(y_data)/len(y_data)
+        az = sum(z_data)/len(z_data)
+
+        pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
+        yaw = np.arctan2(-ax,-ay) + np.pi/2
+        self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
+
+    def pad_waiting(self):
+        # The different loops for the code
+        pass
+
+    def idle_stage(self):
+        pass
+
+    # Function to retrive all sensor data
+    def get_sensor_data(self):
+        return (sensors.get_barometer_data(self.x, self.sensor_config),
+                sensors.get_accelerometer_data(self.x, self.sensor_config),
+                sensors.get_gyro_data(self.x, self.sensor_config), 
+                sensors.get_bno_orientation(self.x, self.sensor_config))
+
+    def get_kalman_state(self):
+        current_state = self.kalman_filter.get_state()
+        current_cov = self.kalman_filter.get_covariance()
+        current_state_r = self.r_kalman_filter.get_state()
+        return (current_state, current_cov, current_state_r)
+
+def sim(x0, rocket, motor, dt):
+    si = Simulation()
+def simulator(x0, rocket, motor, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
 
     Args:
@@ -76,14 +127,6 @@ def simulator(x0, dt) -> None:
     bno_ang_pos = 0
 
     sensor_config = rocket.stage_config['sensors']
-    
-    len_buffer = 30
-    for i in range(len_buffer):
-        baro+=sensors.get_barometer_data(x, sensor_config)
-        bno_ang_pos+=sensors.get_bno_orientation(x, sensor_config)
-
-    baro_avg = baro/len_buffer
-    bno_ang_pos_avg = bno_ang_pos/len_buffer
 
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -96,7 +139,7 @@ def simulator(x0, dt) -> None:
         x_data.append(reading[0])
         y_data.append(reading[1])
         z_data.append(reading[2])
-    
+
     accel_tracker = np.array([])
     
     ax = sum(x_data)/len(x_data)
@@ -182,7 +225,16 @@ if __name__ == '__main__':
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0]
     dt = 0.01
-    simulator(x0, dt)
+
+    atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
+
+    # rocket = rocket_model.Rocket(config, atm=atm)
+    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
+
+    motor = rocket.motor
+    sim = sim_class.Simulator(atm=atm, rocket=rocket)
+
+    simulator(x0, rocket, motor, dt)
 
     print("Writing to file...")
 

@@ -54,7 +54,8 @@ class KalmanFilter:
 
     def priori(self, u=0):
         """Sets priori state and covariance
-        
+            Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
+            But basically predicts step
         Args:
             u (float): control input
         """

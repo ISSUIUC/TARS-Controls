@@ -4,6 +4,21 @@ import numpy as np
 import util.vectors as vct
 
 class KalmanFilter_R:
+    """Kalman Filter for 3D rotational estimation
+
+    Args:
+        dt (float): time step
+        pos_x (float): initial x rotational position
+        vel_x (float): initial x rotational velocity
+        accel_x (float): initial x rotational acceleration
+        pos_y (float): initial y rotational position
+        vel_y (float): initial y rotational velocity
+        accel_y (float): initial y rotational acceleration
+        pos_z (float): initial z rotational position
+        vel_z (float): initial z rotational velocity
+        accel_z (float): initial z rotational acceleration
+    """
+
     def __init__(self, dt, pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z):
         self.dt = dt
         self.x_k = np.zeros((9,1))
