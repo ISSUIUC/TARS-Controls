@@ -121,23 +121,24 @@ class Motor():
             time: Time stamp of the current state
         """ 
         # shift time_stamp to reflect the time since ignition
-        time_stamp = time_stamp - self.start_time
-        if time_stamp < self.thrust_data["Time (s)"].iloc[0]:
+        shifted_time = time_stamp - self.start_time
+        if shifted_time < self.thrust_data["Time (s)"].iloc[0]:
             return self.total_mass
-        elif self.is_burnout(time_stamp):
+        elif self.burnout(time_stamp):
             self.current_mass = 0
+
         else:
             self.current_mass = self.lerp_(float(self.thrust_data["Time (s)"].iloc[0]),
                                            float(self.thrust_data["Time (s)"].iloc[-1]),
                                            self.total_mass,
                                            0,
-                                           time_stamp)
+                                           shifted_time)
         self.rocket_total_mass = self.rocket_dry_mass + self.current_mass
         self.cm = (self.cm_rocket*self.rocket_dry_mass + self.cm_motor*self.current_mass) / (self.rocket_dry_mass + self.current_mass)
         return self.current_mass
 
     def burnout(self, time_stamp):
-        return time_stamp >= self.thrust_data["Time (s)"].iloc[-1]
+        return (time_stamp - self.start_time) >= self.thrust_data["Time (s)"].iloc[-1]
 
     def set_coast_time(self, coast_time: np.float64) -> None:
         """Sets the coast time of the motor
