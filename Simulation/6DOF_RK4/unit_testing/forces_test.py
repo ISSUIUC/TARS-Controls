@@ -13,59 +13,114 @@ TODO:
     -also maybe why??
 - verify current code calcs
 '''
-
-
-import dynamics.motor as motor
-import environment.atmosphere as atmosphere
-import properties.properties as prop
 import numpy as np
+import sys
+import os
+import math
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import dynamics.forces as forces 
+import dynamics.rocket as rocket_model
+import environment.atmosphere as atmosphere
+import dynamics.motor as mot
 import util.vectors as vct
 import pandas as pd
-import os
+import properties.properties as prop
 
-class ForceTest():
+# Defining neccessary variables  
+cm = np.array([3.34-2.31, 0., 0.])
+cp = np.array([3.34-2.71, 0., 0.])
+rocket_dry_mass = 14.691
+r_r = 0.0508
+l = 3.34
+A = math.pi*r_r**2
+A_s = 2*r_r*l
+max_ext_length = .0178
+rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
+rasaero = pd.read_csv(rasaero_file_location)
 
-    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, atm): # Do we need this?
-        self.max_ext_length = max_ext_length
-        self.cm = cm
-        self.cp = cp
-        self.A = A
-        self.A_s = A_s
-        self.rocket_dry_mass = rocket_dry_mass
-        self.motor = motor
-        self.atm = atm
+# Create instances of neccessary objects to run get_force 
+rocket = rocket_model.Rocket()
+atm = atmosphere.Atmosphere() 
+motor = rocket.motor
+forces = forces.Forces(max_ext_length,cm,cp,A,A_s,rocket_dry_mass,motor,atm)
+# Local "get_force copy" --> Designed to execute functions called within get_force
+def get_force(x_state, flap_ext, time_stamp, density_noise=False) -> np.ndarray:
+    alt = x_state.copy()[0,0]
+    density = atm.get_density(alt, noise=density_noise, position=x_state[0])
+    thrust = motor.get_thrust(time_stamp)
+    wind_vector = atm.get_wind_vector(time_stamp)
+    alpha = forces.get_alpha(x_state, wind_vector)
+    test_get_alpha(alpha)
+    drag = forces.aerodynamic_force(x_state, density, wind_vector, alpha, rasaero, thrust.dot(thrust) > 0, flap_ext) 
+    test_aerodynamic_force(drag)
+    grav =  forces.gravitational_force(alt, time_stamp)
+    test_gravitational_force(grav)
+    force = vct.body_to_world(*x_state[2],thrust + drag) + grav
+    moment = vct.body_to_world(*x_state[2], np.cross(-cm, thrust) + forces.aerodynamic_moment(drag))
+    return np.array([force, moment]), alpha
 
-    def test_forces(self, x_state, flap_ext, time_stamp, density_noise=False, test) -> np.ndarray:
-        '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
+# "get_force" from dynamics.forces
+def test_get_force():
+    #Initiallized Values (Random Values) (Working values of get_force as of 09/15/23)
+    arr = np.array([[2,2,2],[2,2,2], [2,2,2]])
+    answer = forces.get_force(arr, 0.015, 100.1)
+    temp = get_force(arr, 0.015, 100.1)
+    test_answer = np.array([[-152.8198926,-2.29827,-0.80334082],[0.74368931,-3.41707564,1.56364289]])
 
-        Args:
-            x_state (np.array): State Vector [4x3]
-            flap_ext (float): current flap extention config
-            time_stamp (float): current time stamp of rocket in simulation
-            test ALWAYS is false
-        
-        Returns:
-            Boolean for if test passes or not
-        '''
-        if(test):  
-            # print("State: ", x_state)
-            alt = x_state.copy()[0,0]
-            density = self.atm.get_density(alt, noise=density_noise, position=x_state[0])
-            thrust = self.motor.get_thrust(time_stamp)
-            # wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
-            wind_vector = self.atm.get_wind_vector(time_stamp)
-            alpha = self.get_alpha(x_state, wind_vector)
-            drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
-            grav = self.gravitational_force(alt, time_stamp)
-            force = vct.body_to_world(*x_state[2],thrust + drag) + grav
-            moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
-            # print(self.aerodynamic_moment(drag))
-            return np.array([force, moment]), alpha
-        if not(test):
-            forcesTest = test_forces(self, x_state, flap_ext, time_stamp, density_noise=False, True) #put in our test values here
-            if(forcesTest == getForce(self, x_state, flap_ext, time_stamp, density_noise=False)):
-                return True
-            else:
-                return False
+    #Testing output of get_force function
+    # True --> the same 7-decimal points
+    # False --> otherwise 
+    test_array_component = True
+    for i in range(0,np.size(answer[0],0)):
+        for k in range(0, np.size(answer[0], 1)):
+            boolean = (round(test_answer[i][k], 7) == round(answer[0][i][k], 7))
+            if (boolean == False):
+                test_array_component = False
 
-        
+    test_float_component = answer[1] == 0.9553166181245089
+    response = (test_array_component and test_float_component)
+    if response:
+        return "PASSED --> [get_force]"
+    else:
+        return "FAILED --> [get_force]"
+
+# "aerodynamic_force" from dynamics.forces
+def test_aerodynamic_force(var):
+    test_answer = np.array([0.06389041, -2.12639454, -8.94960151])
+    passed = True 
+    for i in range(0,3):
+        if round(var[i], 7) != round(test_answer[i], 7):
+            passed = False; 
+    if passed:
+        print("PASSED --> [aerodynamic_force]")
+    else:
+        print("FAILED --> [aerodynamic_force]")   
+
+# "get_alpha" from dynamics.forces 
+def test_get_alpha(var):
+    answer = 0.9553166181245089
+    if round(var, 7) == round(answer, 7):
+        print("PASSED --> [get_alpha]")
+    else:
+        print("FAILED --> [get_alpha]")
+
+# "gravitational_force" from dynamics.forces
+def test_gravitational_force(var):
+    answer = np.array([-143.94895119,0,0])
+    response = True
+    for i in range (0,3):
+        if round(var[i], 7) != round(answer[i], 7):
+            response = False
+    if response:
+        print("PASSED --> [gravitational_force]")
+    else: 
+        print("FAILED --> [gravitational_force]")
+
+
+
+# Testing Input
+
+print("--------------- \n Test Results | \n---------------")
+print(test_get_force())
+
