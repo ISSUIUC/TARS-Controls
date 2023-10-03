@@ -19,20 +19,26 @@ class Apogee:
         b (float): upper bound of domain (inclusive)
         n (int): number of points to use in approximation
         atm (Atmosphere): atmosphere object
+        simulator_config: Simulator configuration file
     '''
 
     atm = None
-    rasaero_file_location = os.path.join(os.path.dirname(__file__), prop.rasaero_lookup_file)
-    rasaero = pd.read_csv(rasaero_file_location)
-    rocket = rocket_model.Rocket()
+    rasaero_file_location = ""
+    rasaero = None
+    rocket = None
+    simulator_config = None
     
-    def __init__(self, state, dt, a, b, n, atm):
+    def __init__(self, state, dt, a, b, n, atm, simulator_config):
+        self.rasaero_file_location = os.path.join(os.path.dirname(__file__), simulator_config["rocket"]["rasaero_lookup_file"])
+        self.rasaero = pd.read_csv(self.rasaero_file_location)
         self.state = state[:3][0].copy()
         self.dt = dt
         self.flap_ext = 0.
         self.c, self.x_interpolate = self.calc_spline_coefficients(a, b, n)
         self.n = n
         self.atm = atm
+        self.simulator_config = simulator_config
+        self.rocket = rocket_model.Rocket(self.simulator_config)
     
     def set_params(self, state):
         '''Reset the state vector to the current state of the rocket

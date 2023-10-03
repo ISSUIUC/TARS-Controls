@@ -19,7 +19,7 @@ class Motor():
         lookup_file: CSV file containing the thrust curve of the motor
     """
     def __init__(self, rocket_total_mass, cm, cm_rocket, cm_motor, rocket_dry_mass, 
-                 impulse=prop.impulse, mass=prop.motor_mass, delay=prop.delay, lookup_file: str=prop.motor_lookup_file):
+                 impulse, mass, delay, lookup_file: str):
         
         lookup = os.path.join(os.path.dirname(__file__), lookup_file)
         self.thrust_data = pd.read_csv(lookup)
@@ -29,7 +29,7 @@ class Motor():
         self.current_mass = mass 
         self.coast_time = delay
         self.alignment = np.array([0, 0])
-        self.start_time = prop.delay
+        self.start_time = delay
         self.cur_line = 0
         self.rocket_total_mass = rocket_total_mass
         self.cm = cm

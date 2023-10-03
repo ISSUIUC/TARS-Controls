@@ -36,6 +36,7 @@ sys.path.insert(0, os.path.abspath(
 import estimation.ekf as ekf
 import estimation.r_ekf as r_ekf
 import properties.properties as prop
+import properties.data_loader as dataloader
 import simulator as sim_class
 import dynamics.sensors as sensors
 import time
@@ -45,8 +46,11 @@ import environment.atmosphere as atmosphere
 import dynamics.controller as contr
 import util.vectors as vct
 
+# Load desired config file
+config = dataloader.config
+
 atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
-rocket = rocket_model.Rocket(atm=atm)
+rocket = rocket_model.Rocket(config, atm=atm)
 motor = rocket.motor
 sim = sim_class.Simulator(atm=atm, rocket=rocket)
 sim_dict = {
@@ -91,8 +95,9 @@ sensor_dict = {
     "apogee_estimate": []
 }
 
-def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext):
-    # Append to sensor_dict
+
+def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext, dt):
+        # Append to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
     sensor_dict["imu_accel_x"].append(accel[0])
     sensor_dict["imu_accel_y"].append(accel[1])
@@ -129,10 +134,48 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sim_dict["rocket_total_mass"].append(rocket_total_mass)
     sim_dict["motor_mass"].append(motor_mass)
 
+    # Append to sensor_dict
+    sensor_dict["baro_alt"].append(baro_alt)
+    sensor_dict["imu_accel_x"].append(accel[0])
+    sensor_dict["imu_accel_y"].append(accel[1])
+    sensor_dict["imu_accel_z"].append(accel[2])
+    sensor_dict["imu_ang_pos_x"].append(bno_ang_pos[0])
+    sensor_dict["imu_ang_pos_y"].append(bno_ang_pos[1])
+    sensor_dict["imu_ang_pos_z"].append(bno_ang_pos[2])
+    sensor_dict["imu_gyro_x"].append(gyro[0])
+    sensor_dict["imu_gyro_y"].append(gyro[1])
+    sensor_dict["imu_gyro_z"].append(gyro[2])
+    sensor_dict["apogee_estimate"].append(apogee_estimation)
 def add_event(event):
     sim_dict["event"].append(event)
 
-def simulator(x0, dt) -> None:
+    kalman_dict["x"].append(kalman_filter[0:3])
+    kalman_dict["y"].append(kalman_filter[3:6])
+    kalman_dict["z"].append(kalman_filter[6:9])
+    kalman_dict["cov_x"].append(kf_cov[0:3])
+    kalman_dict["cov_y"].append(kf_cov[3:6])
+    kalman_dict["cov_z"].append(kf_cov[6:9])
+    kalman_dict["rx"].append(kalman_filter_r[0:3])
+    kalman_dict["ry"].append(kalman_filter_r[3:6])
+    kalman_dict["rz"].append(kalman_filter_r[6:9])
+
+    # Update Simulator Log
+    sim_dict["pos"].append(x[0])
+    sim_dict["vel"].append(x[1])
+    sim_dict["accel"].append(x[2])
+    sim_dict["ang_pos"].append(x[3])
+    sim_dict["ang_vel"].append(x[4])
+    sim_dict["ang_accel"].append(x[5])
+    sim_dict["time"].append(sim_dict["time"][-1] + dt if len(sim_dict["time"]) > 0 else 0)
+    sim_dict["flap_ext"].append(flap_ext)                    
+    sim_dict["alpha"].append(alpha)
+    sim_dict["rocket_total_mass"].append(rocket_total_mass)
+    sim_dict["motor_mass"].append(motor_mass)
+
+def add_event(event):
+    sim_dict["event"].append(event)
+
+def simulator(x0) -> None:
     '''Method which handles running the simulation and logging sim data to dict
 
     Args:
@@ -147,6 +190,9 @@ def simulator(x0, dt) -> None:
         dt (float): time step between each iteration in simulation
 
     '''
+
+    dt = config['simulation_timestep']
+    dt_rec = config['recovery']['timestep']
 
     x = x0.copy()
     baro = 0
@@ -186,9 +232,11 @@ def simulator(x0, dt) -> None:
     time_stamp = 0
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm)
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, config)
     Kp, Ki, Kd = 0.0002, 0, 0
-    controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
+    controller = contr.Controller(Kp, Ki, Kd, dt, config["desired_apogee"])
+
+    print("Ignition")
 
     # Idle stage
     while time_stamp < rocket.delay:
@@ -210,11 +258,10 @@ def simulator(x0, dt) -> None:
         current_covariance = kalman_filter.get_covariance()
         current_state_r = r_kalman_filter.get_state()
 
-
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
         add_event(event)
 
-    print("Ignition")
+    parachute = {'deployed': False, 'reefing_deployed': False}
 
     # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
     start = True
@@ -266,7 +313,68 @@ def simulator(x0, dt) -> None:
 
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
 
-        flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+        flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+
+        rocket.set_motor_mass(time_stamp)
+
+        x, alpha = sim.RK4(x, dt, time_stamp, parachute, flap_ext)
+        time_stamp += dt
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext, dt)
+        add_event(event)
+    
+    print("Apogee reached at", time_stamp, "s")
+    apogee_timestamp = time_stamp
+    
+    while x[0, 0] >= 0: # Recovery loop
+        # Temp parachute release delay
+        if(not parachute['reefing_deployed'] and x[0,0] < config['recovery']['reefing_deployment_altitude']):
+            parachute['reefing_deployed'] = True
+            parachute['reef_deploy_time'] = time_stamp
+            print(f"Main deployed at {time_stamp}s; altitiude:{x[0,0]}m")
+
+        if(not parachute['deployed'] and (time_stamp-apogee_timestamp) > config['recovery']['parachute_deploy_delay']):
+            parachute['deployed'] = True
+            parachute['deploy_time'] = time_stamp
+            print("Drogue deployed at", time_stamp, "s; altitiude:", x[0,0], "m")
+
+        # Get sensor data
+        baro_alt = sensors.get_barometer_data(x)
+        accel = sensors.get_accelerometer_data(x)
+       
+        # state update (burnout)
+        if (la.norm(motor.get_thrust(time_stamp)) == 0):
+            #print('Burnout at {}'.format(time_stamp))
+            burnout = True
+            event = 2 # event value for burnout
+    
+        #state update (apogee)
+        if (x[1,0] <= 0 and burnout):
+            apogee = True
+            event = 3 # event value for apogee
+        else:
+            prev_alt = x[0,0] # updating prev_alt to be the current altitude
+
+
+        gyro = sensors.get_gyro_data(x)
+        bno_ang_pos = sensors.get_bno_orientation(x)
+
+        # Kalman Filter stuff goes here
+        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
+        kalman_filter.update(bno_ang_pos, baro_alt,
+                             accel[0], accel[1], accel[2])
+
+        r_kalman_filter.priori()
+        r_kalman_filter.update(*gyro, *accel)
+
+        current_state = kalman_filter.get_state()
+        current_cov = kalman_filter.get_covariance()
+        current_state_r = r_kalman_filter.get_state()
+
+        flap_ext = 0 #controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+
+        x, alpha = sim.RK4(x, dt_rec, time_stamp, parachute, flap_ext)
+        time_stamp += dt_rec
+        ## flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
         rocket.set_motor_mass(time_stamp)
 
@@ -276,22 +384,26 @@ def simulator(x0, dt) -> None:
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
         add_event(event)
 
+        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, 0, rocket.rocket_total_mass, rocket.motor_mass, flap_ext, dt_rec)
+        add_event(event)
+    
     t_end = time.time() - t_start
-    print(f"Time: {t_end:.2f}")
+    print(f"Landed at {time_stamp:.2f}s (simulation-time)")
+    print(f"Simulation runtime (real-time): {t_end:.2f}s")
+    
 
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0]
-    dt = 0.01
-    simulator(x0, dt)
+    simulator(x0)
 
     print("Writing to file...")
 
     record = []
-    for point in range(len(sim_dict["time"])):
+    for point in range(len(sim_dict["event"])): #known issue = event only goes up to around 110s and stops.
         cur_point = []
         cur_point.append(str(sim_dict["time"][point]))
-        cur_point.append(str(str(sim_dict["event"][point])))
+        cur_point.append(str(sim_dict["event"][point]))
         cur_point += list(map(str, sim_dict["pos"][point]))
         cur_point += list(map(str, sim_dict["vel"][point]))
         cur_point += list(map(str, sim_dict["accel"][point]))
@@ -326,8 +438,9 @@ if __name__ == '__main__':
         record.append(cur_point)
     print
 
-    output_file = os.path.join(os.path.dirname(__file__), prop.output_file)
+    output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     with open(output_file, 'w') as f:
         f.write("time,event,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
+print(sim_dict["time"][-1])

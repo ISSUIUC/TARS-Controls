@@ -9,6 +9,8 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 import properties.properties as prop
+import properties.data_loader as dataloader
+config = dataloader.config
 
 # Indices of each state variable in the output array
 # kf and rkf values are arrays containing position, velocity and acceleration in each axis
@@ -223,7 +225,7 @@ def plotTrajectory3D(states:list, nominal_data:np.ndarray, monte_carlo_data:np.n
         fig.savefig(os.path.join(os.path.dirname(__file__), '../', output_folder, "_".join(states) + ".png"))
         
 if __name__ == "__main__":
-    folder_path = os.path.join(os.path.dirname(__file__), prop.monte_carlo_output_folder)
+    folder_path = os.path.join(os.path.dirname(__file__), config["meta"]["monte_carlo_output_folder"])
     nominal_data = np.load(os.path.join(folder_path, 'SimData/nominal.npy'))
     monte_carlo_data = np.load(os.path.join(folder_path, 'SimData/sim_data_0.npy'))
 
