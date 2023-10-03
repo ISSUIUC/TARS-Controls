@@ -226,7 +226,7 @@ def simulator(x0, dt) -> None:
     start = True
     t_start = time.time()
     has_more_stages = True
-    stage_separation_delay = 0.5
+    stage_separation_delay = 1
     
     '''
         Run the boost phases of the rocket until 

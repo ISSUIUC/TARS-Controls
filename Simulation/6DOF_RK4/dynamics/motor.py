@@ -148,7 +148,7 @@ class Motor():
     def get_burn_time(self) -> float:
         """Gets the burn time of the motor
         """
-        return self.thrust_data["Time (s)"].iloc[-1]
+        return float(self.thrust_data["Time (s)"].iloc[-1])
 
 
 if __name__ == '__main__':
