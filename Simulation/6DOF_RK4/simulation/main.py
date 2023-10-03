@@ -148,19 +148,6 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sensor_dict["apogee_estimate"].append(apogee_estimation)
 def add_event(event):
     sim_dict["event"].append(event)
-<<<<<<< HEAD
-
-    kalman_dict["x"].append(kalman_filter[0:3])
-    kalman_dict["y"].append(kalman_filter[3:6])
-    kalman_dict["z"].append(kalman_filter[6:9])
-    kalman_dict["cov_x"].append(kf_cov[0:3])
-    kalman_dict["cov_y"].append(kf_cov[3:6])
-    kalman_dict["cov_z"].append(kf_cov[6:9])
-    kalman_dict["rx"].append(kalman_filter_r[0:3])
-    kalman_dict["ry"].append(kalman_filter_r[3:6])
-    kalman_dict["rz"].append(kalman_filter_r[6:9])
-=======
->>>>>>> 37989e0993c0d25aaf1ec9b395b0a189ae56134d
 
     # Update Simulator Log
     sim_dict["pos"].append(x[0])
@@ -329,7 +316,7 @@ def simulator(x0) -> None:
 
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
 
-        flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+        ##flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
         rocket.set_motor_mass(time_stamp)
 
@@ -407,18 +394,6 @@ def simulator(x0) -> None:
 
         x, alpha = sim.RK4(x, dt_rec, time_stamp, parachute, flap_ext)
         time_stamp += dt_rec
-<<<<<<< HEAD
-        ## flap_ext = controller.get_flap_extension(time_stamp > prop.delay and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
-
-        rocket.set_motor_mass(time_stamp)
-
-        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
-        time_stamp += dt
-        
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
-        add_event(event)
-=======
->>>>>>> 37989e0993c0d25aaf1ec9b395b0a189ae56134d
 
         addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, 0, rocket.rocket_total_mass, rocket.motor_mass, flap_ext, dt_rec)
         add_event(event)
