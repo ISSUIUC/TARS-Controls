@@ -53,6 +53,8 @@ def get_force(x_state, flap_ext, time_stamp, density_noise=False) -> np.ndarray:
     alpha = forces.get_alpha(x_state, wind_vector)
     test_get_alpha(alpha)
     drag = forces.aerodynamic_force(x_state, density, wind_vector, alpha, rasaero, thrust.dot(thrust) > 0, flap_ext) 
+    values = forces.get_Ca_Cn_Cp(x_state, alpha, rasaero, thrust.dot(thrust) > 0, flap_ext)
+    test_get_Ca_Cn_Cp(values)
     test_aerodynamic_force(drag)
     grav =  forces.gravitational_force(alt, time_stamp)
     test_gravitational_force(grav)
@@ -116,6 +118,23 @@ def test_gravitational_force(var):
         print("PASSED --> [gravitational_force]")
     else: 
         print("FAILED --> [gravitational_force]")
+
+def test_get_Ca_Cn_Cp(var):
+    answer0 = 2.59
+    answer1 = 10.72
+    answer2 = np.array([1.06356,0,0])
+    response = True
+    if (var[0] != answer0 or var[1] != answer1):
+        response = False
+        print("Fload Component Failed")
+    if (not (np.allclose(answer2, var[2],0.00000001))):
+        response = False
+        print("Array Component Failed")
+    if (response):
+        print("PASSED --> [get_Ca_Cn_Cp]")
+    else:
+        print("FAILED --> [get_Ca_Cn_Cp]")
+
 
 
 
