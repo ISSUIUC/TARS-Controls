@@ -111,7 +111,8 @@ class Simulation:
         self.motor.ignite(self.time_stamp)
         has_burnedout = False
         start = True
-        while self.x[1, 0] >= 0 or start:
+        stage_num = -1
+        while self.x[1, 0] >= 0 or start or not has_burnedout:
             if start:
                 start = False
             # Get sensor data
@@ -130,8 +131,37 @@ class Simulation:
 
             rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
             self.time_step()
-        print(f"Reached apogee at {self.time_stamp:.2f} seconds")
+            self.time_stamp += dt
+        #needs code from AV-1035 
+        #while has_more_stages:
 
+        # dynamics for coasting right after burnout #1
+
+        self.motor.ignite(time_stamp)
+        has_burnedout = False
+        start = True
+        stage_num += 1
+        self.time_stamp += rocket.delay
+        print(f"Ignition at {self.time_stamp}")
+        while self.x[1,0] >= 0:
+            if start:
+                start = False
+            rocket = stages[stage_num]
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            rocket.set_motor_mass(self.time_stamp)
+            if not has_burnedout and rocket.is_motor_burnout(time_stamp):
+                print(f"Burnout at {self.time_stamp:2f} seconds")
+                has_burnedout = True
+            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
+            rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
+            self.time_step()
+            time_stamp += dt
+
+        print(f"Reached apogee at {self.time_stamp:.2f} seconds")
+        
     # Function to retrive all sensor data
     def get_sensor_data(self):
         return (sensors.get_barometer_data(self.x, self.sensor_config),
@@ -174,8 +204,12 @@ if __name__ == '__main__':
 
     atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 
+
     # rocket = rocket_model.Rocket(config, atm=atm)
-    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
+    stages = []
+    for stage in config['rocket']['stages'][1:]:
+        stages.append(rocket_model.Rocket(stage, atm=atm))
+        rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm, stages=stages)
 
     motor = rocket.motor
     sim = sim_class.Simulator(atm=atm, rocket=rocket)
