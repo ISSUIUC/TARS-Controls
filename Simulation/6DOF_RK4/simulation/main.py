@@ -57,13 +57,12 @@ class Simulation:
         self.x = x0.copy()
         self.baro = 0
         self.time_stamp = time_stamp
-        self.sensor_config = rocket.stage_config['sensors']
+        self.sensor_config = self.rocket.stage_config['sensors']
         self.init_kalman_filters()
 
     def init_kalman_filters(self):
         # TODO: Init with previous rocket data
         self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, rocket.stage_config)
         # TODO: init this data with the previous rocket becuase of staging
         x_data = []
         y_data = []
@@ -83,6 +82,7 @@ class Simulation:
         pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
         yaw = np.arctan2(-ax,-ay) + np.pi/2
         self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
+        self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
 
     def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
         self.kalman_filter.priori()
@@ -91,19 +91,18 @@ class Simulation:
         
         self.r_kalman_filter.priori()
         self.r_kalman_filter.update(*gyro, *accel)
-
-        self.kalman_filter.reset_lateral_pos()
     
     def time_step(self):
         self.time_stamp += self.dt
 
     def idle_stage(self):
-        while self.time_stamp < rocket.delay:
+        while self.time_stamp < self.rocket.delay:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            self.kalman_filter.reset_lateral_pos()
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
             self.time_step()
 
     def in_flight(self):
@@ -121,14 +120,14 @@ class Simulation:
 
             apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
 
-            rocket.set_motor_mass(self.time_stamp)
-            if not has_burnedout and rocket.is_motor_burnout(self.time_stamp):
+            self.rocket.set_motor_mass(self.time_stamp)
+            if not has_burnedout and self.rocket.is_motor_burnout(self.time_stamp):
                 print(f"Burnout at {self.time_stamp:2f} seconds")
                 has_burnedout = True
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 
-            rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
             self.time_step()
         print(f"Reached apogee at {self.time_stamp:.2f} seconds")
 
