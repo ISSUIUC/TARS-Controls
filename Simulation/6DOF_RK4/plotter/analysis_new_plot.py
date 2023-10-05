@@ -1,4 +1,8 @@
 import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from plotly import * 
 import numpy as np
 import numpy.linalg as la
 import pandas as pd
@@ -26,6 +30,30 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     """
     fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);   
     #fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20); 
+
+    trace1 = go.Line(x = sim_dict["time"], y = sim_dict["pos"][:,0]);
+    trace2  = go.Line(x = sim_dict["time"], y = sim_dict["pos"][:,1]);
+    trace3 = go.Line(x = sim_dict["time"], y = sim_dict["pos"][:,2]);
+    trace4 = go.Line(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0]);
+    trace5 = go.Line(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1]);
+    trace6 = go.Line(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2]);
+    trace7 = go.Line(x = sensor_dict["time"], y = sim_dict["pos"][:,1]);
+    #trace8 = go.Line(x = sim_dict["time"], y = sim_dict["pos"][:,1]);
+    #trace9 = go.Line(x = sim_dict["time"], y = sim_dict["pos"][:,1]);
+
+    data1 = [trace1, trace2, trace3, trace4, trace5, trace6, trace7];
+
+    trace8 = go.Line(x = sim_dict["time"], y = sim_dict["vel"][:,0]);
+    trace9 = go.Line(x = sim_dict["time"], y = sim_dict["vel"][:,1]);
+
+    data2 = [trace8, trace9];
+    fig1_linear = go.Figure(data = data1);
+    fig1_linear.show();
+
+    big_plot = make_subplots(rows = 3, cols = 1, shared_xaxes= True)
+    big_plot.add_trace(trace3, row = 1, col = 1);
+    big_plot.add_trace(trace2, row = 2, col = 1);
+    big_plot.show();
 
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
     plt.xlabel("Time (s)", fontsize = 14);  
