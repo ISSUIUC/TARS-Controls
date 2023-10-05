@@ -25,7 +25,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
         kalmann_dict (dict, optional): Dictionary containing kalman filter data. Defaults to 0.
     """
     fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);   
-    fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20);  
+    #fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20); 
 
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
     plt.xlabel("Time (s)", fontsize = 14);  
