@@ -146,9 +146,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sensor_dict["imu_gyro_y"].append(gyro[1])
     sensor_dict["imu_gyro_z"].append(gyro[2])
     sensor_dict["apogee_estimate"].append(apogee_estimation)
-def add_event(event):
-    sim_dict["event"].append(event)
-
+    
     # Update Simulator Log
     sim_dict["pos"].append(x[0])
     sim_dict["vel"].append(x[1])
@@ -316,7 +314,7 @@ def simulator(x0) -> None:
 
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
 
-        ##flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+        flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
         rocket.set_motor_mass(time_stamp)
 
