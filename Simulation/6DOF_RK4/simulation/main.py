@@ -47,15 +47,104 @@ import environment.atmosphere as atmosphere
 # Load desired config file
 config = dataloader.config
 
-atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
+# Runs simulation for the specific component of the rocket
+class Simulation:
+    # dt can be dynamic in the future, so we need to 
+    def __init__(self, rocket, motor, dt, x0, time_stamp=0):
+        self.rocket = rocket
+        self.motor = motor
+        self.dt = dt
+        self.x = x0.copy()
+        self.baro = 0
+        self.time_stamp = time_stamp
+        self.sensor_config = self.rocket.stage_config['sensors']
+        self.init_kalman_filters()
 
-# rocket = rocket_model.Rocket(config, atm=atm)
-rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
+    def init_kalman_filters(self):
+        # TODO: Init with previous rocket data
+        self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        # TODO: init this data with the previous rocket becuase of staging
+        x_data = []
+        y_data = []
+        z_data = []
+        for i in range(10):
+            reading = sensors.get_accelerometer_data(self.x, self.sensor_config)
+            x_data.append(reading[0])
+            y_data.append(reading[1])
+            z_data.append(reading[2])
 
-motor = rocket.motor
-sim = sim_class.Simulator(atm=atm, rocket=rocket)
+        accel_tracker = np.array([])
 
-def simulator(x0, dt) -> None:
+        ax = sum(x_data)/len(x_data)
+        ay = sum(y_data)/len(y_data)
+        az = sum(z_data)/len(z_data)
+
+        pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
+        yaw = np.arctan2(-ax,-ay) + np.pi/2
+        self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
+        self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
+
+    def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
+        self.kalman_filter.priori()
+        self.kalman_filter.update(bno_ang_pos, baro_alt,
+                            accel[0], accel[1], accel[2])
+        
+        self.r_kalman_filter.priori()
+        self.r_kalman_filter.update(*gyro, *accel)
+    
+    def time_step(self):
+        self.time_stamp += self.dt
+
+    def idle_stage(self):
+        while self.time_stamp < self.rocket.delay:
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            self.kalman_filter.reset_lateral_pos()
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
+            self.time_step()
+
+    def in_flight(self):
+        print(f"Ignition at {self.time_stamp}")
+        self.motor.ignite(self.time_stamp)
+        has_burnedout = False
+        start = True
+        while self.x[1, 0] >= 0 or start:
+            if start:
+                start = False
+            # Get sensor data
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
+            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+
+            self.rocket.set_motor_mass(self.time_stamp)
+            if not has_burnedout and self.rocket.is_motor_burnout(self.time_stamp):
+                print(f"Burnout at {self.time_stamp:2f} seconds")
+                has_burnedout = True
+
+            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
+
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
+            self.time_step()
+        print(f"Reached apogee at {self.time_stamp:.2f} seconds")
+
+    # Function to retrive all sensor data
+    def get_sensor_data(self):
+        return (sensors.get_barometer_data(self.x, self.sensor_config),
+                sensors.get_accelerometer_data(self.x, self.sensor_config),
+                sensors.get_gyro_data(self.x, self.sensor_config), 
+                sensors.get_bno_orientation(self.x, self.sensor_config))
+
+    def get_kalman_state(self):
+        current_state = self.kalman_filter.get_state()
+        current_cov = self.kalman_filter.get_covariance()
+        current_state_r = self.r_kalman_filter.get_state()
+        return (current_state, current_cov, current_state_r)
+
+def simulator(x0, rocket, motor, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
 
     Args:
@@ -70,119 +159,27 @@ def simulator(x0, dt) -> None:
         dt (float): time step between each iteration in simulation
 
     '''
-
-    x = x0.copy()
-    baro = 0
-    bno_ang_pos = 0
-
-    sensor_config = rocket.stage_config['sensors']
-    
-    len_buffer = 30
-    for i in range(len_buffer):
-        baro+=sensors.get_barometer_data(x, sensor_config)
-        bno_ang_pos+=sensors.get_bno_orientation(x, sensor_config)
-
-    baro_avg = baro/len_buffer
-    bno_ang_pos_avg = bno_ang_pos/len_buffer
-
-    kalman_filter = ekf.KalmanFilter(
-        dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-    accel = sensors.get_accelerometer_data(x, sensor_config)
-    x_data = []
-    y_data = []
-    z_data = []
-    for i in range(10):
-        reading = sensors.get_accelerometer_data(x, sensor_config)
-        x_data.append(reading[0])
-        y_data.append(reading[1])
-        z_data.append(reading[2])
-    
-    accel_tracker = np.array([])
-    
-    ax = sum(x_data)/len(x_data)
-    ay = sum(y_data)/len(y_data)
-    az = sum(z_data)/len(z_data)
-    
-    pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
-    yaw = np.arctan2(-ax,-ay) + np.pi/2
-    r_kalman_filter = r_ekf.KalmanFilter_R(
-        dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
-    time_stamp = 0
-
-    # Use an n value (last parameter) that is divisible by 3 to make computations easier
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, rocket.stage_config)
-    Kp, Ki, Kd = 0.0002, 0, 0
-    # controller = contr.Controller(Kp, Ki, Kd, dt, config["desired_apogee"])
-
-    # Idle stage
-    while time_stamp < rocket.delay:
-        time_stamp += dt
-        baro_alt = sensors.get_barometer_data(x, sensor_config)
-        accel = sensors.get_accelerometer_data(x, sensor_config)
-        gyro = sensors.get_gyro_data(x, sensor_config)
-        bno_ang_pos = sensors.get_bno_orientation(x, sensor_config)
-
-        kalman_filter.priori()
-        kalman_filter.update(bno_ang_pos, baro_alt,
-                             accel[0], accel[1], accel[2])
-        
-        r_kalman_filter.priori()
-        r_kalman_filter.update(*gyro, *accel)
-
-        kalman_filter.reset_lateral_pos()
-        current_state = kalman_filter.get_state()
-        current_covariance = kalman_filter.get_covariance()
-        current_state_r = r_kalman_filter.get_state()
-
-        rocket.add_to_dict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
-
-    print("Ignition")
-
-    # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
-    start = True
+    simulator = Simulation(rocket, motor, dt, x0)
+    simulator.idle_stage()
     t_start = time.time()
-    motor.ignite(time_stamp)
-
-    while x[1, 0] >= 0 or start:
-        if start:
-            start = False
-        # Get sensor data
-        baro_alt = sensors.get_barometer_data(x, sensor_config)
-        accel = sensors.get_accelerometer_data(x, sensor_config)
-        gyro = sensors.get_gyro_data(x, sensor_config)
-        bno_ang_pos = sensors.get_bno_orientation(x, sensor_config)
-
-        # Kalman Filter stuff goes here
-        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(bno_ang_pos, baro_alt,
-                             accel[0], accel[1], accel[2])
-
-        r_kalman_filter.priori()
-        r_kalman_filter.update(*gyro, *accel)
-
-        current_state = kalman_filter.get_state()
-        current_cov = kalman_filter.get_covariance()
-        current_state_r = r_kalman_filter.get_state()
-
-        apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
-
-        # flap_ext = controller.get_flap_extension(time_stamp > rocket.stage_config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
-
-        rocket.set_motor_mass(time_stamp)
-
-        x, alpha = sim.RK4(x, dt, time_stamp, 0)
-        time_stamp += dt
-
-        rocket.add_to_dict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0, dt)
-
+    simulator.in_flight()
     t_end = time.time() - t_start
-    print(f"Time: {t_end:.2f}")
+    print(f"Runtime: {t_end:.2f} seconds")
 
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0]
     dt = 0.01
-    simulator(x0, dt)
+
+    atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
+
+    # rocket = rocket_model.Rocket(config, atm=atm)
+    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
+
+    motor = rocket.motor
+    sim = sim_class.Simulator(atm=atm, rocket=rocket)
+
+    simulator(x0, rocket, motor, dt)
 
     print("Writing to file...")
 
