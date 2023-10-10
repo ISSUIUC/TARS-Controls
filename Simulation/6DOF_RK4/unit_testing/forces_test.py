@@ -1,17 +1,5 @@
 '''
-For each unit test, the code calculations as of 9/9/23 is run by the inner test function. 
-This is saved to the outer test function which is not run by the inner test function. If
-the test output by the test method is identical to the test output by a modified function 
-in the main dynamics code, true will be returned and the test will have passed. Else, false
-is returned.
-
-TODO: 
-- create tests for all "units"
-- enter test values
-- create naming conventions to avoid double-naming
-- create function running every test and returning false if any test fails and if the test fails, which tests failed
-    -also maybe why??
-- verify current code calcs
+Creates a local copy of get_force and calls get_force to compare to known outputs in forces.py using rudimentary values. 
 '''
 import numpy as np
 import sys
