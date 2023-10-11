@@ -195,6 +195,8 @@ if __name__ == "__main__":
     sensor_dict = {}
     kalman_dict = {}
     output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
+    if len(sys.argv) > 1:
+        output_file = sys.argv[1]
     file_data = pd.read_csv(output_file)
     sim_dict["time"] = file_data["time"].values
     sensor_dict["time"] = file_data["time"].values
