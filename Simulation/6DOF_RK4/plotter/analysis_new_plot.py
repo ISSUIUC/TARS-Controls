@@ -32,49 +32,67 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);   
     #fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20); 
 
-    trace_pos_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,0], mode = "lines");
-    trace_pos_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,1], mode = "lines");
-    trace3_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,2], mode = "lines");
-    trace4_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines");
-    trace_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines");
-    trace_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines");
-    trace_apogee_estimate = go.Scatter(x = sensor_dict["time"],y = sensor_dict["apogee_estimate"], mode = "lines");
-    trace_vel_0 = go.Scatter(x = sensor_dict["time"], y = sim_dict["vel"][:,0], mode = "lines");
-    trace_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,1], mode = "lines");
-    trace_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,2], mode = "lines");
-    trace_accel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,0], mode = "lines");
-    trace_accel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,1], mode = "lines");
-    trace_accel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,2], mode = "lines");
-    trace_kalman_accel_0 = go.Scatter(x = kalman_dict["time"],y = kalman_dict["kalman_accel"][:,0], mode = "lines");
-    trace_kalman_accel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,1], mode = "lines");
-    trace_kalman_accel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,2], mode = "lines");
+    trace_pos_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,0], mode = "lines", name = "X");
+    trace_pos_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,1], mode = "lines", name = "Y");
+    trace3_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,2], mode = "lines", name = "Z");
+    trace4_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'));
+    trace4_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'));
+    trace4_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
+    trace_apogee_estimate = go.Scatter(x = sensor_dict["time"],y = sensor_dict["apogee_estimate"], mode = "lines", name = "Apogee Estimate", line=dict(dash ='dot'));
+    
+
+   # trace_vel_0 = go.Scatter(x = sensor_dict["time"], y = sim_dict["vel"][:,0], mode = "lines", name = "X Estimate");
+    trace_vel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,0], mode = "lines", name = "X");
+    trace_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,1], mode = "lines",  name = "Y");
+    trace_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,2], mode = "lines",  name = "Z");
+    trace_kalman_vel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,0], mode = "lines",  name = "X Estimate", line=dict(dash ='dot'));
+    trace_kalman_vel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,1], mode = "lines",  name = "Y Estimate", line=dict(dash ='dot'));
+    trace_kalman_vel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,2], mode = "lines",  name = "Z Estimate", line=dict(dash ='dot'));
+
+
+    trace_accel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,0], mode = "lines", name = "X");
+    trace_accel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,1], mode = "lines", name = "Y");
+    trace_accel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,2], mode = "lines", name = "Z");
+    trace_kalman_accel_0 = go.Scatter(x = kalman_dict["time"],y = kalman_dict["kalman_accel"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'));
+    trace_kalman_accel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'));
+    trace_kalman_accel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
+   
     trace_ang_pos_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,0], mode = "lines");
     trace_ang_pos_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,1], mode = "lines");
-    trace_ang_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_Dict["ang_pos"][:,2], mode = "lines");
+    trace_ang_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,2], mode = "lines");
     trace_kalman_rpos_0 = go.Scatter(x = kalman_dict["time"],y = kalman_dict["kalman_rpos"][:,0], mode = "lines");
     trace_kalman_rpos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rpos"][:,1], mode = "lines");
     trace_kalman_rpos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rpos"][:,2], mode = "lines");
     trace_ang_vel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,0], mode = "lines");
     trace_ang_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,1], mode = "lines");
     trace_ang_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,2], mode = "lines");
-    trace_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines");
-    trace_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines");
-    trace_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines"); 
+   # trace_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines");
+   # trace_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines");
+   # trace_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines"); 
     
-
-    data1 = [trace1, trace2, trace3, trace4, trace5, trace6, trace7];
-
   #  trace8 = go.Line(x = sim_dict["time"], y = sim_dict["vel"][:,0]);
   #  trace9 = go.Line(x = sim_dict["time"], y = sim_dict["vel"][:,1]);
 
-    data2 = [trace8, trace9];
-    fig1_linear = go.Figure(data = data1);
+    layout1 = go.Layout(yaxis=dict(title="Position"))
+    data1 = [trace_pos_0, trace_pos_1, trace3_pos_2, trace4_kalman_pos_0, trace4_kalman_pos_1, trace4_kalman_pos_2,];
+    fig1_linear = go.Figure(layout = layout1, data = data1);
     fig1_linear.show();
 
-    big_plot = make_subplots(rows = 3, cols = 1, shared_xaxes= True)
-    big_plot.add_trace((trace1, trace2), row = 1, col = 1);
-    big_plot.add_trace(trace2, row = 2, col = 1);
-    big_plot.show();
+    layout2 = go.Layout(yaxis=dict(title="Velocity"))
+    data2 = [trace_vel_0, trace_vel_1, trace_vel_2, trace_kalman_vel_0, trace_kalman_vel_1, trace_kalman_vel_2];
+    fig2_linear = go.Figure(layout = layout2, data = data2);
+    fig2_linear.show();
+
+    layout3 = go.Layout(yaxis=dict(title="Acceleration"))
+    data3 = [trace_accel_0, trace_accel_1, trace_accel_2, trace_kalman_accel_0, trace_kalman_accel_1, trace_kalman_accel_2];
+    fig3_linear = go.Figure(layout = layout3, data = data3);
+    fig3_linear.show();
+
+
+   # big_plot = make_subplots(rows = 3, cols = 1, shared_xaxes= True)
+   # big_plot.add_trace((trace1, trace2), row = 1, col = 1);
+   # big_plot.add_trace(trace2, row = 2, col = 1);
+   # big_plot.show();
 
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
     plt.xlabel("Time (s)", fontsize = 14);  
