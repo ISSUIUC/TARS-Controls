@@ -82,7 +82,7 @@ class Simulator():
 
         ang_p = (y0[3] + (1/6)*(k1_ap+(2*k2_ap)+(2*k3_ap)+k4_ap)*dt)
 
-        temp,alpha = (self.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, density_noise=density_noise))
+        temp,alpha = (self.rocket.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, density_noise=density_noise))
         # print(time_stamp, y0[3], temp[0], temp[1])
         a = temp[0]/self.rocket.rocket_total_mass
 

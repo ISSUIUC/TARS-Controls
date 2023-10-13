@@ -21,3 +21,11 @@ define: &motor_N2450
   delay: 60
   motor_lookup_file: "../lookup/n2540.csv"
   cm: !numpy/array [0.3755, 0., 0.]
+
+define: &motor_J244
+  <<: *simulated_motor
+  impulse: 849
+  motor_mass: 0.911
+  delay: 60
+  motor_lookup_file: "../lookup/j244.csv"
+  cm: !numpy/array [0.3755, 0., 0.]

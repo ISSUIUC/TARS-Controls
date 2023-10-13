@@ -50,8 +50,9 @@ config = dataloader.config
 # Runs simulation for the specific component of the rocket
 class Simulation:
     # dt can be dynamic in the future, so we need to 
-    def __init__(self, rocket, motor, dt, x0, time_stamp=0):
+    def __init__(self, rocket, motor, dt, x0, time_stamp=0, stages=[]):
         self.rocket = rocket
+        self.stages = stages
         self.motor = motor
         self.dt = dt
         self.x = x0.copy()
@@ -144,6 +145,52 @@ class Simulation:
         current_state_r = self.r_kalman_filter.get_state()
         return (current_state, current_cov, current_state_r)
 
+    def run_stage(self, stage):
+        stage_separation_delay = 1
+        self.rocket.get_motor().ignite(self.time_stamp)
+        ignition_time = self.time_stamp
+        start = True
+        while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
+            if start:
+                start = False
+            # Get sensor data
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
+            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+
+            self.rocket.set_motor_mass(self.time_stamp)
+
+            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
+
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
+            self.time_step()
+
+        # Coasting phase
+        print(f"Coasting phase at {self.time_stamp:.2f} seconds")
+        while self.x[1, 0] >= 0:
+            # Get sensor data
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
+            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+
+            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
+
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
+            self.time_step()
+            
+    def multiple_stages(self):
+        '''
+            Run the boost phases of the rocket until 
+            the rocket runs out of additional stages
+            For now, we only have one stage, so we will exclusively stage that
+        '''
+        if len(self.stages) > 0:
+            self.run_stage(self.stages[0])
+
 def simulator(x0, rocket, motor, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
 
@@ -157,14 +204,15 @@ def simulator(x0, rocket, motor, dt) -> None:
             [ang_vel,   ang_vel,   ang_vel],
             [ang_accel, ang_accel, ang_accel]]
         dt (float): time step between each iteration in simulation
-
     '''
-    simulator = Simulation(rocket, motor, dt, x0)
+    simulator = Simulation(rocket, motor, dt, x0, stages=rocket.stages)
     simulator.idle_stage()
     t_start = time.time()
     simulator.in_flight()
+    simulator.multiple_stages()
     t_end = time.time() - t_start
     print(f"Runtime: {t_end:.2f} seconds")
+
 
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))
@@ -174,7 +222,10 @@ if __name__ == '__main__':
     atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 
     # rocket = rocket_model.Rocket(config, atm=atm)
-    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
+    stages = []
+    for stage in config['rocket']['stages'][1:]:
+        stages.append(rocket_model.Rocket(stage, atm=atm))
+    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm, stages=stages)
 
     motor = rocket.motor
     sim = sim_class.Simulator(atm=atm, rocket=rocket)
