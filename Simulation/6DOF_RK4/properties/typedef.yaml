@@ -18,6 +18,7 @@ define: &simulated_rocket_body
   structure_cm: *unset_required # numpy/array (Center of mass of the rocket body)
   combined_cm: *unset_required # numpy/array (Center of mass of the rocket+motor assembly.)
   combined_cp: *unset_required # numpy/array (Center of pressure of the rocket+motor asssembly)
+  
 
 define: &simulated_motor
   impulse: *unset_required # Ns (Impulse of the motor)
@@ -32,6 +33,7 @@ define: &simulated_flaps
   max_ext_length: *unset_required # m (flap max estension length)
 
 define: &simulated_stage
+  name: *unset_required # String (human-readable identifier, i.e., sustainer stage, booster stage, etc.)
   rocket_body: *simulated_rocket_body # simulated_rocket_body structure (The data about the structure of the rocket body (SDA data))
   motor: *simulated_motor # simulated_motor structure (The motor used in the simulation)
   sensors: *unset_required # No structure defined, but reminds user that sensors need to be set.

@@ -54,8 +54,8 @@ atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_var
 # rocket = rocket_model.Rocket(config, atm=atm)
 stages = []
 for stage in config['rocket']['stages'][1:]:
-    stages.append(rocket_model.Rocket(stage, atm=atm))
-rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm, stages=stages)
+    stages.append(rocket_model.Rocket(stage, atm=atm, name=stage['name']))
+rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm, stages=stages, name=config['rocket']['stages'][0]['name'])
 
 motor = rocket.motor
 sim = sim_class.Simulator(atm=atm, rocket=rocket)
@@ -266,7 +266,7 @@ def simulator(x0, dt) -> None:
             time_stamp += dt
 
             addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, 0)
-        print(("Separation " if has_more_stages else "Burnout ") + "of stage " + str(rocket.current_stage) + " at " + str(time_stamp) + "s")
+        print(("Separation " if has_more_stages else "Burnout ") + "of " + rocket.get_rocket_name() + " at " + str(time_stamp) + "s")
         has_more_stages = rocket.separate_stage(time_stamp)
     
     '''

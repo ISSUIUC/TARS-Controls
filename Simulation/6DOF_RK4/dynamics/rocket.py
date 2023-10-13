@@ -15,8 +15,9 @@ class Rocket:
     forces = None
     stage_config = None
     
-    def __init__(self, stage_config, atm:atmosphere.Atmosphere=None, stages:list=[]):
+    def __init__(self, stage_config, atm:atmosphere.Atmosphere=None, stages:list=[], name=None):
         self.stage_config = stage_config
+        self.rocket_name = name
         self.cm_rocket = stage_config["rocket_body"]["structure_cm"]
         self.cm_motor = stage_config["motor"]["cm"]
         self.cm = stage_config['rocket_body']['combined_cm']
@@ -70,6 +71,12 @@ class Rocket:
                                     stage_config["rocket_body"]["rasaero_lookup_file"],
                                     self.atm)
 
+    def get_rocket_name(self) -> str:
+        if self.current_stage == -1:
+            return self.rocket_name
+        else:
+            return self.stages[self.current_stage].get_rocket_name()
+    
     def set_motor_mass(self, timestamp) -> None:
         """Sets the mass of the motor at a given time
         

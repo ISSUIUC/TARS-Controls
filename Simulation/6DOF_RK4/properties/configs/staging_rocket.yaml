@@ -4,6 +4,7 @@ rocket:
   stages:
     - booster:
       <<: *simulated_stage
+      name: "booster stage"
       rocket_body:
         <<: *simulated_rocket_body
         rasaero_lookup_file: "../lookup/RASAero.csv"
@@ -32,6 +33,7 @@ rocket:
         max_ext_spd: 0.001
     - sustainer:
       <<: *simulated_stage
+      name: "sustainer stage"      
       rocket_body:
         <<: *simulated_rocket_body
         rasaero_lookup_file: "../lookup/RASAero.csv"
