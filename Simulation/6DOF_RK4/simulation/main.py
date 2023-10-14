@@ -146,7 +146,9 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sensor_dict["imu_gyro_y"].append(gyro[1])
     sensor_dict["imu_gyro_z"].append(gyro[2])
     sensor_dict["apogee_estimate"].append(apogee_estimation)
-    
+def add_event(event):
+    sim_dict["event"].append(event)
+
     # Update Simulator Log
     sim_dict["pos"].append(x[0])
     sim_dict["vel"].append(x[1])

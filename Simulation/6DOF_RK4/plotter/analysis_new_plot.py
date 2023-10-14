@@ -66,9 +66,9 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     trace_ang_vel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,0], mode = "lines");
     trace_ang_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,1], mode = "lines");
     trace_ang_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,2], mode = "lines");
-   # trace_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines");
-   # trace_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines");
-   # trace_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines"); 
+    trace_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines");
+    trace_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines");
+    trace_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines"); 
     
   #  trace8 = go.Line(x = sim_dict["time"], y = sim_dict["vel"][:,0]);
   #  trace9 = go.Line(x = sim_dict["time"], y = sim_dict["vel"][:,1]);
@@ -88,11 +88,27 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     fig3_linear = go.Figure(layout = layout3, data = data3);
     fig3_linear.show();
 
+    #checking if 3D plot works
+    x = np.array([0,1])
+    y = np.array([1,1])
+    z = np.array([1,1])
+    df = pd.DataFrame({"x": x, "y":y, "z":z})
 
-   # big_plot = make_subplots(rows = 3, cols = 1, shared_xaxes= True)
-   # big_plot.add_trace((trace1, trace2), row = 1, col = 1);
-   # big_plot.add_trace(trace2, row = 2, col = 1);
-   # big_plot.show();
+    fig = px.line_3d(df, x="x", y="y", z="z")
+    fig.show()
+
+    #implementing 3D plot
+    dposition = pd.DataFrame({"x": trace_pos_0, "y": trace_pos_1, "z":trace3_pos_2})
+    fig = px.line_3d(dposition, x = "x", y = "y", z= "z")
+    fig.show()
+    
+
+
+    #big_plot = make_subplots(rows = 3, cols = 1, shared_xaxes= True)
+    #big_plot.add_trace((trace_pos_0, trace_pos_1), row = 1, col = 1);
+    #big_plot.add_trace(trace_pos_1, row = 2, col = 1);
+    #big_plot.add_trace(trace3_pos_2, row = 3, col = 1);
+    #big_plot.show();
 
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
     plt.xlabel("Time (s)", fontsize = 14);  
