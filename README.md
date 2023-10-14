@@ -9,4 +9,5 @@ The `Control_Design` folder contains the python implementation of the PID roll c
 
 `1dof_sim_RK4.py` is an RK4 based 1-DOF python simulation that was used to develop the active drag control system and extended kalman filter that is implemented on the **Intrepid** class of launch vehicles. The Kalman filter that is being developed here and eventually in `6dof_sim.py` will also be implemented for testing on individual's rockets that are in the ISS **L1 Research Fleet** for test and evaluation of new components and algorithms. `1dof_sim_RK4.py` will be used as a framework to improve `6dof_sim.py`.
 
-
+# Visualizers and plotters
+To visualize the launch, run `python simulation/6dof_rk4/plotter/analysis.py` after running a simulation.
