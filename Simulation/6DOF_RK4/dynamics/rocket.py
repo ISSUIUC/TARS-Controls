@@ -152,6 +152,7 @@ class Rocket:
             return False
         self.current_stage += 1
         self.separation_timestamp = timestamp
+        self.forces = self.stages[self.current_stage].forces
         return True
             
     def get_motor(self) -> Motor:

@@ -110,6 +110,7 @@ class Simulation:
         # Run the stages
         stage_separation_delay = 1
         self.rocket.get_motor().ignite(self.time_stamp)
+
         ignition_time = self.time_stamp
         start = True
         print(f"Staged at {self.time_stamp}")
