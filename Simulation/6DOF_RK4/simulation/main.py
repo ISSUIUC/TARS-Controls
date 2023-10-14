@@ -106,50 +106,13 @@ class Simulation:
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
             self.time_step()
 
-    def in_flight(self):
-        print(f"Ignition at {self.time_stamp}")
-        self.motor.ignite(self.time_stamp)
-        has_burnedout = False
-        start = True
-        while self.x[1, 0] >= 0 or start:
-            if start:
-                start = False
-            # Get sensor data
-            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
-            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
-            current_state, current_covariance, current_state_r = self.get_kalman_state()
-
-            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
-
-            self.rocket.set_motor_mass(self.time_stamp)
-            if not has_burnedout and self.rocket.is_motor_burnout(self.time_stamp):
-                print(f"Burnout at {self.time_stamp:2f} seconds")
-                has_burnedout = True
-
-            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
-
-            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
-            self.time_step()
-        print(f"Reached apogee at {self.time_stamp:.2f} seconds")
-
-    # Function to retrive all sensor data
-    def get_sensor_data(self):
-        return (sensors.get_barometer_data(self.x, self.sensor_config),
-                sensors.get_accelerometer_data(self.x, self.sensor_config),
-                sensors.get_gyro_data(self.x, self.sensor_config), 
-                sensors.get_bno_orientation(self.x, self.sensor_config))
-
-    def get_kalman_state(self):
-        current_state = self.kalman_filter.get_state()
-        current_cov = self.kalman_filter.get_covariance()
-        current_state_r = self.r_kalman_filter.get_state()
-        return (current_state, current_cov, current_state_r)
-
-    def run_stage(self, stage):
+    def execute_stage(self):
+        # Run the stages
         stage_separation_delay = 1
         self.rocket.get_motor().ignite(self.time_stamp)
         ignition_time = self.time_stamp
         start = True
+        print(f"Staged at {self.time_stamp}")
         while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
             if start:
                 start = False
@@ -167,10 +130,28 @@ class Simulation:
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
             self.time_step()
 
-        # Coasting phase
-        print(f"Coasting phase at {self.time_stamp:.2f} seconds")
+    def run_stages(self):
+        has_more_stages = True
+        while has_more_stages:
+            self.execute_stage()
+            has_more_stages = self.rocket.separate_stage(self.time_stamp)
+
+    # Function to retrive all sensor data
+    def get_sensor_data(self):
+        return (sensors.get_barometer_data(self.x, self.sensor_config),
+                sensors.get_accelerometer_data(self.x, self.sensor_config),
+                sensors.get_gyro_data(self.x, self.sensor_config), 
+                sensors.get_bno_orientation(self.x, self.sensor_config))
+
+    def get_kalman_state(self):
+        current_state = self.kalman_filter.get_state()
+        current_cov = self.kalman_filter.get_covariance()
+        current_state_r = self.r_kalman_filter.get_state()
+        return (current_state, current_cov, current_state_r)
+
+    def coast(self):
         while self.x[1, 0] >= 0:
-            # Get sensor data
+        # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
@@ -181,16 +162,7 @@ class Simulation:
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
             self.time_step()
-            
-    def multiple_stages(self):
-        '''
-            Run the boost phases of the rocket until 
-            the rocket runs out of additional stages
-            For now, we only have one stage, so we will exclusively stage that
-        '''
-        if len(self.stages) > 0:
-            self.run_stage(self.stages[0])
-
+    
 def simulator(x0, rocket, motor, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
 
@@ -208,8 +180,8 @@ def simulator(x0, rocket, motor, dt) -> None:
     simulator = Simulation(rocket, motor, dt, x0, stages=rocket.stages)
     simulator.idle_stage()
     t_start = time.time()
-    simulator.in_flight()
-    simulator.multiple_stages()
+    simulator.run_stages()
+    simulator.coast()
     t_end = time.time() - t_start
     print(f"Runtime: {t_end:.2f} seconds")
 
