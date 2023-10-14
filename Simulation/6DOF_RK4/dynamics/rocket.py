@@ -114,8 +114,24 @@ class Rocket:
                                     stage_config["rocket_body"]["rasaero_lookup_file"],
                                     self.atm)
 
+
+    def get_total_motor_mass(self, timestamp) -> float:
+        mass = 0
+        if self.current_stage == -1:
+            # Then get the mass of the motor
+            mass += self.motor.get_mass(timestamp - self.separation_timestamp)
+            # Sum all the other masses
+            for x in self.stages:
+                mass += x.get_motor().total_mass
+            return mass
+
+        mass += self.stages[self.current_stage].get_motor().get_mass(timestamp - self.separation_timestamp)
+        for x in self.stages[self.current_stage+1:]:
+            mass += x.get_motor().total_mass
+        return mass
+
     def set_motor_mass(self, timestamp) -> None:
-        """Sets the mass of the motor at a given time
+        """Sets the mass of the current stage's motor
         
         Args:
             timestamp (float): Time in seconds
@@ -154,12 +170,15 @@ class Rocket:
         self.separation_timestamp = timestamp
         self.forces = self.stages[self.current_stage].forces
         return True
-            
+
     def get_motor(self) -> Motor:
         """Returns the motor of the rocket
         """
         return self.motor if self.current_stage == -1 else self.stages[self.current_stage].get_motor()
-    
+
+    def get_rocket_total_mass(self) -> float:
+        return self.get_dry_mass() + self.get_motor_mass(self.time_stamp)
+
     def get_rocket_dry_mass(self) -> float:
         """Returns the dry mass of the rocket
         """

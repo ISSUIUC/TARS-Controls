@@ -103,7 +103,7 @@ class Simulation:
             self.kalman_filter.reset_lateral_pos()
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
 
     def execute_stage(self):
@@ -128,7 +128,7 @@ class Simulation:
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 
-            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
 
     def run_stages(self):
@@ -161,7 +161,7 @@ class Simulation:
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 
-            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.rocket_total_mass, self.rocket.motor_mass, 0, dt)
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
     
 def simulator(x0, rocket, motor, dt) -> None:
