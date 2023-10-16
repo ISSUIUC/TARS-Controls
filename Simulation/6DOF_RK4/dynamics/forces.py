@@ -62,22 +62,19 @@ class Forces:
             (float): angle of attack (radians)
         '''
         # TODO: Add random disturbances
-        # print("State: ", x_state)
         alt = x_state.copy()[0,0]
         density = self.atm.get_density(alt, noise=density_noise, position=x_state[0])
         thrust = self.motor.get_thrust(time_stamp)
-        # wind_vector = self.atm.get_nominal_wind_direction() * self.atm.get_nominal_wind_magnitude()
         wind_vector = self.atm.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
-        # print(self.aerodynamic_moment(drag))
+
         return np.array([force, moment]), alpha
 
     def get_Ca_Cn_Cp(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:
-        # TODO: account for area change of flaps in C_a calculation
         '''References lookup table to find C_a, C_n, C_p based on flap extension
 
         Args:
@@ -109,7 +106,6 @@ class Forces:
         Cn_up = 0
 
         # define csv file to search throughs
-        #csv_file = csv.reader(open('RASAero.csv', 'r'))
         csv_file = rasaero
 
         # Define protuberance percentage of full extension given current extension
@@ -151,9 +147,6 @@ class Forces:
                 Ca = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Ca_low, Ca_up])  
                 Cn = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cn_low, Cn_up])  
                 Cp = np.interp(protub_perc, [csv_file['Protuberance (%)'][idx], csv_file['Protuberance (%)'][idx+1]], [Cp_low, Cp_up])  
-                # print('CP: ', Cp)
-                # print('Cn: ', Cn)
-                # print("Ca: ", Ca)
                 Cp = Cp/100. #Convert cm to m
 
                 return [Ca,Cn,np.array([Cp, 0.0, 0.0])]
@@ -194,7 +187,7 @@ class Forces:
             (np.array): vector of gravitational forces on each axis [1x3]
         '''
         total_mass = self.rocket_dry_mass + self.motor.get_mass(time_stamp) #Adding dry mass + motor mass
-        # return np.array([-9.81*total_mass, 0, 0])
+
         return -np.array([(prop.G*prop.m_e*total_mass)/((prop.r_e+altitude)**2), 0, 0])
 
     def aerodynamic_moment(self, aerodynamic_force) -> np.ndarray:

@@ -42,7 +42,6 @@ import time
 import estimation.apogee_estimator as apg
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
-# import dynamics.controller as contr SG1 onward does not use TARSIII controls
 
 # Load desired config file
 config = dataloader.config
@@ -194,7 +193,6 @@ if __name__ == '__main__':
 
     atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 
-    # rocket = rocket_model.Rocket(config, atm=atm)
     stages = []
     for stage in config['rocket']['stages'][1:]:
         stages.append(rocket_model.Rocket(stage, atm=atm))
