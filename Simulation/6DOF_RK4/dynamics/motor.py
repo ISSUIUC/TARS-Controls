@@ -3,10 +3,6 @@ import numpy as np
 import os
 import pandas as pd
 
-import properties.properties as prop
-
-
-
 class Motor():
     """Represents the motor of the rocket
 

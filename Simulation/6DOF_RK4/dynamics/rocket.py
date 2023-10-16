@@ -82,12 +82,14 @@ class Rocket:
         
         # Add stages to rocket via this list. Only the base rocket object should have stages, each stage should be its own rocket object with no stages
         self.stages = stages
+        
         '''
         Start with the base rocket object, which is the first stage, then increment at each separation event.
         This is used to determine which stage the rocket is currently in. Start at -1, then increment to 0, 1, etc., so that
         they align with the indices of the stages list
         '''
         self.current_stage = -1
+        
         '''
         This is used to store the time of the latest separation event. Start at 0, then update at each separation event so that timestamp is
         based on the latest separation event
@@ -140,7 +142,7 @@ class Rocket:
             self.motor_mass = self.motor.get_mass(timestamp)
         else:
             self.motor_mass = self.stages[self.current_stage].get_motor().get_mass(timestamp - self.separation_timestamp)
-        self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
+        self.rocket_total_mass = self.rocket_dry_mass + self.get_total_motor_mass(timestamp)
 
     def is_motor_burnout(self, timestamp):
         return self.motor.burnout(timestamp)
@@ -176,14 +178,14 @@ class Rocket:
         """
         return self.motor if self.current_stage == -1 else self.stages[self.current_stage].get_motor()
 
-    def get_rocket_total_mass(self) -> float:
-        return self.get_dry_mass() + self.get_motor_mass(self.time_stamp)
-
     def get_rocket_dry_mass(self) -> float:
         """Returns the dry mass of the rocket
         """
         return self.rocket_dry_mass if self.current_stage == -1 else self.stages[self.current_stage].get_rocket_dry_mass()
     
+    def get_rocket_total_mass(self, timestamp:float) -> float:
+        return self.get_rocket_dry_mass() + self.get_total_motor_mass(timestamp)
+ 
     def get_CM(self):
         return self.cm if self.current_stage == -1 else self.stages[self.current_stage].get_CM()
     
@@ -198,6 +200,7 @@ class Rocket:
     
     def get_Rasaero(self):
         return self.rasaero if self.current_stage == -1 else self.stages[self.current_stage].get_Rasaero()
+    
     def I(self, total_mass): 
         """Returns the inertia matrix of the rocket
         
