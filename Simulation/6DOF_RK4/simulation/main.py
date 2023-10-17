@@ -146,8 +146,8 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sensor_dict["imu_gyro_y"].append(gyro[1])
     sensor_dict["imu_gyro_z"].append(gyro[2])
     sensor_dict["apogee_estimate"].append(apogee_estimation)
-def add_event(event):
-    sim_dict["event"].append(event)
+#def add_event(event):
+#    sim_dict["event"].append(event)
 
     # Update Simulator Log
     sim_dict["pos"].append(x[0])
@@ -414,6 +414,7 @@ if __name__ == '__main__':
     for point in range(len(sim_dict["time"])): #known issue = event only goes up to around 110s and stops.
         cur_point = []
         cur_point.append(str(sim_dict["time"][point]))
+        cur_point += map(str, list(kalman_dict["x"][point]))
         cur_point.append(str(sim_dict["event"][point]))
         cur_point += list(map(str, sim_dict["pos"][point]))
         cur_point += list(map(str, sim_dict["vel"][point]))
@@ -436,7 +437,6 @@ if __name__ == '__main__':
         cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
         cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
         cur_point += map(str, list([sensor_dict["apogee_estimate"][point]]))
-        cur_point += map(str, list(kalman_dict["x"][point]))
         cur_point += map(str, list(kalman_dict["y"][point]))
         cur_point += map(str, list(kalman_dict["z"][point]))
         cur_point += map(str, list(kalman_dict["cov_x"][point]))
