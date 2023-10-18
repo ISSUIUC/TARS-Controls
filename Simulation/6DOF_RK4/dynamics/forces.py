@@ -12,6 +12,7 @@ import numpy as np
 import util.vectors as vct
 import pandas as pd
 import os
+import random
 
 # Define Objects
 
@@ -49,7 +50,7 @@ class Forces:
 
     
 
-    def get_force(self, x_state, flap_ext, time_stamp, density_noise=False) -> np.ndarray:
+    def get_force(self, x_state, flap_ext, time_stamp, ejection_force, ejection_angle,density_noise=False) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
 
         Args:
@@ -71,7 +72,9 @@ class Forces:
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
-
+        if ejection_force != 0:
+            force += ejection_force
+            moment += ejection_force * self.stages[self.current_stage].cm * np.array([0, np.cos(ejection_angle), np.sin(ejection_angle)])
         return np.array([force, moment]), alpha
 
     def get_Ca_Cn_Cp(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:

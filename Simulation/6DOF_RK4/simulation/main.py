@@ -114,8 +114,6 @@ class Simulation:
         start = True
         print(f"Staged at {self.time_stamp}")
         while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
-            if start:
-                start = False
             # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
@@ -125,10 +123,12 @@ class Simulation:
 
             self.rocket.set_motor_mass(self.time_stamp)
 
-            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
+            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, start, 0)
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
+            if start:
+                start = False
 
     def run_stages(self):
         has_more_stages = True
