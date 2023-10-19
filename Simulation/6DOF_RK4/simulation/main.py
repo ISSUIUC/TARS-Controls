@@ -97,7 +97,7 @@ sensor_dict = {
 
 
 def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext, dt):
-        # Append to sensor_dict
+    # Appending data to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)
     sensor_dict["imu_accel_x"].append(accel[0])
     sensor_dict["imu_accel_y"].append(accel[1])
@@ -110,6 +110,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sensor_dict["imu_gyro_z"].append(gyro[2])
     sensor_dict["apogee_estimate"].append(apogee_estimation)
 
+    #Appending data to kalman_dict
     kalman_dict["x"].append(kalman_filter[0:3])
     kalman_dict["y"].append(kalman_filter[3:6])
     kalman_dict["z"].append(kalman_filter[6:9])
@@ -120,7 +121,7 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     kalman_dict["ry"].append(kalman_filter_r[3:6])
     kalman_dict["rz"].append(kalman_filter_r[6:9])
 
-    # Update Simulator Log
+    # Appending data to sim_dict
     sim_dict["pos"].append(x[0])
     sim_dict["vel"].append(x[1])
     sim_dict["accel"].append(x[2])
@@ -129,34 +130,6 @@ def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalm
     sim_dict["ang_accel"].append(x[5])
     sim_dict["time"].append(sim_dict["time"][-1] +
                             dt if len(sim_dict["time"]) > 0 else 0)
-    sim_dict["flap_ext"].append(flap_ext)                    
-    sim_dict["alpha"].append(alpha)
-    sim_dict["rocket_total_mass"].append(rocket_total_mass)
-    sim_dict["motor_mass"].append(motor_mass)
-
-    # Append to sensor_dict
-    sensor_dict["baro_alt"].append(baro_alt)
-    sensor_dict["imu_accel_x"].append(accel[0])
-    sensor_dict["imu_accel_y"].append(accel[1])
-    sensor_dict["imu_accel_z"].append(accel[2])
-    sensor_dict["imu_ang_pos_x"].append(bno_ang_pos[0])
-    sensor_dict["imu_ang_pos_y"].append(bno_ang_pos[1])
-    sensor_dict["imu_ang_pos_z"].append(bno_ang_pos[2])
-    sensor_dict["imu_gyro_x"].append(gyro[0])
-    sensor_dict["imu_gyro_y"].append(gyro[1])
-    sensor_dict["imu_gyro_z"].append(gyro[2])
-    sensor_dict["apogee_estimate"].append(apogee_estimation)
-#def add_event(event):
-#    sim_dict["event"].append(event)
-
-    # Update Simulator Log
-    sim_dict["pos"].append(x[0])
-    sim_dict["vel"].append(x[1])
-    sim_dict["accel"].append(x[2])
-    sim_dict["ang_pos"].append(x[3])
-    sim_dict["ang_vel"].append(x[4])
-    sim_dict["ang_accel"].append(x[5])
-    sim_dict["time"].append(sim_dict["time"][-1] + dt if len(sim_dict["time"]) > 0 else 0)
     sim_dict["flap_ext"].append(flap_ext)                    
     sim_dict["alpha"].append(alpha)
     sim_dict["rocket_total_mass"].append(rocket_total_mass)
@@ -272,7 +245,6 @@ def simulator(x0) -> None:
         elif (start == False):
             event = 0
 
-        
         # Get sensor data
         baro_alt = sensors.get_barometer_data(x)
         accel = sensors.get_accelerometer_data(x)
@@ -296,8 +268,6 @@ def simulator(x0) -> None:
             event = 0
         else:
             prev_alt = x[0,0] # updating prev_alt to be the current altitude
-
-
 
         gyro = sensors.get_gyro_data(x)
         bno_ang_pos = sensors.get_bno_orientation(x)
@@ -333,7 +303,7 @@ def simulator(x0) -> None:
         if(not parachute['reefing_deployed'] and x[0,0] < config['recovery']['reefing_deployment_altitude']):
             parachute['reefing_deployed'] = True
             parachute['reef_deploy_time'] = time_stamp
-            print(f"Main deployed at {time_stamp}s; altitiude:{x[0,0]}m")
+            print(f"Main deployed at {time_stamp} s; altitiude:{x[0,0]}m")
 
         if(not parachute['deployed'] and (time_stamp-apogee_timestamp) > config['recovery']['parachute_deploy_delay']):
             parachute['deployed'] = True
@@ -414,7 +384,6 @@ if __name__ == '__main__':
     for point in range(len(sim_dict["time"])): #known issue = event only goes up to around 110s and stops.
         cur_point = []
         cur_point.append(str(sim_dict["time"][point]))
-        cur_point += map(str, list(kalman_dict["x"][point]))
         cur_point.append(str(sim_dict["event"][point]))
         cur_point += list(map(str, sim_dict["pos"][point]))
         cur_point += list(map(str, sim_dict["vel"][point]))
@@ -437,6 +406,7 @@ if __name__ == '__main__':
         cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
         cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
         cur_point += map(str, list([sensor_dict["apogee_estimate"][point]]))
+        cur_point += map(str, list(kalman_dict["x"][point]))
         cur_point += map(str, list(kalman_dict["y"][point]))
         cur_point += map(str, list(kalman_dict["z"][point]))
         cur_point += map(str, list(kalman_dict["cov_x"][point]))
@@ -445,7 +415,7 @@ if __name__ == '__main__':
         cur_point += map(str, list(kalman_dict["rx"][point]))
         cur_point += map(str, list(kalman_dict["ry"][point]))
         cur_point += map(str, list(kalman_dict["rz"][point]))
-
+        
         record.append(cur_point)
     print
 
