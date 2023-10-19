@@ -120,7 +120,7 @@ class Simulation:
         # Run the stages
         stage_separation_delay = 1
 
-        minimum_ignition_delay = 1
+        minimum_ignition_delay = 14
         motor_ignition_delay = 0
         maximum_ignition_delay = 15
         is_ignited = False
@@ -133,9 +133,10 @@ class Simulation:
         while self.time_stamp < stage_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay + motor_ignition_delay:
             if start:
                 start = False
-
+            # print(self.rocket.current_stage)
             # Apogee optimization
-            if self.rocket.current_stage == 1 and not is_ignited:
+            if self.rocket.current_stage == 0 and not is_ignited:
+                
                 # Only do this for sustainer stage
 
                 # Get apogee estimate:
@@ -148,7 +149,7 @@ class Simulation:
                     motor_ignition_delay = maximum_ignition_delay
 
                 if self.time_stamp > motor_ignition_delay + stage_time:
-                    print(f"Motor ignited at {self.time_stamp}")
+                    print(f"(delayed) Motor ignited at {self.time_stamp}")
                     is_ignited = True
                     self.rocket.get_motor().ignite(self.time_stamp)
                     ignition_time = self.time_stamp
