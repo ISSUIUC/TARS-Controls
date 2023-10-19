@@ -1,0 +1,3 @@
+The `Legacy/Control_Design` folder contains the python implementation of the PID roll controller that was used on the **Endurance** launch vehicle in October 2021.
+
+`Simulation/Legacy/1dof_sim_RK4.py` is an RK4 based 1-DOF python simulation that was used to develop the active drag control system and extended kalman filter that is implemented on the **Intrepid** class of launch vehicles in 2021-2022.
