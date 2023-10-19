@@ -4,11 +4,98 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import math
+import sys
 
 import dynamics.forces as forces
 import util.vectors as vct
 import properties.properties as prop
 import dynamics.rocket as rocket_model
+
+class ApogeeOptimizer:
+    last_sample_d0: float = sys.float_info.min # Last value seen for the "actual value"
+    last_sample_d1: float = sys.float_info.min # Last value seen for the first derivative
+    last_sample_d2: float = sys.float_info.min # Last value seen for the second derivative
+
+    samples_d0: list[float] = [] # Samples for actual values
+    samples_d1: list[float] = [] # Samples for first derivative
+    samples_d2: list[float] = [] # Samples for second derivative
+    d2_smooth_samples: list[float] = [] # Samples for averages of samples_d2, to smooth out the graph.
+
+    smoothing_d0: int = 1 # Number of samples to "look back" when calculating a reference value for "actual value"
+    smoothing_d1: int = 1 # Number of samples to "look back" when calculating a reference value for the first derivative
+    smoothing_d2: int = 1 # Number of samples to "look back" when calculating a reference value for the second derivative
+    smoothing_d2_granular: int = 1 # Number of samples to accumulate for second derivative (to reduce spikes)
+
+    def __init__(self, smooth_d0, smooth_d1, smooth_d2, smooth_granular) -> None:
+        """Initializes apogee optimizer with certain values for smoothing"""
+        self.smoothing_d0 = smooth_d0
+        self.smoothing_d1 = smooth_d1
+        self.smoothing_d2 = smooth_d2
+        self.smoothing_d2_granular = smooth_granular
+        pass
+
+    def add_element_to_circular_buffer(value: float, buffer: list[float], max_buffer_len: int) -> None:
+        """
+        Adds an element to a list as if it's a buffer with a limited size (removes earlier elements)
+        """
+        if(len(buffer) >= max_buffer_len):
+            buffer = buffer[1:]
+        buffer.append(value)
+        return buffer
+
+    def get_buffer_average(buffer: list[float]) -> float:
+        buf_sum = 0
+        for sample in buffer:
+            buf_sum += sample
+        return buf_sum / len(buffer)
+        
+    def add_sample(self, new_apogee_estimate: float, dt: float):
+        """
+        Adds a sample to the apogee optimizer and recalculates all derivaitves
+        @new_apogee_estimate: New value (from Apogee_Estimator)
+        @dt: Time between last estimate and current estimate.
+        """
+
+        # Remove differentiation spikes for actual:
+        if self.last_sample_d0 == sys.float_info.min:
+            self.last_sample_d0 = new_apogee_estimate
+
+        # Add the current sample to the buffer
+        self.samples_d0 = ApogeeOptimizer.add_element_to_circular_buffer(new_apogee_estimate, self.samples_d0, self.smoothing_d0)
+
+        # Calculate first derivative:
+        apogee_diff = (new_apogee_estimate - self.last_sample_d0) / dt # 1st derivative
+        self.samples_d1 = ApogeeOptimizer.add_element_to_circular_buffer(apogee_diff, self.samples_d1, self.smoothing_d1)
+        
+        # Calculate second derivative:
+
+        apogee_d2 = (apogee_diff - self.last_sample_d1) / dt # 2nd derivative
+
+        self.samples_d2 = ApogeeOptimizer.add_element_to_circular_buffer(apogee_d2, self.samples_d2, self.smoothing_d2)
+
+        # Calculate smooth value for second derivative:
+        new_smooth = ApogeeOptimizer.get_buffer_average(self.samples_d2)
+        self.d2_smooth_samples = ApogeeOptimizer.add_element_to_circular_buffer(new_smooth, self.d2_smooth_samples, self.smoothing_d2_granular)
+
+        # Set all "Last" values:
+        self.last_sample_d0 = new_apogee_estimate
+        self.last_sample_d1 = apogee_diff
+        self.last_sample_d2 = apogee_d2
+
+    def get_d0(self):
+        return ApogeeOptimizer.get_buffer_average(self.samples_d0)
+    
+    def get_d1(self):
+        return ApogeeOptimizer.get_buffer_average(self.samples_d1)
+    
+    def get_d2(self):
+        return ApogeeOptimizer.get_buffer_average(self.samples_d2)
+    
+    def get_d2_smooth(self):
+        return ApogeeOptimizer.get_buffer_average(self.d2_smooth_samples)
+
+
+
 class Apogee: 
     '''Apogee Estimator Class
     
@@ -26,10 +113,10 @@ class Apogee:
     rasaero_file_location = ""
     rasaero = None
     rocket = None
-    stage_config = None
     
-    def __init__(self, state, dt, a, b, n, atm, stage_config):
-        self.rasaero_file_location = os.path.join(os.path.dirname(__file__), stage_config['rocket_body']['rasaero_lookup_file'])
+    def __init__(self, state, dt, a, b, n, atm, rocket: rocket_model.Rocket):
+        current_config: rocket_model.Rocket = rocket.stages[rocket.current_stage]
+        self.rasaero_file_location = os.path.join(os.path.dirname(__file__), current_config.get_Rasaero())
         self.rasaero = pd.read_csv(self.rasaero_file_location)
         self.state = state[:3][0].copy()
         self.dt = dt
@@ -37,8 +124,7 @@ class Apogee:
         self.c, self.x_interpolate = self.calc_spline_coefficients(a, b, n)
         self.n = n
         self.atm = atm
-        self.stage_config = stage_config
-        self.rocket = rocket_model.Rocket(self.stage_config)
+        self.rocket = rocket
     
     def set_params(self, state):
         '''Reset the state vector to the current state of the rocket
@@ -48,9 +134,10 @@ class Apogee:
         '''
         self.state = state.copy()
 
-    def RK4(self):
+    def RK4(self, timestamp):
         """Runge-Kutta 4th order method for state propogation
         """
+
         k1_v = self.state[2]
         k2_v = self.state[2] + k1_v*(self.dt/2)
         k3_v = self.state[2] + k2_v*(self.dt/2)
@@ -66,7 +153,7 @@ class Apogee:
 
         p = (self.state[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*self.dt)
 
-        a = self.get_accel()
+        a = self.get_accel(timestamp)
 
         self.state = np.array([p,v,a])
     
@@ -104,7 +191,7 @@ class Apogee:
         return Ca
 
 
-    def get_accel(self) -> np.ndarray:
+    def get_accel(self, timestamp) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
         
         Returns:
@@ -116,11 +203,12 @@ class Apogee:
         alt = self.state[0]
         density = self.atm.get_density(alt)
         drag = -0.5*(self.state[1]**2 * C_a*density*self.rocket.A)
-        grav = self.gravitational_force(alt)
-        force =  drag + grav
-        return force/self.rocket.rocket_dry_mass
+        grav = self.gravitational_force(alt, timestamp)
+        thrust = self.rocket.motor.get_thrust(timestamp)
+        force = drag + grav + thrust[0]
+        return force/self.rocket.get_rocket_total_mass(timestamp)
 
-    def gravitational_force(self, altitude) -> np.ndarray:
+    def gravitational_force(self, altitude, timestamp) -> np.ndarray:
         '''Calculates gravitational force acting on rocket based on altitude
         Relevant Equations:
             F = GMm/r^2
@@ -131,7 +219,7 @@ class Apogee:
         Returns:
             (np.array): vector of gravitational forces on each axis [1x3]
         '''
-        return -(prop.G*prop.m_e*self.rocket.rocket_dry_mass)/((prop.r_e+altitude)**2)
+        return -(prop.G*prop.m_e*self.rocket.get_rocket_total_mass(timestamp))/((prop.r_e+altitude)**2)
 
     def step_v(self):
         
@@ -152,8 +240,10 @@ class Apogee:
             self.state[0] (float): predicted apogee of rocket
         '''
         self.set_params(current_state.copy())
+        timestamp = 0
         while (self.state[1] > 0):
-            self.RK4()
+            self.RK4(timestamp)
+            timestamp += self.dt
         return self.state[0]
     
     ########################################

@@ -8,7 +8,6 @@ import dynamics.rocket as rocket_model
 import environment.atmosphere as atm_model
 
 class Simulator():
-    
     atm = None
     rocket = None
     forces = None

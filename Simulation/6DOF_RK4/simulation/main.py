@@ -47,9 +47,19 @@ import environment.atmosphere as atmosphere
 config = dataloader.config
 
 # Runs simulation for the specific component of the rocket
+
+gl_apogee_last = 0
+gl_apogee_d1_last = 0
+gl_apogee_d2_last = []
+gl_apogee_plot = []
+gl_apogee_plot_d1 = []
+gl_apogee_plot_d2 = []
+gl_apogee_d2_accum = []
+gl_apogee_accum_plot = []
+
 class Simulation:
     # dt can be dynamic in the future, so we need to 
-    def __init__(self, rocket, motor, dt, x0, time_stamp=0, stages=[]):
+    def __init__(self, rocket: rocket_model.Rocket, motor, dt, x0, time_stamp=0, stages=[]):
         self.rocket = rocket
         self.stages = stages
         self.motor = motor
@@ -82,7 +92,7 @@ class Simulation:
         pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
         yaw = np.arctan2(-ax,-ay) + np.pi/2
         self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
-        self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
+        self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket)
 
     def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
         self.kalman_filter.priori()
@@ -106,22 +116,56 @@ class Simulation:
             self.time_step()
 
     def execute_stage(self):
+        global gl_apogee_accum_plot, gl_apogee_plot, gl_apogee_plot_d2, gl_apogee_plot_d1
         # Run the stages
         stage_separation_delay = 1
-        self.rocket.get_motor().ignite(self.time_stamp)
 
-        ignition_time = self.time_stamp
+        minimum_ignition_delay = 1
+        motor_ignition_delay = 0
+        maximum_ignition_delay = 15
+        is_ignited = False
+
+        stage_time = self.time_stamp
+
         start = True
         print(f"Staged at {self.time_stamp}")
-        while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
+        apogee_optimizer = apg.ApogeeOptimizer(1, 3, 20, 15)
+        while self.time_stamp < stage_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay + motor_ignition_delay:
             if start:
                 start = False
+
+            # Apogee optimization
+            if self.rocket.current_stage == 1 and not is_ignited:
+                # Only do this for sustainer stage
+
+                # Get apogee estimate:
+                # self.apogee_estimator.predict_apogee()
+
+                if motor_ignition_delay < minimum_ignition_delay:
+                    motor_ignition_delay = minimum_ignition_delay
+
+                if motor_ignition_delay > maximum_ignition_delay:
+                    motor_ignition_delay = maximum_ignition_delay
+
+                if self.time_stamp > motor_ignition_delay + stage_time:
+                    print(f"Motor ignited at {self.time_stamp}")
+                    is_ignited = True
+                    self.rocket.get_motor().ignite(self.time_stamp)
+                    ignition_time = self.time_stamp
+            else:
+                if not is_ignited:
+                    # If not second stage, immediately ignite.
+                    print(f"Motor ignited at {self.time_stamp}")
+                    is_ignited = True
+                    self.rocket.get_motor().ignite(self.time_stamp)
+                    ignition_time = self.time_stamp
+
             # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            apogee_est = 0
 
             self.rocket.set_motor_mass(self.time_stamp)
 
@@ -129,6 +173,7 @@ class Simulation:
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
+
 
     def run_stages(self):
         has_more_stages = True
