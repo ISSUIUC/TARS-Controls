@@ -1,3 +1,5 @@
+<<: *OUTDATED_CONFIG
+---
 <<: *pysim_simulation
 desired_apogee: 4572
 rocket:

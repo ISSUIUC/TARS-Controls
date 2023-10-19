@@ -42,96 +42,129 @@ import time
 import estimation.apogee_estimator as apg
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
-import dynamics.controller as contr
 
 # Load desired config file
 config = dataloader.config
 
-atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
-rocket = rocket_model.Rocket(config, atm=atm)
-motor = rocket.motor
-sim = sim_class.Simulator(atm=atm, rocket=rocket)
-sim_dict = {
-    "pos": [],
-    "vel": [],
-    "accel": [],
-    "ang_pos": [],
-    "ang_vel": [],
-    "ang_accel": [],
-    "alpha": [],
-    "flap_ext": [],
-    "rocket_total_mass": [],
-    "motor_mass": [],
-    "time": [],
-}
+# Runs simulation for the specific component of the rocket
+class Simulation:
+    # dt can be dynamic in the future, so we need to 
+    def __init__(self, rocket, motor, dt, x0, time_stamp=0, stages=[]):
+        self.rocket = rocket
+        self.stages = stages
+        self.motor = motor
+        self.dt = dt
+        self.x = x0.copy()
+        self.baro = 0
+        self.time_stamp = time_stamp
+        self.sensor_config = self.rocket.stage_config['sensors']
+        self.init_kalman_filters()
 
-kalman_dict = {
-    "x": [],
-    "y": [],
-    "z": [],
-    "cov_x": [],
-    "cov_y": [],
-    "cov_z": [],
-    "rx": [],
-    "ry": [],
-    "rz": [],
-    "time": []
-}
+    def init_kalman_filters(self):
+        # TODO: Init with previous rocket data
+        self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        # TODO: init this data with the previous rocket becuase of staging
+        x_data = []
+        y_data = []
+        z_data = []
+        for i in range(10):
+            reading = sensors.get_accelerometer_data(self.x, self.sensor_config)
+            x_data.append(reading[0])
+            y_data.append(reading[1])
+            z_data.append(reading[2])
 
-sensor_dict = {
-    "baro_alt": [],
-    "imu_accel_x": [],
-    "imu_accel_y": [],
-    "imu_accel_z": [],
-    "imu_ang_pos_x": [],
-    "imu_ang_pos_y": [],
-    "imu_ang_pos_z": [],
-    "imu_gyro_x": [],
-    "imu_gyro_y": [],
-    "imu_gyro_z": [],
-    "apogee_estimate": []
-}
+        accel_tracker = np.array([])
 
-def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext):
-    # Append to sensor_dict
-    sensor_dict["baro_alt"].append(baro_alt)
-    sensor_dict["imu_accel_x"].append(accel[0])
-    sensor_dict["imu_accel_y"].append(accel[1])
-    sensor_dict["imu_accel_z"].append(accel[2])
-    sensor_dict["imu_ang_pos_x"].append(bno_ang_pos[0])
-    sensor_dict["imu_ang_pos_y"].append(bno_ang_pos[1])
-    sensor_dict["imu_ang_pos_z"].append(bno_ang_pos[2])
-    sensor_dict["imu_gyro_x"].append(gyro[0])
-    sensor_dict["imu_gyro_y"].append(gyro[1])
-    sensor_dict["imu_gyro_z"].append(gyro[2])
-    sensor_dict["apogee_estimate"].append(apogee_estimation)
+        ax = sum(x_data)/len(x_data)
+        ay = sum(y_data)/len(y_data)
+        az = sum(z_data)/len(z_data)
 
-    kalman_dict["x"].append(kalman_filter[0:3])
-    kalman_dict["y"].append(kalman_filter[3:6])
-    kalman_dict["z"].append(kalman_filter[6:9])
-    kalman_dict["cov_x"].append(kf_cov[0:3])
-    kalman_dict["cov_y"].append(kf_cov[3:6])
-    kalman_dict["cov_z"].append(kf_cov[6:9])
-    kalman_dict["rx"].append(kalman_filter_r[0:3])
-    kalman_dict["ry"].append(kalman_filter_r[3:6])
-    kalman_dict["rz"].append(kalman_filter_r[6:9])
+        pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
+        yaw = np.arctan2(-ax,-ay) + np.pi/2
+        self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
+        self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
 
-    # Update Simulator Log
-    sim_dict["pos"].append(x[0])
-    sim_dict["vel"].append(x[1])
-    sim_dict["accel"].append(x[2])
-    sim_dict["ang_pos"].append(x[3])
-    sim_dict["ang_vel"].append(x[4])
-    sim_dict["ang_accel"].append(x[5])
-    sim_dict["time"].append(sim_dict["time"][-1] +
-                            dt if len(sim_dict["time"]) > 0 else 0)
-    sim_dict["flap_ext"].append(flap_ext)                    
-    sim_dict["alpha"].append(alpha)
-    sim_dict["rocket_total_mass"].append(rocket_total_mass)
-    sim_dict["motor_mass"].append(motor_mass)
+    def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
+        self.kalman_filter.priori()
+        self.kalman_filter.update(bno_ang_pos, baro_alt,
+                            accel[0], accel[1], accel[2])
+        
+        self.r_kalman_filter.priori()
+        self.r_kalman_filter.update(*gyro, *accel)
+    
+    def time_step(self):
+        self.time_stamp += self.dt
 
+    def idle_stage(self):
+        while self.time_stamp < self.rocket.delay:
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            self.kalman_filter.reset_lateral_pos()
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-def simulator(x0, dt) -> None:
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
+            self.time_step()
+
+    def execute_stage(self):
+        # Run the stages
+        stage_separation_delay = 1
+        self.rocket.get_motor().ignite(self.time_stamp)
+
+        ignition_time = self.time_stamp
+        start = True
+        print(f"Staged at {self.time_stamp}")
+        while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
+            # Get sensor data
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
+            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+
+            self.rocket.set_motor_mass(self.time_stamp)
+
+            is_staging = start and self.rocket.current_stage != -1
+            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, is_staging, 0)
+
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
+            self.time_step()
+            if start:
+                start = False
+
+    def run_stages(self):
+        has_more_stages = True
+        while has_more_stages:
+            self.execute_stage()
+            has_more_stages = self.rocket.separate_stage(self.time_stamp)
+
+    # Function to retrive all sensor data
+    def get_sensor_data(self):
+        return (sensors.get_barometer_data(self.x, self.sensor_config),
+                sensors.get_accelerometer_data(self.x, self.sensor_config),
+                sensors.get_gyro_data(self.x, self.sensor_config), 
+                sensors.get_bno_orientation(self.x, self.sensor_config))
+
+    def get_kalman_state(self):
+        current_state = self.kalman_filter.get_state()
+        current_cov = self.kalman_filter.get_covariance()
+        current_state_r = self.r_kalman_filter.get_state()
+        return (current_state, current_cov, current_state_r)
+
+    def coast(self):
+        while self.x[1, 0] >= 0:
+        # Get sensor data
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
+            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+
+            self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
+
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
+            self.time_step()
+    
+def simulator(x0, rocket, motor, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
 
     Args:
@@ -144,159 +177,36 @@ def simulator(x0, dt) -> None:
             [ang_vel,   ang_vel,   ang_vel],
             [ang_accel, ang_accel, ang_accel]]
         dt (float): time step between each iteration in simulation
-
     '''
-
-    x = x0.copy()
-    baro = 0
-    bno_ang_pos = 0
-    
-    len_buffer = 30
-    for i in range(len_buffer):
-        baro+=sensors.get_barometer_data(x)
-        bno_ang_pos+=sensors.get_bno_orientation(x)
-
-    baro_avg = baro/len_buffer
-    bno_ang_pos_avg = bno_ang_pos/len_buffer
-
-    kalman_filter = ekf.KalmanFilter(
-        dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-    accel = sensors.get_accelerometer_data(x)
-    x_data = []
-    y_data = []
-    z_data = []
-    for i in range(10):
-        reading = sensors.get_accelerometer_data(x)
-        x_data.append(reading[0])
-        y_data.append(reading[1])
-        z_data.append(reading[2])
-    
-    accel_tracker = np.array([])
-    
-    ax = sum(x_data)/len(x_data)
-    ay = sum(y_data)/len(y_data)
-    az = sum(z_data)/len(z_data)
-    
-    pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
-    yaw = np.arctan2(-ax,-ay) + np.pi/2
-    r_kalman_filter = r_ekf.KalmanFilter_R(
-        dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
-    time_stamp = 0
-
-    # Use an n value (last parameter) that is divisible by 3 to make computations easier
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, config)
-    Kp, Ki, Kd = 0.0002, 0, 0
-    controller = contr.Controller(Kp, Ki, Kd, dt, config["desired_apogee"])
-
-    # Idle stage
-    while time_stamp < rocket.delay:
-        time_stamp += dt
-        baro_alt = sensors.get_barometer_data(x)
-        accel = sensors.get_accelerometer_data(x)
-        gyro = sensors.get_gyro_data(x)
-        bno_ang_pos = sensors.get_bno_orientation(x)
-
-        kalman_filter.priori()
-        kalman_filter.update(bno_ang_pos, baro_alt,
-                             accel[0], accel[1], accel[2])
-        
-        r_kalman_filter.priori()
-        r_kalman_filter.update(*gyro, *accel)
-
-        kalman_filter.reset_lateral_pos()
-        current_state = kalman_filter.get_state()
-        current_covariance = kalman_filter.get_covariance()
-        current_state_r = r_kalman_filter.get_state()
-
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], rocket.rocket_total_mass, rocket.motor_mass, 0)
-
-    print("Ignition")
-
-    # # while x[1][prop.vertical] > prop.apogee_thresh and x[0][prop.vertical] > prop.start_thresh:
-    start = True
+    simulator = Simulation(rocket, motor, dt, x0, stages=rocket.stages)
+    simulator.idle_stage()
     t_start = time.time()
-    motor.ignite(time_stamp)
-
-    while x[1, 0] >= 0 or start:
-        if start:
-            start = False
-        # Get sensor data
-        baro_alt = sensors.get_barometer_data(x)
-        accel = sensors.get_accelerometer_data(x)
-        gyro = sensors.get_gyro_data(x)
-        bno_ang_pos = sensors.get_bno_orientation(x)
-
-        # Kalman Filter stuff goes here
-        kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
-        kalman_filter.update(bno_ang_pos, baro_alt,
-                             accel[0], accel[1], accel[2])
-
-        r_kalman_filter.priori()
-        r_kalman_filter.update(*gyro, *accel)
-
-        current_state = kalman_filter.get_state()
-        current_cov = kalman_filter.get_covariance()
-        current_state_r = r_kalman_filter.get_state()
-
-        apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
-
-        flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
-
-        rocket.set_motor_mass(time_stamp)
-
-        x, alpha = sim.RK4(x, dt, time_stamp, flap_ext)
-        time_stamp += dt
-
-        addToDict(x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_cov, current_state_r, alpha, apogee_est, rocket.rocket_total_mass, rocket.motor_mass, flap_ext)
-
+    simulator.run_stages()
+    simulator.coast()
     t_end = time.time() - t_start
-    print(f"Time: {t_end:.2f}")
+    print(f"Runtime: {t_end:.2f} seconds")
+
 
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0]
     dt = 0.01
-    simulator(x0, dt)
+
+    atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
+
+    stages = []
+    for stage in config['rocket']['stages'][1:]:
+        stages.append(rocket_model.Rocket(stage, atm=atm))
+    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm, stages=stages)
+
+    motor = rocket.motor
+    sim = sim_class.Simulator(atm=atm, rocket=rocket)
+
+    simulator(x0, rocket, motor, dt)
 
     print("Writing to file...")
 
-    record = []
-    for point in range(len(sim_dict["time"])):
-        cur_point = []
-        cur_point.append(str(sim_dict["time"][point]))
-        cur_point += list(map(str, sim_dict["pos"][point]))
-        cur_point += list(map(str, sim_dict["vel"][point]))
-        cur_point += list(map(str, sim_dict["accel"][point]))
-        cur_point += list(map(str, sim_dict["ang_pos"][point]))
-        cur_point += list(map(str, sim_dict["ang_vel"][point]))
-        cur_point += list(map(str, sim_dict["ang_accel"][point]))
-        cur_point += map(str, list([sim_dict["alpha"][point]]))
-        cur_point += map(str, list([sim_dict["rocket_total_mass"][point]]))
-        cur_point += map(str, list([sim_dict["motor_mass"][point]]))
-        cur_point += map(str, list([sim_dict["flap_ext"][point]]))
-        cur_point += map(str, list([sensor_dict["baro_alt"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_accel_x"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_accel_y"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_accel_z"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_ang_pos_x"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_ang_pos_y"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_ang_pos_z"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_gyro_x"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_gyro_y"][point]]))
-        cur_point += map(str, list([sensor_dict["imu_gyro_z"][point]]))
-        cur_point += map(str, list([sensor_dict["apogee_estimate"][point]]))
-        cur_point += map(str, list(kalman_dict["x"][point]))
-        cur_point += map(str, list(kalman_dict["y"][point]))
-        cur_point += map(str, list(kalman_dict["z"][point]))
-        cur_point += map(str, list(kalman_dict["cov_x"][point]))
-        cur_point += map(str, list(kalman_dict["cov_y"][point]))
-        cur_point += map(str, list(kalman_dict["cov_z"][point]))
-        cur_point += map(str, list(kalman_dict["rx"][point]))
-        cur_point += map(str, list(kalman_dict["ry"][point]))
-        cur_point += map(str, list(kalman_dict["rz"][point]))
-
-        record.append(cur_point)
-
+    record = rocket.to_csv()
     output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     with open(output_file, 'w') as f:
         f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,apogee_estimate,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")

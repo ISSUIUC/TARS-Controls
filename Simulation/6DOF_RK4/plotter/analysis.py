@@ -163,6 +163,15 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     fig_3d.colorbar(plot)
     plt.show()
 
+def rocket_mass_plot(sim_dict, sensor_dict=0, kalman_dict=0):
+    plt.figure()
+    plt.plot(sim_dict["time"], sim_dict["rocket_total_mass"], label="Rocket Total Mass", color="tab:red", linewidth = 2)
+    plt.plot(sim_dict["time"], sim_dict["motor_mass"], label="Motor Mass", color="tab:blue", linewidth = 2);
+    plt.legend()
+    plt.xlabel("Time (s)")
+    plt.ylabel("Mass (kg)")
+    plt.show(block=False)
+
 if __name__ == "__main__":
     sim_dict = {}
     sensor_dict = {}
@@ -198,4 +207,5 @@ if __name__ == "__main__":
     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
     sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
 
+    rocket_mass_plot(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)
     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)

@@ -151,6 +151,22 @@ Ideally, the structure definition for `pysim_simulation` would be such that not 
 
 as it will at least help you get most of the way there.
 
+### Outdated configuration files
+If, while loading a configuration file, you recieve the following error: 
+```
+PySim Configuration ERR: The configuration file loaded was marked with the OUTDATED_CONFIG flag, and the simulation will crash if it continues with this config. Please select a different configuration file.
+```
+
+This means that the current version of the simulator does not support your config, and someone has marked the config as `OUTDATED`. If you know of a config which will not work with current PySim code, and you do not with to delete the config, simply mark it as `OUTDATED` by prepending the file with this code:
+
+```
+<<: *OUTDATED_CONFIG
+---
+
+...rest of the config here...
+```
+
+
 ### Object templates
 If you have an object of a certain type that you know you will be re-using (such as a specific COTS motor), it is better to add it to **templates** instead of re-writing the data for that object in each configuration file.
 

@@ -116,13 +116,18 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
                                 enable_magnitude_variance=enable_magnitude_variance,
                                 nominal_wind_direction=nominal_wind_direction,
                                 nominal_wind_magnitude=nominal_wind_magnitude)
-    rocket = rocket_model.Rocket(atm=atm)
+    
+    # rocket = rocket_model.Rocket(atm=atm)
+    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm)
     motor = rocket.motor
     sim = sim_class.Simulator(atm=atm, rocket=rocket)
     
     # Array to store the data from this simulation. Each row is a datapoint. This replaces the 3 dictionaries used in main.py 
     # for the performance improvement offered by .npy files over .csv files.
     sim_data = np.array([])
+
+    # Get sensor config data
+    sensor_config = rocket.stage_config['sensors']
     
     x = x0.copy()
     # Random variations to initial state
@@ -133,12 +138,12 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
             
     kalman_filter = ekf.KalmanFilter(
         dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-    accel = sensors.get_accelerometer_data(x)
+    accel = sensors.get_accelerometer_data(x, sensor_config)
     x_data = []
     y_data = []
     z_data = []
     for i in range(10):
-        reading = sensors.get_accelerometer_data(x)
+        reading = sensors.get_accelerometer_data(x, sensor_config)
         x_data.append(reading[0])
         y_data.append(reading[1])
         z_data.append(reading[2])
@@ -156,17 +161,17 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
     time_stamp = 0
 
     # Use an n value (last parameter) that is divisible by 3 to make computations easier
-    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm)
+    apogee_estimator = apg.Apogee(kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, rocket.stage_config)
     Kp, Ki, Kd = 0.0002, 0, 0
-    controller = contr.Controller(Kp, Ki, Kd, dt, prop.des_apogee)
+    controller = contr.Controller(Kp, Ki, Kd, dt, config['desired_apogee'], rocket.stage_config)
 
     # Idle stage
     while time_stamp < rocket.delay:
         time_stamp += dt
-        baro_alt = sensors.get_barometer_data(x)
-        accel = sensors.get_accelerometer_data(x)
-        gyro = sensors.get_gyro_data(x)
-        bno_ang_pos = sensors.get_bno_orientation(x)
+        baro_alt = sensors.get_barometer_data(x, sensor_config)
+        accel = sensors.get_accelerometer_data(x, sensor_config)
+        gyro = sensors.get_gyro_data(x, sensor_config)
+        bno_ang_pos = sensors.get_bno_orientation(x, sensor_config)
 
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
         kalman_filter.update(bno_ang_pos, baro_alt,
@@ -201,10 +206,10 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
             start = False
         # print("Timestamp: ", time_stamp)
         # Get sensor data
-        baro_alt = sensors.get_barometer_data(x)
-        accel = sensors.get_accelerometer_data(x)
-        gyro = sensors.get_gyro_data(x)
-        bno_ang_pos = sensors.get_bno_orientation(x)
+        baro_alt = sensors.get_barometer_data(x, sensor_config)
+        accel = sensors.get_accelerometer_data(x, sensor_config)
+        gyro = sensors.get_gyro_data(x, sensor_config)
+        bno_ang_pos = sensors.get_bno_orientation(x, sensor_config)
 
         # Kalman Filter stuff goes here
         kalman_filter.priori(np.array([0.0, 0.0, 0.0, 0.0]))
@@ -219,7 +224,7 @@ def simulator(x0, dt, sample_number, run_folder, target_size:int, nominal:bool=F
 
         apogee_est = apogee_estimator.predict_apogee(current_state[0:3])
 
-        flap_ext = controller.get_flap_extension(time_stamp > config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
+        flap_ext = controller.get_flap_extension(time_stamp > rocket.stage_config["motor"]["delay"] and np.linalg.norm(motor.get_thrust(time_stamp)) <= 0, apogee_est)
 
         # flap_ext will be passed by kalman filter
         rocket.set_motor_mass(time_stamp)

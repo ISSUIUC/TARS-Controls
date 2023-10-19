@@ -1,0 +1,66 @@
+<<: *pysim_simulation
+rocket:
+  <<: *simulated_rocket
+  stages:
+    - booster:
+      <<: *simulated_stage
+      rocket_body:
+        <<: *simulated_rocket_body
+        rasaero_lookup_file: "../lookup/RASAero.csv"
+        C_d: 0.5
+        C_d_s: 1.2
+        length: 6.68
+        dry_mass: 30
+        radius: 0.0508
+        structure_cm: !numpy/array [1.48, 0., 0.]
+        combined_cm: !numpy/array [1.03, 0., 0.]
+        combined_cp: !numpy/array [0.63, 0., 0.]
+      motor:
+        <<: *motor_M2500
+      sensors:
+        high_g:
+          RMS: 1.9 # milli g
+        gyro:
+          RMS: 75 # mdps (millidegrees per second)
+        barometer:
+          RMS: .012  # Pascal Conversion
+        bno:
+          error: !eval 2.5/3
+      flaps:
+        <<: *simulated_flaps
+        max_ext_length: .0178
+        max_ext_spd: 0.001
+    - sustainer:
+      <<: *simulated_stage
+      rocket_body:
+        <<: *simulated_rocket_body
+        rasaero_lookup_file: "../lookup/RASAero.csv"
+        C_d: 0.5
+        C_d_s: 1.2
+        length: 3.34
+        dry_mass: 14.691
+        radius: 0.0508
+        structure_cm: !numpy/array [1.48, 0., 0.]
+        combined_cm: !numpy/array [1.03, 0., 0.]
+        combined_cp: !numpy/array [0.63, 0., 0.]
+      motor:
+        <<: *motor_M2500
+      sensors:
+        high_g:
+          RMS: 1.9 # milli g
+        gyro:
+          RMS: 75 # mdps (millidegrees per second)
+        barometer:
+          RMS: .012  # Pascal Conversion
+        bno:
+          error: !eval 2.5/3
+      flaps:
+        <<: *simulated_flaps
+        max_ext_length: .0178
+        max_ext_spd: 0.001
+desired_apogee: 4572
+meta:
+  output_file: '../output/simulated_6dof.csv'
+  monte_carlo_output_folder: '../output/monte_carlo'
+
+
