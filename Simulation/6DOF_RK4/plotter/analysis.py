@@ -69,7 +69,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     flap_nc.set_ylabel("Flap Extension (m)", fontsize = 10);  
     flap_nc.legend(fontsize=10, loc='upper left',ncol=1);   
 
-    plt.tight_layout(); 
+    plt.tight_layout();
 
     fig_angular,(ang_pos_nc, ang_vel_nc, ang_accel_nc, alpha_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);  
     fig_angular.suptitle("PYSIM 6DOF ANGULAR PLOT", color='#F5B14C', fontsize = 20);    
