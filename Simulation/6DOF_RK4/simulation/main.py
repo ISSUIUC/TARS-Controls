@@ -120,19 +120,28 @@ class Simulation:
         # Run the stages
         stage_separation_delay = 1
 
-        minimum_ignition_delay = 14
+        minimum_ignition_delay = 10
         motor_ignition_delay = 0
         maximum_ignition_delay = 15
         is_ignited = False
 
         stage_time = self.time_stamp
 
+        time_stamps = []
+
         start = True
         print(f"Staged at {self.time_stamp}")
-        apogee_optimizer = apg.ApogeeOptimizer(1, 3, 20, 15)
+        apogee_optimizer = apg.ApogeeOptimizer(1,1,1,1)
         while self.time_stamp < stage_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay + motor_ignition_delay:
             if start:
                 start = False
+
+
+            # Get sensor data
+            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
             # print(self.rocket.current_stage)
             # Apogee optimization
             if self.rocket.current_stage == 0 and not is_ignited:
@@ -140,7 +149,16 @@ class Simulation:
                 # Only do this for sustainer stage
 
                 # Get apogee estimate:
-                # self.apogee_estimator.predict_apogee()
+                apogee_estimate = self.apogee_estimator.predict_apogee(current_state[0:3])
+                apogee_optimizer.add_sample(apogee_estimate, dt)
+
+                print(f"Coasting: {(self.time_stamp - stage_time):.2f}s | Current motor delay: {motor_ignition_delay:.2f}s | Current Apogee Estimate: {apogee_estimate:.2f}m", end="\r")
+
+                gl_apogee_accum_plot.append(apogee_optimizer.get_d2_smooth())
+                gl_apogee_plot.append(apogee_estimate)
+                gl_apogee_plot_d2.append(apogee_optimizer.get_d2())
+                gl_apogee_plot_d1.append(apogee_optimizer.get_d1())
+                time_stamps.append(self.time_stamp)
 
                 if motor_ignition_delay < minimum_ignition_delay:
                     motor_ignition_delay = minimum_ignition_delay
@@ -149,6 +167,15 @@ class Simulation:
                     motor_ignition_delay = maximum_ignition_delay
 
                 if self.time_stamp > motor_ignition_delay + stage_time:
+
+                    plt.plot(time_stamps, gl_apogee_plot, label="apogee_estimate")
+                    plt.plot(time_stamps, gl_apogee_plot_d1, label="apogee_d1")
+                    plt.plot(time_stamps, gl_apogee_plot_d2, label="apogee_d2")
+                    plt.plot(time_stamps, gl_apogee_accum_plot, label="apogee_smooth_d2")
+                    plt.legend()
+
+                    plt.show()
+                    print("")
                     print(f"(delayed) Motor ignited at {self.time_stamp}")
                     is_ignited = True
                     self.rocket.get_motor().ignite(self.time_stamp)
@@ -161,10 +188,7 @@ class Simulation:
                     self.rocket.get_motor().ignite(self.time_stamp)
                     ignition_time = self.time_stamp
 
-            # Get sensor data
-            baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
-            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
-            current_state, current_covariance, current_state_r = self.get_kalman_state()
+
 
             apogee_est = 0
 
@@ -202,7 +226,7 @@ class Simulation:
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            # apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 

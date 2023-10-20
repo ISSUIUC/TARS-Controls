@@ -204,7 +204,8 @@ class Apogee:
         density = self.atm.get_density(alt)
         drag = -0.5*(self.state[1]**2 * C_a*density*self.rocket.A)
         grav = self.gravitational_force(alt, timestamp)
-        thrust = self.rocket.motor.get_thrust(timestamp)
+        
+        thrust = self.rocket.get_motor().get_thrust(timestamp)
         force = drag + grav + thrust[0]
         return force/self.rocket.get_rocket_total_mass(timestamp)
 
@@ -241,6 +242,7 @@ class Apogee:
         '''
         self.set_params(current_state.copy())
         timestamp = 0
+        self.rocket.get_motor().start_time = 0
         while (self.state[1] > 0):
             self.RK4(timestamp)
             timestamp += self.dt
