@@ -32,30 +32,30 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);   
     #fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20); 
 
-    #pos line graphs
+    # linear pos line graphs
     trace_pos_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,0], mode = "lines", name = "X");
     trace_pos_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,1], mode = "lines", name = "Y");
     trace3_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,2], mode = "lines", name = "Z");
-    #kalman_pos line graphs
+    # linear kalman_pos line graphs
     trace4_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'));
     trace4_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'));
     trace4_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
     trace_apogee_estimate = go.Scatter(x = sensor_dict["time"],y = sensor_dict["apogee_estimate"], mode = "lines", name = "Apogee Estimate", line=dict(dash ='dot'));
     
-    #vel line graphs
+    # linear vel line graphs
     trace_vel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,0], mode = "lines", name = "X");
     trace_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,1], mode = "lines",  name = "Y");
     trace_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,2], mode = "lines",  name = "Z");
-    #kalman_vel line graphs
+    # linear kalman_vel line graphs
     trace_kalman_vel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,0], mode = "lines",  name = "X Estimate", line=dict(dash ='dot'));
     trace_kalman_vel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,1], mode = "lines",  name = "Y Estimate", line=dict(dash ='dot'));
     trace_kalman_vel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,2], mode = "lines",  name = "Z Estimate", line=dict(dash ='dot'));
 
-    #accel line graphs
+    # linear accel line graphs
     trace_accel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,0], mode = "lines", name = "X");
     trace_accel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,1], mode = "lines", name = "Y");
     trace_accel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,2], mode = "lines", name = "Z");
-    #kalman_accel line graphs
+    # linear kalman_accel line graphs
     trace_kalman_accel_0 = go.Scatter(x = kalman_dict["time"],y = kalman_dict["kalman_accel"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'));
     trace_kalman_accel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'));
     trace_kalman_accel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
@@ -82,26 +82,37 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     
     ##NEED TO ADD SENSOR INFORMATION TO THE GRAPH
 
+    ##Figure out how to stack subplots with all the desired traces, not just one
+
+    
     #Position Vs Kalman Estimated Position Graph
-    layout1 = go.Layout(yaxis=dict(title="Position")) #go.Layout meshes our traces together to form graphs  
-    data1 = [trace_pos_0, trace_pos_1, trace3_pos_2, trace4_kalman_pos_0, trace4_kalman_pos_1, trace4_kalman_pos_2,]
-    fig1_linear = go.Figure(layout = layout1, data = data1)
-    fig1_linear.show()
+    #layout1 = go.Layout(yaxis=dict(title="Position")) #go.Layout meshes our traces together to form graphs  
+    data1 = [trace_pos_0, trace_pos_1, trace3_pos_2, trace4_kalman_pos_0, trace4_kalman_pos_1, trace4_kalman_pos_2, trace_apogee_estimate]
+    #fig1_linear = go.Figure(layout = layout1, data = data1)
+    #fig1_linear.show()
 
     #Velocity Vs Kalman Estimated Velocity Graph
-    layout2 = go.Layout(yaxis=dict(title="Velocity"))
+    #layout2 = go.Layout(yaxis=dict(title="Velocity"))
     data2 = [trace_vel_0, trace_vel_1, trace_vel_2, trace_kalman_vel_0, trace_kalman_vel_1, trace_kalman_vel_2];
-    fig2_linear = go.Figure(layout = layout2, data = data2);
-    fig2_linear.show();
+    #fig2_linear = go.Figure(layout = layout2, data = data2);
+    #fig2_linear.show();
 
     #Acceleration Vs Kalman Estimated Acceleration Graph
-    layout3 = go.Layout(yaxis=dict(title="Acceleration"))
+    #layout3 = go.Layout(yaxis=dict(title="Acceleration"))
     data3 = [trace_accel_0, trace_accel_1, trace_accel_2, trace_kalman_accel_0, trace_kalman_accel_1, trace_kalman_accel_2];
-    fig3_linear = go.Figure(layout = layout3, data = data3);
-    fig3_linear.show();
+    #fig3_linear = go.Figure(layout = layout3, data = data3);
+    #fig3_linear.show();
+
+ ##Figure out how to stack subplots with all the desired traces, not just one
+    stack_fig = make_subplots(rows=3, cols=1)
+    stack_fig.add_traces(data1, rows=1, cols=1)
+    stack_fig.add_traces(data2, rows=2, cols=1)
+    stack_fig.add_traces(data3, rows=3, cols=1)
+    stack_fig.update_layout(title_text="Linear State vs. Kalman Filter", yaxis="position")
+    stack_fig.show()
 
     #NEED Angular Position Vs Kalman Position
-    #NEED
+
     layout4 = go.Layout(yaxis=dict(title=""))
 
 
@@ -273,39 +284,39 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 #     fig_3d.colorbar(plot)
 #     plt.show()
 
-# if __name__ == "__main__":
-#     sim_dict = {}
-#     sensor_dict = {}
-#     kalman_dict = {}
-#     output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
-#     file_data = pd.read_csv(output_file)
-#     sim_dict["time"] = file_data["time"].values
-#     sensor_dict["time"] = file_data["time"].values
-#     kalman_dict["time"] = file_data["time"].values
+if __name__ == "__main__":
+     sim_dict = {}
+     sensor_dict = {}
+     kalman_dict = {}
+     output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
+     file_data = pd.read_csv(output_file)
+     sim_dict["time"] = file_data["time"].values
+     sensor_dict["time"] = file_data["time"].values
+     kalman_dict["time"] = file_data["time"].values
 
-#     for attr in ["pos", "vel", "accel", "ang_pos", "ang_vel", "ang_accel"]:
-#         sim_dict[attr] = np.array(
-#             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
-#     for attr in ["kalman_pos", "kalman_vel", "kalman_accel", "pos_cov", "vel_cov", "accel_cov"]:
-#         kalman_dict[attr] = np.array(
-#             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
-#     for attr in ["kalman_rpos", "kalman_rvel", "kalman_raccel"]:
-#         kalman_dict[attr] = np.array(
-#             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
-#     sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
-#     sim_dict["rocket_total_mass"] = np.array(list(zip(file_data["rocket_total_mass"].values)))
-#     sim_dict["motor_mass"] = np.array(list(zip(file_data["motor_mass"].values)))
-#     sim_dict["flap_ext"] = np.array(list(zip(file_data["flap_ext"].values)))
-#     sensor_dict["baro_alt"] = np.array(list(zip(file_data["baro_alt"].values)))
-#     sensor_dict["imu_accel_x"] = np.array(list(zip(file_data["imu_accel_x"].values)))
-#     sensor_dict["imu_accel_y"] = np.array(list(zip(file_data["imu_accel_y"].values)))
-#     sensor_dict["imu_accel_z"] = np.array(list(zip(file_data["imu_accel_z"].values)))
-#     sensor_dict["imu_ang_pos_x"] = np.array(list(zip(file_data["imu_ang_pos_x"].values)))
-#     sensor_dict["imu_ang_pos_y"] = np.array(list(zip(file_data["imu_ang_pos_y"].values)))
-#     sensor_dict["imu_ang_pos_z"] = np.array(list(zip(file_data["imu_ang_pos_z"].values)))
-#     sensor_dict["imu_gyro_x"] = np.array(list(zip(file_data["imu_gyro_x"].values)))
-#     sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
-#     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
-#     sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
+     for attr in ["pos", "vel", "accel", "ang_pos", "ang_vel", "ang_accel"]:
+         sim_dict[attr] = np.array(
+             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+     for attr in ["kalman_pos", "kalman_vel", "kalman_accel", "pos_cov", "vel_cov", "accel_cov"]:
+         kalman_dict[attr] = np.array(
+             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+     for attr in ["kalman_rpos", "kalman_rvel", "kalman_raccel"]:
+         kalman_dict[attr] = np.array(
+             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+     sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
+     sim_dict["rocket_total_mass"] = np.array(list(zip(file_data["rocket_total_mass"].values)))
+     sim_dict["motor_mass"] = np.array(list(zip(file_data["motor_mass"].values)))
+     sim_dict["flap_ext"] = np.array(list(zip(file_data["flap_ext"].values)))
+     sensor_dict["baro_alt"] = np.array(list(zip(file_data["baro_alt"].values)))
+     sensor_dict["imu_accel_x"] = np.array(list(zip(file_data["imu_accel_x"].values)))
+     sensor_dict["imu_accel_y"] = np.array(list(zip(file_data["imu_accel_y"].values)))
+     sensor_dict["imu_accel_z"] = np.array(list(zip(file_data["imu_accel_z"].values)))
+     sensor_dict["imu_ang_pos_x"] = np.array(list(zip(file_data["imu_ang_pos_x"].values)))
+     sensor_dict["imu_ang_pos_y"] = np.array(list(zip(file_data["imu_ang_pos_y"].values)))
+     sensor_dict["imu_ang_pos_z"] = np.array(list(zip(file_data["imu_ang_pos_z"].values)))
+     sensor_dict["imu_gyro_x"] = np.array(list(zip(file_data["imu_gyro_x"].values)))
+     sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
+     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
+     sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
 
-#     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict) 
+     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict) 
