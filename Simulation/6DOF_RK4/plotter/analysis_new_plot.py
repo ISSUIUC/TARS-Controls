@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
+from plotly import * 
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly.graph_objs.scatter.marker import Line
-from plotly import * 
 import numpy as np
 import numpy.linalg as la
 import pandas as pd
@@ -80,8 +80,10 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     trace_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines");
     trace_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines"); 
     
-    ##NEED TO ADD SENSOR INFORMATION TO THE GRAPH
-
+    
+    
+    
+    
     ##Figure out how to stack subplots with all the desired traces, not just one
 
     
@@ -117,12 +119,14 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
 
     ### 3D PLOT WORKSPACE BELOW ###
+    ### SENSOR INFORMATION FOR THE GRAPH (IN PROGRESS) ##
 
-    #checking if 3D plot works
-    x = np.array([0,1])
-    y = np.array([1,1])
-    z = np.array([1,1])
-    df = pd.DataFrame({"x": x, "y":y, "z":z})
+    imu_accel_x = np.array(list(zip(file_data["imu_accel_x"].values)))
+    imu_accel_y = np.array(list(zip(file_data["imu_accel_y"].values)))
+    imu_accel_z = np.array(list(zip(file_data["imu_accel_z"].values)))
+    df_imu_accel = pd.DataFrame({"imu_accel_x": imu_accel_x, "imu_accel_y": imu_accel_y, "imu_accel_z": imu_accel_z})
+    
+    
 
     #fig = px.line_3d(df, x="x", y="y", z="z")
     #fig.show()
@@ -283,6 +287,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 #     ax_3d.set_zlabel("Altitude (m)")
 #     fig_3d.colorbar(plot)
 #     plt.show()
+
 
 if __name__ == "__main__":
      sim_dict = {}
