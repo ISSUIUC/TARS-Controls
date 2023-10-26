@@ -11,7 +11,7 @@ import util.vectors as vct
 import properties.properties as prop
 import dynamics.rocket as rocket_model
 
-class ApogeeOptimizer:
+class FiniteApogeeOptimizer:
     last_sample_d0: float = sys.float_info.min # Last value seen for the "actual value"
     last_sample_d1: float = sys.float_info.min # Last value seen for the first derivative
     last_sample_d2: float = sys.float_info.min # Last value seen for the second derivative
@@ -61,21 +61,21 @@ class ApogeeOptimizer:
             self.last_sample_d0 = new_apogee_estimate
 
         # Add the current sample to the buffer
-        self.samples_d0 = ApogeeOptimizer.add_element_to_circular_buffer(new_apogee_estimate, self.samples_d0, self.smoothing_d0)
+        self.samples_d0 = FiniteApogeeOptimizer.add_element_to_circular_buffer(new_apogee_estimate, self.samples_d0, self.smoothing_d0)
 
         # Calculate first derivative:
         apogee_diff = (new_apogee_estimate - self.last_sample_d0) / dt # 1st derivative
-        self.samples_d1 = ApogeeOptimizer.add_element_to_circular_buffer(apogee_diff, self.samples_d1, self.smoothing_d1)
+        self.samples_d1 = FiniteApogeeOptimizer.add_element_to_circular_buffer(apogee_diff, self.samples_d1, self.smoothing_d1)
         
         # Calculate second derivative:
 
         apogee_d2 = (apogee_diff - self.last_sample_d1) / dt # 2nd derivative
 
-        self.samples_d2 = ApogeeOptimizer.add_element_to_circular_buffer(apogee_d2, self.samples_d2, self.smoothing_d2)
+        self.samples_d2 = FiniteApogeeOptimizer.add_element_to_circular_buffer(apogee_d2, self.samples_d2, self.smoothing_d2)
 
         # Calculate smooth value for second derivative:
-        new_smooth = ApogeeOptimizer.get_buffer_average(self.samples_d2)
-        self.d2_smooth_samples = ApogeeOptimizer.add_element_to_circular_buffer(new_smooth, self.d2_smooth_samples, self.smoothing_d2_granular)
+        new_smooth = FiniteApogeeOptimizer.get_buffer_average(self.samples_d2)
+        self.d2_smooth_samples = FiniteApogeeOptimizer.add_element_to_circular_buffer(new_smooth, self.d2_smooth_samples, self.smoothing_d2_granular)
 
         # Set all "Last" values:
         self.last_sample_d0 = new_apogee_estimate
@@ -83,18 +83,41 @@ class ApogeeOptimizer:
         self.last_sample_d2 = apogee_d2
 
     def get_d0(self):
-        return ApogeeOptimizer.get_buffer_average(self.samples_d0)
+        return FiniteApogeeOptimizer.get_buffer_average(self.samples_d0)
     
     def get_d1(self):
-        return ApogeeOptimizer.get_buffer_average(self.samples_d1)
+        return FiniteApogeeOptimizer.get_buffer_average(self.samples_d1)
     
     def get_d2(self):
-        return ApogeeOptimizer.get_buffer_average(self.samples_d2)
+        return FiniteApogeeOptimizer.get_buffer_average(self.samples_d2)
     
     def get_d2_smooth(self):
-        return ApogeeOptimizer.get_buffer_average(self.d2_smooth_samples)
+        return FiniteApogeeOptimizer.get_buffer_average(self.d2_smooth_samples)
 
 
+class PolynomialApogeeOptimizer:
+    samples: list[float] = [] # Samples for actual values
+    degree: int = 2
+    sample_timestamps: list[float] = [] # Timestamps for values in {samples}
+    current_polynomial: list[float] = [1, 2, 3]
+
+    def __init__(self, degree:int = 2) -> None:
+        self.degree = degree
+
+    def add(self, sample: float, time: float):
+        self.samples.append(sample)
+        self.sample_timestamps.append(time)
+        self.current_polynomial = np.polyfit(self.sample_timestamps, self.samples, self.degree)
+
+    def calculate_derivative(self, order):
+        return np.polyder(self.current_polynomial, order)
+
+    def get_value(self, time):
+        return np.polyval(self.current_polynomial, [time])[0]
+
+    def get_derivative_value(self, order, time):
+        derivative = self.calculate_derivative(order)
+        return np.polyval(derivative, [time])[0]
 
 class Apogee: 
     '''Apogee Estimator Class
@@ -206,7 +229,6 @@ class Apogee:
         grav = self.gravitational_force(alt, timestamp)
         
         thrust = self.rocket.get_motor().get_thrust(timestamp)
-        force = drag + grav + thrust[0]
         return force/self.rocket.get_rocket_total_mass(timestamp)
 
     def gravitational_force(self, altitude, timestamp) -> np.ndarray:

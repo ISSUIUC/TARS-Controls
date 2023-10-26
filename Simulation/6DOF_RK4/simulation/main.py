@@ -57,6 +57,14 @@ gl_apogee_plot_d2 = []
 gl_apogee_d2_accum = []
 gl_apogee_accum_plot = []
 
+class PrettyOutput:
+    COAST_TAG = "\033[32maCOAST\033[0m" # 5 chars + space
+    PASSIVE_COAST_TAG = "\033[96mpCOAST\033[0m" # 5 chars + space
+    IDLE_TAG =  "\033[93mIDLE  \033[0m" # 5 chars + space
+    BURN_TAG =  "\033[91mBURN  \033[0m" # 5 chars + space
+    FLUSH = "                                                                                     "
+    SMFLUSH = "          "
+
 class Simulation:
     # dt can be dynamic in the future, so we need to 
     def __init__(self, rocket: rocket_model.Rocket, motor, dt, x0, time_stamp=0, stages=[]):
@@ -106,32 +114,43 @@ class Simulation:
         self.time_stamp += self.dt
 
     def idle_stage(self):
+        print_time_diff = 0
         while self.time_stamp < self.rocket.delay:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
             self.kalman_filter.reset_lateral_pos()
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
+            if(self.time_stamp > print_time_diff + 1):
+                print_time_diff += 1
+                FLIGHT_TS = f"\033[90m[T-{(self.rocket.delay-self.time_stamp):.2f}s] >\033[0m"
+                print(f"{PrettyOutput.IDLE_TAG} {FLIGHT_TS} Waiting for launch.. (Idle on pad)", end="\r")
+
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
+        print(f"{PrettyOutput.FLUSH}")
 
     def execute_stage(self):
         global gl_apogee_accum_plot, gl_apogee_plot, gl_apogee_plot_d2, gl_apogee_plot_d1
         # Run the stages
         stage_separation_delay = 1
 
-        minimum_ignition_delay = 10
+        minimum_ignition_delay = 1
         motor_ignition_delay = 0
-        maximum_ignition_delay = 15
+        maximum_ignition_delay = 10
+        motor_ignition_time = 0.5
         is_ignited = False
+
+        do_apogee_optimization = True
 
         stage_time = self.time_stamp
 
         time_stamps = []
 
         start = True
-        print(f"Staged at {self.time_stamp}")
-        apogee_optimizer = apg.ApogeeOptimizer(1,1,1,1)
+        print(f"Staged at {self.time_stamp:.3f}")
+        print()
+        apogee_optimizer = apg.PolynomialApogeeOptimizer()
         while self.time_stamp < stage_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay + motor_ignition_delay:
             if start:
                 start = False
@@ -141,23 +160,31 @@ class Simulation:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
+            apogee_estimate = 0
 
             # print(self.rocket.current_stage)
             # Apogee optimization
-            if self.rocket.current_stage == 0 and not is_ignited:
+            
+            if self.rocket.current_stage == 0 and not is_ignited and do_apogee_optimization:
                 
                 # Only do this for sustainer stage
 
                 # Get apogee estimate:
                 apogee_estimate = self.apogee_estimator.predict_apogee(current_state[0:3])
-                apogee_optimizer.add_sample(apogee_estimate, dt)
+                apogee_optimizer.add(apogee_estimate, self.time_stamp)
 
-                print(f"Coasting: {(self.time_stamp - stage_time):.2f}s | Current motor delay: {motor_ignition_delay:.2f}s | Current Apogee Estimate: {apogee_estimate:.2f}m", end="\r")
+                d1 = apogee_optimizer.get_derivative_value(1, self.time_stamp)
+                d2 = apogee_optimizer.get_derivative_value(2, self.time_stamp)
+    
+                time_to_apo = -(d1/d2)
+                motor_ignition_delay = (self.time_stamp - stage_time) + time_to_apo - motor_ignition_time
 
-                gl_apogee_accum_plot.append(apogee_optimizer.get_d2_smooth())
+                
+
+                gl_apogee_accum_plot.append(apogee_optimizer.get_value(self.time_stamp))
                 gl_apogee_plot.append(apogee_estimate)
-                gl_apogee_plot_d2.append(apogee_optimizer.get_d2())
-                gl_apogee_plot_d1.append(apogee_optimizer.get_d1())
+                gl_apogee_plot_d2.append(d2)
+                gl_apogee_plot_d1.append(d1)
                 time_stamps.append(self.time_stamp)
 
                 if motor_ignition_delay < minimum_ignition_delay:
@@ -166,17 +193,14 @@ class Simulation:
                 if motor_ignition_delay > maximum_ignition_delay:
                     motor_ignition_delay = maximum_ignition_delay
 
+
+                FLIGHT_TS = f"\033[90m[T+{(self.time_stamp - self.rocket.delay):.2f}s] >\033[0m"
+                print(f"{PrettyOutput.COAST_TAG} {FLIGHT_TS} Light in: {(motor_ignition_delay - (self.time_stamp-stage_time)):.2f}s | Est: {apogee_estimate:.2f}m | Pos: <{self.x[0][0]:.2f},{self.x[0][1]:.2f},{self.x[0][2]:.2f}> | Vel: <{self.x[1][0]:.2f},{self.x[1][1]:.2f},{self.x[1][2]:.2f}>", end="\r")
+
                 if self.time_stamp > motor_ignition_delay + stage_time:
 
-                    plt.plot(time_stamps, gl_apogee_plot, label="apogee_estimate")
-                    plt.plot(time_stamps, gl_apogee_plot_d1, label="apogee_d1")
-                    plt.plot(time_stamps, gl_apogee_plot_d2, label="apogee_d2")
-                    plt.plot(time_stamps, gl_apogee_accum_plot, label="apogee_smooth_d2")
-                    plt.legend()
-
-                    plt.show()
-                    print("")
-                    print(f"(delayed) Motor ignited at {self.time_stamp}")
+                    print(PrettyOutput.FLUSH)
+                    print(f"Motor ignited at {self.time_stamp:.3f}")
                     is_ignited = True
                     self.rocket.get_motor().ignite(self.time_stamp)
                     ignition_time = self.time_stamp
@@ -189,15 +213,17 @@ class Simulation:
                     ignition_time = self.time_stamp
 
 
-
-            apogee_est = 0
+            if is_ignited:
+                FLIGHT_TS = f"\033[90m[T+{(self.time_stamp - self.rocket.delay):.2f}s] >\033[0m"
+                print(f"{PrettyOutput.BURN_TAG} {FLIGHT_TS} Position: <{self.x[0][0]:.2f},{self.x[0][1]:.2f},{self.x[0][2]:.2f}> | Velocity: <{self.x[1][0]:.2f},{self.x[1][1]:.2f},{self.x[1][2]:.2f}>", end="\r")
 
             self.rocket.set_motor_mass(self.time_stamp)
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 
-            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_estimate, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
+        print(PrettyOutput.FLUSH)
 
 
     def run_stages(self):
@@ -220,6 +246,7 @@ class Simulation:
         return (current_state, current_cov, current_state_r)
 
     def coast(self):
+        print_time_diff = 0
         while self.x[1, 0] >= 0:
         # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
@@ -227,11 +254,16 @@ class Simulation:
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
             # apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            if(self.time_stamp > print_time_diff + 0.1):
+                print_time_diff += 0.1
+                FLIGHT_TS = f"\033[90m[T+{(self.time_stamp - self.rocket.delay):.2f}s] >\033[0m"
+                print(f"{PrettyOutput.PASSIVE_COAST_TAG} {FLIGHT_TS} [No more motors] Position: <{self.x[0][0]:.2f},{self.x[0][1]:.2f},{self.x[0][2]:.2f}> | Velocity: <{self.x[1][0]:.2f},{self.x[1][1]:.2f},{self.x[1][2]:.2f}>", end="\r")
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 
-            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, 0, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
+        print(f"Apogee reached {PrettyOutput.FLUSH}")
     
 def simulator(x0, rocket, motor, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
