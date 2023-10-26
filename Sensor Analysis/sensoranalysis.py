@@ -294,7 +294,6 @@ def stddev_plot(time_a,sensorkey,t_1,t_2):
     timearray = timearray[timearray != 0.0]
     # print(len(timearray))
     keyarray = sensorkey[index1:index2]
-    print(len(timearray))
     std_plot = np.zeros(len(timearray)-50)
     time_plot = np.zeros(len(timearray)-50)
     # print(timearray)
