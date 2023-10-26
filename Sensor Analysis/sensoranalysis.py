@@ -32,7 +32,7 @@ from plotly.subplots import make_subplots
 
     
 def main():
-    arr = pd.read_csv("Sensor Analysis/csvdata.csv")
+    arr = pd.read_csv("Sensor Analysis/csvfinal.csv")
     arr_df = np.asarray(arr.values) #changes to an array
     dict_sensor = {
         "has_lowG_data": arr_df[:,0],
