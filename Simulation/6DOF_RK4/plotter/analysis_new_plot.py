@@ -32,90 +32,126 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);   
     #fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20); 
 
-    # linear pos line graphs
+    # linear pos 
     trace_pos_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,0], mode = "lines", name = "X");
     trace_pos_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,1], mode = "lines", name = "Y");
-    trace3_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,2], mode = "lines", name = "Z");
-    # linear kalman_pos line graphs
-    trace4_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'));
-    trace4_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'));
-    trace4_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
+    trace_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["pos"][:,2], mode = "lines", name = "Z");
+   
+    # linear kalman_pos 
+    trace_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'));
+    trace_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'));
+    trace_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
     trace_apogee_estimate = go.Scatter(x = sensor_dict["time"],y = sensor_dict["apogee_estimate"], mode = "lines", name = "Apogee Estimate", line=dict(dash ='dot'));
     
-    # linear vel line graphs
+    # linear vel 
     trace_vel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,0], mode = "lines", name = "X");
     trace_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,1], mode = "lines",  name = "Y");
     trace_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["vel"][:,2], mode = "lines",  name = "Z");
-    # linear kalman_vel line graphs
+    
+    # linear kalman_vel
     trace_kalman_vel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,0], mode = "lines",  name = "X Estimate", line=dict(dash ='dot'));
     trace_kalman_vel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,1], mode = "lines",  name = "Y Estimate", line=dict(dash ='dot'));
     trace_kalman_vel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_vel"][:,2], mode = "lines",  name = "Z Estimate", line=dict(dash ='dot'));
 
-    # linear accel line graphs
+    # linear accel 
     trace_accel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,0], mode = "lines", name = "X");
     trace_accel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,1], mode = "lines", name = "Y");
     trace_accel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["accel"][:,2], mode = "lines", name = "Z");
-    # linear kalman_accel line graphs
+   
+    # linear kalman_accel 
     trace_kalman_accel_0 = go.Scatter(x = kalman_dict["time"],y = kalman_dict["kalman_accel"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'));
     trace_kalman_accel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'));
     trace_kalman_accel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
    
-    #ang_pos line graphs
+    #ang_pos line 
     trace_ang_pos_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,0], mode = "lines");
     trace_ang_pos_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,1], mode = "lines");
     trace_ang_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,2], mode = "lines");
 
-    #kalman_rpos line graphs
+    #kalman_rpos 
     trace_kalman_rpos_0 = go.Scatter(x = kalman_dict["time"],y = kalman_dict["kalman_rpos"][:,0], mode = "lines");
     trace_kalman_rpos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rpos"][:,1], mode = "lines");
     trace_kalman_rpos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rpos"][:,2], mode = "lines");
 
-    #ang_vel graphs
+    #ang_vel 
     trace_ang_vel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,0], mode = "lines");
     trace_ang_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,1], mode = "lines");
     trace_ang_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,2], mode = "lines");
 
-    #kalman_pos graphs
-    trace_kalman_pos_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,0], mode = "lines");
-    trace_kalman_pos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,1], mode = "lines");
-    trace_kalman_pos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_pos"][:,2], mode = "lines"); 
+    #kalman_rvel 
+    trace_kalman_rvel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,0], mode = "lines")
+    trace_kalman_rvel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,1], mode = "lines")
+    trace_kalman_rvel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,2], mode = "lines")
+
+    #kalman_raccel
+    trace_kalman_raccel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,0], mode = "lines")
+    trace_kalman_raccel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,1], mode = "lines")
+    trace_kalman_raccel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,2], mode = "lines")
+
+    #ang_accel 
+    trace_ang_accel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,0], mode = "lines")
+    trace_ang_accel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,1], mode = "lines")
+    trace_ang_accel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,2], mode = "lines")  
     
-    
+    #position error
+
+    #velocity error
+
+    #accel error
     
     
     
     ##Figure out how to stack subplots with all the desired traces, not just one
 
-    
     #Position Vs Kalman Estimated Position Graph
-    #layout1 = go.Layout(yaxis=dict(title="Position")) #go.Layout meshes our traces together to form graphs  
-    data1 = [trace_pos_0, trace_pos_1, trace3_pos_2, trace4_kalman_pos_0, trace4_kalman_pos_1, trace4_kalman_pos_2, trace_apogee_estimate]
-    #fig1_linear = go.Figure(layout = layout1, data = data1)
-    #fig1_linear.show()
+    layout1 = go.Layout(xaxis=dict(title = "Time"), yaxis=dict(title="Position"), 
+                        title= "Position Vs. Kalman Estimated Position") #go.Layout meshes our traces together to form graphs  
+    data1 = [trace_pos_0, trace_pos_1, trace_pos_2, trace_kalman_pos_0, trace_kalman_pos_1, trace_kalman_pos_2, trace_apogee_estimate];
+    fig1_linear = go.Figure(layout = layout1, data = data1)
+    fig1_linear.show()
 
-    #Velocity Vs Kalman Estimated Velocity Graph
-    #layout2 = go.Layout(yaxis=dict(title="Velocity"))
+    # #Velocity Vs Kalman Estimated Velocity Graph
+    layout2 = go.Layout(xaxis=dict(title = "Time"), yaxis=dict(title="Velocity"), 
+                        title= "Velocity Vs. Kalman Estimated Velocity")
     data2 = [trace_vel_0, trace_vel_1, trace_vel_2, trace_kalman_vel_0, trace_kalman_vel_1, trace_kalman_vel_2];
-    #fig2_linear = go.Figure(layout = layout2, data = data2);
-    #fig2_linear.show();
+    fig2_linear = go.Figure(layout = layout2, data = data2);
+    fig2_linear.show();
 
-    #Acceleration Vs Kalman Estimated Acceleration Graph
-    #layout3 = go.Layout(yaxis=dict(title="Acceleration"))
+    # #Acceleration Vs Kalman Estimated Acceleration Graph
+    layout3 = go.Layout(xaxis=dict(title = "Time"), yaxis=dict(title="Acceleration"), 
+                        title = "Acceleration Vs Kalman Estimated Acceleration")
     data3 = [trace_accel_0, trace_accel_1, trace_accel_2, trace_kalman_accel_0, trace_kalman_accel_1, trace_kalman_accel_2];
-    #fig3_linear = go.Figure(layout = layout3, data = data3);
-    #fig3_linear.show();
+    fig3_linear = go.Figure(layout = layout3, data = data3);
+    fig3_linear.show();
+
+    # #Angular velocity Vs Kalman Rotation Velocity Graph
+    layout4 = go.Layout(xaxis=dict(title = "Time"), yaxis=dict(title="Angular Velocity"), 
+                        title = "Angular velocity Vs Kalman Rotation Velocity")
+    data4 = [trace_ang_vel_0,trace_ang_vel_1,trace_ang_vel_2,trace_kalman_rvel_0,trace_kalman_rvel_1,trace_kalman_rvel_2];
+    fig4_linear = go.Figure(layout = layout4, data = data4)
+    fig4_linear.show()
+
+    #Angular acceleration Vs Kalman Rotation Acceleration Graph
+    layout5 = go.Layout(xaxis=dict(title = "Time"), yaxis = dict(title="Angular Acceleration"), 
+                        title = "Angular acceleration Vs Kalman Rotation Acceleration")
+    data5 = [trace_ang_accel_0, trace_ang_accel_1, trace_ang_accel_2, trace_kalman_raccel_0, trace_kalman_raccel_1, trace_kalman_raccel_2];
+    fig5_linear = go.Figure(layout = layout5, data = data5)
+    fig5_linear.show()
+
+    #Angular position Vs Kalman Roational Position Graph
+    layout6 = go.Layout(xaxis=dict(title = "Time"), yaxis = dict(title="Angular Position"), 
+                        title = "Angular Position Vs Kalman Rotation Postion")
+    data6 = [trace_ang_pos_0, trace_ang_pos_1, trace_ang_pos_2, trace_kalman_rpos_0, trace_kalman_rpos_1, trace_kalman_rpos_2]
+    fig6_linear = go.Figure(layout = layout6, data = data6)
+    fig6_linear.show()
 
  ##Figure out how to stack subplots with all the desired traces, not just one
-    stack_fig = make_subplots(rows=3, cols=1)
-    stack_fig.add_traces(data1, rows=1, cols=1)
-    stack_fig.add_traces(data2, rows=2, cols=1)
-    stack_fig.add_traces(data3, rows=3, cols=1)
-    stack_fig.update_layout(title_text="Linear State vs. Kalman Filter", yaxis="position")
-    stack_fig.show()
-
-    #NEED Angular Position Vs Kalman Position
-
-    layout4 = go.Layout(yaxis=dict(title=""))
+    # stack_fig = make_subplots(rows=3, cols=1)
+    # stack_fig.add_traces(data1, rows=1, cols=1)
+    # stack_fig.add_traces(data2, rows=2, cols=1)
+    # stack_fig.add_traces(data3, rows=3, cols=1)
+    # stack_fig.update_layout(title_text="Linear State vs. Kalman Filter", yaxis="position")
+    # stack_fig.show()
 
 
     ### 3D PLOT WORKSPACE BELOW ###
