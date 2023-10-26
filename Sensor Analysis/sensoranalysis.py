@@ -165,6 +165,7 @@ def main():
     titles = []
     count1 = 0
     for j in dict_sensor:
+        # appending only titles of things to be graphed (no time or has data columns)
         if j!="has_lowG_data" and j!="lowG_data.timeStamp_lowG" and j!="has_highG_data" and j!="has_gps_data" and j!="has_barometer_data"and j!="has_kalman_data"and j!="has_rocketState_data"and j!="has_flap_data"and j!="has_voltage_data"and j!="has_orientation_data"and j!="has_magnetometer_data"and j!="highG_data.timeStamp_highG"and j!="gps_data.timeStamp_GPS"and j!="barometer_data.timeStamp_barometer"and j!="kalman_data.timeStamp_state"and j!="rocketState_data.timestamp"and j!="flap_data.timeStamp_flaps"and j!="voltage_data.timestamp"and j!="has_gas_data"and j!="orientation_data.timeStamp_orientation"and j!="magnetometer_data.timestamp"and j!="gas_data.timestamp":
             titles.append(j)
             count1+=count1
@@ -173,6 +174,7 @@ def main():
     count2 = 0
     for key in dict_sensor:
         count2 = count2 + 1
+        # plotting only columns that contain important data
         if key!="has_lowG_data" and key!="lowG_data.timeStamp_lowG" and key!="has_highG_data" and key!="has_gps_data" and key!="has_barometer_data"and key!="has_kalman_data"and key!="has_rocketState_data"and key!="has_flap_data"and key!="has_voltage_data"and key!="has_orientation_data"and key!="has_magnetometer_data"and key!="highG_data.timeStamp_highG"and key!="gps_data.timeStamp_GPS"and key!="barometer_data.timeStamp_barometer"and key!="kalman_data.timeStamp_state"and key!="rocketState_data.timestamp"and key!="flap_data.timeStamp_flaps"and key!="voltage_data.timestamp"and key!="has_gas_data"and key!="orientation_data.timeStamp_orientation"and key!="magnetometer_data.timestamp"and key!="gas_data.timestamp":
             count = count + 1
             if (count2 <= 7):
@@ -236,7 +238,7 @@ def main():
                 y_val = min(data_plot)/2
             else:
                 y_val = 0.2
-            
+            # total standard dev over sample
             fig.add_annotation(
                 text=f'<b> σ = {std_sample:.5f}</b>',
                 x = (time_plot[0]+time_plot[-1])/2,
@@ -246,6 +248,7 @@ def main():
                 row=count,
                 col=1,
             )
+            # r^2 of best fit line over whole sample
             fig.add_annotation(
                 text=f'<b>R² = {R_sq:.5f}</b>',
                 x=(time_plot[0]+time_plot[-1])/2+1000000,  # Adjust the x and y coordinates as needed
@@ -257,7 +260,7 @@ def main():
             )
             # fig.show()
             # use formula for sample standard deviation, create function to find standard deviation for the vars, subtract std dev factor times time from the data and see what there is
-    
+    ## change size here if you want
     fig['layout'].update(height= 5000, width=1500,
                      title='Sensor Data')
     fig.show()   
@@ -279,11 +282,13 @@ def stddev(t1, t2,time_a2,sensorkey2):
 def stddev_plot(time_a,sensorkey,t_1,t_2):
     index1 = 0
     index2 = 0
+    # choosing indexes
     for j in range(0,len(time_a)):
         if (int(time_a[j]) - int(t_1) <= 20000 and time_a[j]!=0.0):
             index1 = j
         if (abs(int(time_a[j]) - int(t_2)) <= 50000 and int(time_a[j]) - int(t_2)>0):
             index2 = j
+    # ensuring a final index is chosen no matter what
     if index2 == 0:
         print(max(time_a))
         index2 = max(time_a)
@@ -300,6 +305,7 @@ def stddev_plot(time_a,sensorkey,t_1,t_2):
         # plotted as a continuous function
         t1 = i
         t2 = i+50 
+        # std dev array of values
         std_plot[i]=(stddev(t1,t2,time_a,sensorkey))
         # time associated with std dev calculation is in between the two times used for the individual std dev calculation
         time_plot[i]=((timearray[t1]+timearray[t2])/2)
