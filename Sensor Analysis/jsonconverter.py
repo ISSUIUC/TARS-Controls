@@ -55,17 +55,18 @@ def construct_data_string(jsonobject: dict[str, Any]):
 with open('Sensor Analysis\data122.json') as json_file:
     jsondata = json.load(json_file)
 header_string = construct_header_string(jsondata[0])
+# new csv file to be created
 data_file = open('Sensor Analysis\csvfile.csv', 'w', newline='')
 csv_writer = csv.writer(data_file)
-print(header_string)
 csv_writer.writerow(header_string)
 for data_object in jsondata:
         for i in data_object:
             i.replace("[","")
         csv_writer.writerow(construct_data_string(data_object))
 data_file.close()
-
+# Removing extra characters to get it to a readable state
 input_file_path = 'Sensor Analysis\csvfile.csv'
+# final csv file that will be used by sensor analysis
 output_file_path = 'Sensor Analysis\csvfinal.csv'
 
 # Characters to remove

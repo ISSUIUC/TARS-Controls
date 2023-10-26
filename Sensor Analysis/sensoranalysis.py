@@ -124,7 +124,6 @@ def main():
     data_i11 = dict_sensor.get("has_gas_data")
     counter = 0
     for key2 in dict_sensor.keys():
-        print(key2)
         new_array = []
         new_array = dict_sensor[key2][np.logical_and(dict_sensor[key2]!=0.0, dict_sensor[key2]!=0)]
         dict_sensor[key2] = new_array
@@ -201,9 +200,8 @@ def main():
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,71],dict_sensor[key],t1,t2)
             # fig = go.Figure()
             ## Plotting of each dictionary entry
+            # Printing key to see how close to done the graphing operation is 
             print(key)
-            print(t1)
-            print(t2)
             fig.add_trace(go.Scatter(x=time_plot.astype(np.float64),y=data_plot.astype(np.float64), name='raw data: ' + key),row=count,col=1)
 
             ## Plotting Standard deviation
@@ -290,13 +288,11 @@ def stddev_plot(time_a,sensorkey,t_1,t_2):
             index2 = j
     # ensuring a final index is chosen no matter what
     if index2 == 0:
-        print(max(time_a))
         index2 = max(time_a)
     timearray = time_a[index1:index2]
     timearray = timearray[timearray != 0.0]
     # print(len(timearray))
     keyarray = sensorkey[index1:index2]
-    print(len(timearray))
     std_plot = np.zeros(len(timearray)-50)
     time_plot = np.zeros(len(timearray)-50)
     # print(timearray)
