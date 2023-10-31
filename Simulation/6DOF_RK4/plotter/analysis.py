@@ -24,7 +24,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
         sensor_dict (dict, optional): Dictionary containing sensor data. Defaults to 0.
         kalmann_dict (dict, optional): Dictionary containing kalman filter data. Defaults to 0.
     """
-    fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);   
+    fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True, num="PYSIM 6DOF LINEAR PLOT");   
     fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20);  
 
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
@@ -71,7 +71,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
     plt.tight_layout(); 
 
-    fig_angular,(ang_pos_nc, ang_vel_nc, ang_accel_nc, alpha_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);  
+    fig_angular,(ang_pos_nc, ang_vel_nc, ang_accel_nc, alpha_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True, num="PYSIM 6DOF ANGULAR PLOT");  
     fig_angular.suptitle("PYSIM 6DOF ANGULAR PLOT", color='#F5B14C', fontsize = 20);    
     plt.xlabel("Time (s)", fontsize = 14);  
     ang_pos_nc.plot(sim_dict["time"], sim_dict["ang_pos"][:,0], label="Roll", color="tab:red", linewidth = 2);  
@@ -113,7 +113,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     alpha_nc.legend(fontsize=10, loc='center left',ncol=1)
     plt.tight_layout() 
 
-    fig_error, (pos_error_nc, vel_error_nc, accel_error_nc) = plt.subplots(3, 1, figsize = (15,10), sharex=True)
+    fig_error, (pos_error_nc, vel_error_nc, accel_error_nc) = plt.subplots(3, 1, figsize = (15,10), sharex=True, num="Kalman Filter Error")
     fig_error.suptitle("Kalman Filter Position, Velocity, and Acceleration Error", fontsize = 16)
     plt.xlabel("Time (s)", fontsize = 10)
     pos_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,0] - sim_dict["pos"][:,0], label="X", color="tab:red", linestyle = "solid",linewidth = 2);
@@ -152,7 +152,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     accel_error_nc.set_ylabel("Acceleration Error (m/s$^2$)", fontsize = 10)
     accel_error_nc.legend(fontsize=10, loc='upper left',ncol=3)
     
-    fig_3d = plt.figure()
+    fig_3d = plt.figure(num="Rocket 3D Trajectory Plot")
     ax_3d = fig_3d.add_subplot(111, projection='3d')
     fig_3d.suptitle("3D plots", fontsize=20)
     x, y, z = sim_dict["pos"][:,0], sim_dict["pos"][:,1], sim_dict["pos"][:,2]
@@ -164,12 +164,24 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     plt.show()
 
 def rocket_mass_plot(sim_dict, sensor_dict=0, kalman_dict=0):
-    plt.figure()
+    plt.figure(num="Rocket Mass")
     plt.plot(sim_dict["time"], sim_dict["rocket_total_mass"], label="Rocket Total Mass", color="tab:red", linewidth = 2)
     plt.plot(sim_dict["time"], sim_dict["motor_mass"], label="Motor Mass", color="tab:blue", linewidth = 2);
     plt.legend()
     plt.xlabel("Time (s)")
     plt.ylabel("Mass (kg)")
+    plt.show(block=False)
+
+def apogee_plot():
+    #Read apogee file
+    apogee_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"] + "_apogee.csv")
+    apogee_data = pd.read_csv(apogee_file)
+    # Plot apogee data
+    apogee_fig = plt.figure(num="Apogee Estimate")
+    plt.plot(apogee_data["time"], apogee_data["apogee_estimate"], label="Apogee Estimate", color="tab:blue", linewidth = 2);
+    plt.plot(apogee_data["time"], apogee_data["apogee_estimate_d1"], label="Apogee Estimate D1", color="tab:red", linewidth = 2);
+    plt.plot(apogee_data["time"], apogee_data["apogee_estimate_d2"], label="Apogee Estimate D2", color="tab:orange", linewidth = 2);
+    plt.title("Apogee Estimate")
     plt.show(block=False)
 
 if __name__ == "__main__":
@@ -208,4 +220,5 @@ if __name__ == "__main__":
     sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
 
     rocket_mass_plot(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)
+    apogee_plot()
     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict)

@@ -166,7 +166,6 @@ class Apogee:
         k3_v = self.state[2] + k2_v*(self.dt/2)
         k4_v = self.state[2] + k3_v*(self.dt)
 
-
         v = (self.state[1] + (1/6)*(k1_v+(2*k2_v)+(2*k3_v)+k4_v)*self.dt)
     
         k1_p = self.state[1]
@@ -264,10 +263,17 @@ class Apogee:
         '''
         self.set_params(current_state.copy())
         timestamp = 0
-        self.rocket.get_motor().start_time = 0
+        dt = self.dt
+        self.rocket.get_motor().ignite(timestamp)
+        while (self.state[1] > 0 and self.rocket.get_motor().burnout(timestamp)):
+            self.RK4(timestamp)
+            timestamp += dt
+
+        dt = 1
         while (self.state[1] > 0):
             self.RK4(timestamp)
-            timestamp += self.dt
+            # Check if motor burnout and then we can have an even higher timestamp?
+            timestamp += dt
         return self.state[0]
     
     ########################################
