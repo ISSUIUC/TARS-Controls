@@ -151,8 +151,13 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
     #Position 3D Plot
     fig = go.Figure(data=[go.Scatter3d(x=sim_dict["pos"][:,0], y=sim_dict["pos"][:,1], z=sim_dict["pos"][:,2], mode='markers')])
-    fig.add_subplot()
+    x_val = sim_dict["pos"][:,0][(sim_dict["event"].index(1))]
+    y_val = sim_dict["pos"][:,1][(sim_dict["event"].index(1))]
+    z_val = sim_dict["pos"][:,2][(sim_dict["event"].index(1))]
+    fig.add_scatter(x=x_val, y= y_val, z= z_val)
     fig.show()
+
+
 
 
  ##Figure out how to stack subplots with all the desired traces, not just one
