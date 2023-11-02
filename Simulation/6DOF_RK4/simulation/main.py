@@ -95,7 +95,6 @@ sensor_dict = {
     "apogee_estimate": []
 }
 
-
 def addToDict(x, baro_alt, accel, bno_ang_pos, gyro, kalman_filter, kf_cov, kalman_filter_r, alpha, apogee_estimation, rocket_total_mass, motor_mass, flap_ext, dt):
     # Appending data to sensor_dict
     sensor_dict["baro_alt"].append(baro_alt)

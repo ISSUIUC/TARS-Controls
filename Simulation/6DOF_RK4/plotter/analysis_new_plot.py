@@ -13,6 +13,10 @@ import sys
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
+if not os.path.exists("Simulation/6DOF_RK4/plotter/images"):
+    os.mkdir("Simulation/6DOF_RK4/plotter/images")
+
+
 import properties.properties as prop
 import properties.data_loader as dataloader
 
@@ -144,6 +148,12 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     data6 = [trace_ang_pos_0, trace_ang_pos_1, trace_ang_pos_2, trace_kalman_rpos_0, trace_kalman_rpos_1, trace_kalman_rpos_2]
     fig6_linear = go.Figure(layout = layout6, data = data6)
     fig6_linear.show()
+
+    #Position 3D Plot
+    fig = go.Figure(data=[go.Scatter3d(x=sim_dict["pos"][:,0], y=sim_dict["pos"][:,1], z=sim_dict["pos"][:,2], mode='markers')])
+    fig.add_subplot()
+    fig.show()
+
 
  ##Figure out how to stack subplots with all the desired traces, not just one
     # stack_fig = make_subplots(rows=3, cols=1)
