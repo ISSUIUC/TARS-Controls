@@ -150,11 +150,12 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     fig6_linear.show()
 
     #Position 3D Plot
+    print(sim_dict["pos"])
     fig = go.Figure(data=[go.Scatter3d(x=sim_dict["pos"][:,0], y=sim_dict["pos"][:,1], z=sim_dict["pos"][:,2], mode='markers')])
     x_val = sim_dict["pos"][:,0][(sim_dict["event"].index(1))]
     y_val = sim_dict["pos"][:,1][(sim_dict["event"].index(1))]
     z_val = sim_dict["pos"][:,2][(sim_dict["event"].index(1))]
-    fig.add_scatter(x=x_val, y= y_val, z= z_val)
+    fig.add_scatter(x=sim_dict["pos"][:,0][(sim_dict["event"].index(1))], y=sim_dict["pos"][:,1][(sim_dict["event"].index(1))], z = sim_dict["pos"][:,2][(sim_dict["event"].index(1))])
     fig.show()
 
 
@@ -341,38 +342,39 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
 
 if __name__ == "__main__":
-     sim_dict = {}
-     sensor_dict = {}
-     kalman_dict = {}
-     output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
-     file_data = pd.read_csv(output_file)
-     sim_dict["time"] = file_data["time"].values
-     sensor_dict["time"] = file_data["time"].values
-     kalman_dict["time"] = file_data["time"].values
+    sim_dict = {}
+    sensor_dict = {}
+    kalman_dict = {}
+    output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
+    file_data = pd.read_csv(output_file)
+    sim_dict["time"] = file_data["time"].values
+    sensor_dict["time"] = file_data["time"].values
+    kalman_dict["time"] = file_data["time"].values
 
-     for attr in ["pos", "vel", "accel", "ang_pos", "ang_vel", "ang_accel"]:
-         sim_dict[attr] = np.array(
-             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
-     for attr in ["kalman_pos", "kalman_vel", "kalman_accel", "pos_cov", "vel_cov", "accel_cov"]:
-         kalman_dict[attr] = np.array(
-             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
-     for attr in ["kalman_rpos", "kalman_rvel", "kalman_raccel"]:
-         kalman_dict[attr] = np.array(
-             list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
-     sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
-     sim_dict["rocket_total_mass"] = np.array(list(zip(file_data["rocket_total_mass"].values)))
-     sim_dict["motor_mass"] = np.array(list(zip(file_data["motor_mass"].values)))
-     sim_dict["flap_ext"] = np.array(list(zip(file_data["flap_ext"].values)))
-     sensor_dict["baro_alt"] = np.array(list(zip(file_data["baro_alt"].values)))
-     sensor_dict["imu_accel_x"] = np.array(list(zip(file_data["imu_accel_x"].values)))
-     sensor_dict["imu_accel_y"] = np.array(list(zip(file_data["imu_accel_y"].values)))
-     sensor_dict["imu_accel_z"] = np.array(list(zip(file_data["imu_accel_z"].values)))
-     sensor_dict["imu_ang_pos_x"] = np.array(list(zip(file_data["imu_ang_pos_x"].values)))
-     sensor_dict["imu_ang_pos_y"] = np.array(list(zip(file_data["imu_ang_pos_y"].values)))
-     sensor_dict["imu_ang_pos_z"] = np.array(list(zip(file_data["imu_ang_pos_z"].values)))
-     sensor_dict["imu_gyro_x"] = np.array(list(zip(file_data["imu_gyro_x"].values)))
-     sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
-     sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
-     sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
-
-     plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict) 
+    for attr in ["pos", "vel", "accel", "ang_pos", "ang_vel", "ang_accel"]:
+        sim_dict[attr] = np.array(
+            list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+    for attr in ["kalman_pos", "kalman_vel", "kalman_accel", "pos_cov", "vel_cov", "accel_cov"]:
+        kalman_dict[attr] = np.array(
+            list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+    for attr in ["kalman_rpos", "kalman_rvel", "kalman_raccel"]:
+        kalman_dict[attr] = np.array(
+            list(zip(file_data[f"{attr}_x"].values, file_data[f"{attr}_y"].values, file_data[f"{attr}_z"].values)))
+    sim_dict["alpha"] = np.array(list(zip(file_data["alpha"].values)))
+    sim_dict["rocket_total_mass"] = np.array(list(zip(file_data["rocket_total_mass"].values)))
+    sim_dict["motor_mass"] = np.array(list(zip(file_data["motor_mass"].values)))
+    sim_dict["flap_ext"] = np.array(list(zip(file_data["flap_ext"].values)))
+    sim_dict["event"] = np.array(list(zip(file_data["event"].values)))
+    sensor_dict["baro_alt"] = np.array(list(zip(file_data["baro_alt"].values)))
+    sensor_dict["imu_accel_x"] = np.array(list(zip(file_data["imu_accel_x"].values)))
+    sensor_dict["imu_accel_y"] = np.array(list(zip(file_data["imu_accel_y"].values)))
+    sensor_dict["imu_accel_z"] = np.array(list(zip(file_data["imu_accel_z"].values)))
+    sensor_dict["imu_ang_pos_x"] = np.array(list(zip(file_data["imu_ang_pos_x"].values)))
+    sensor_dict["imu_ang_pos_y"] = np.array(list(zip(file_data["imu_ang_pos_y"].values)))
+    sensor_dict["imu_ang_pos_z"] = np.array(list(zip(file_data["imu_ang_pos_z"].values)))
+    sensor_dict["imu_gyro_x"] = np.array(list(zip(file_data["imu_gyro_x"].values)))
+    sensor_dict["imu_gyro_y"] = np.array(list(zip(file_data["imu_gyro_y"].values)))
+    sensor_dict["imu_gyro_z"] = np.array(list(zip(file_data["imu_gyro_z"].values)))
+    sensor_dict["apogee_estimate"] = np.array(list(zip(file_data["apogee_estimate"].values)))
+    print(sim_dict.keys())
+    plotter(sim_dict=sim_dict, sensor_dict=sensor_dict, kalman_dict=kalman_dict) 
