@@ -114,11 +114,28 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     fig1_linear = go.Figure(layout = layout1, data = data1)
     fig1_linear.show()
 
+    
+ 
+
     # #Velocity Vs Kalman Estimated Velocity Graph
     layout2 = go.Layout(xaxis=dict(title = "Time"), yaxis=dict(title="Velocity"), 
                         title= "Velocity Vs. Kalman Estimated Velocity")
     data2 = [trace_vel_0, trace_vel_1, trace_vel_2, trace_kalman_vel_0, trace_kalman_vel_1, trace_kalman_vel_2];
     fig2_linear = go.Figure(layout = layout2, data = data2);
+
+# Testing 
+    point = (np.where(sim_dict["event"] == 1)[0])
+    fig2_linear.add_scatter(x = point/100, y = sim_dict["vel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Launch")
+    point = (np.where(sim_dict["event"] == 2)[0])
+    fig2_linear.add_scatter(x = point/100, y = sim_dict["vel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Burnout")
+    point = (np.where(sim_dict["event"] == 3)[0])
+    fig2_linear.add_scatter(x = point/100, y = sim_dict["vel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Apogee")
+    point = (np.where(sim_dict["event"] == 4)[0])
+    fig2_linear.add_scatter(x = point/100, y = sim_dict["vel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Drogue Deployed")
+    point = (np.where(sim_dict["event"] == 5)[0])
+    fig2_linear.add_scatter(x = point/100, y = sim_dict["vel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Demployed")
+
+
     fig2_linear.show();
 
     # #Acceleration Vs Kalman Estimated Acceleration Graph
@@ -126,13 +143,22 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
                         title = "Acceleration Vs Kalman Estimated Acceleration")
     data3 = [trace_accel_0, trace_accel_1, trace_accel_2, trace_kalman_accel_0, trace_kalman_accel_1, trace_kalman_accel_2];
     fig3_linear = go.Figure(layout = layout3, data = data3);
+
+
+    point = (np.where(sim_dict["event"] == 2)[0])
+    print(point/100)
+    print(sim_dict["accel"][:,0][point])
+    fig3_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Burnout")
+
     fig3_linear.show();
+    
 
     # #Angular velocity Vs Kalman Rotation Velocity Graph
     layout4 = go.Layout(xaxis=dict(title = "Time"), yaxis=dict(title="Angular Velocity"), 
                         title = "Angular velocity Vs Kalman Rotation Velocity")
     data4 = [trace_ang_vel_0,trace_ang_vel_1,trace_ang_vel_2,trace_kalman_rvel_0,trace_kalman_rvel_1,trace_kalman_rvel_2];
     fig4_linear = go.Figure(layout = layout4, data = data4)
+    fig4_linear.add_scatter
     fig4_linear.show()
 
     #Angular acceleration Vs Kalman Rotation Acceleration Graph
@@ -140,7 +166,10 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
                         title = "Angular acceleration Vs Kalman Rotation Acceleration")
     data5 = [trace_ang_accel_0, trace_ang_accel_1, trace_ang_accel_2, trace_kalman_raccel_0, trace_kalman_raccel_1, trace_kalman_raccel_2];
     fig5_linear = go.Figure(layout = layout5, data = data5)
+    fig5_linear.add_scatter(x = [3], y = [3], mode="markers", marker=dict(size=10, color="Black"), name="Apogee")
     fig5_linear.show()
+
+    
 
     #Angular position Vs Kalman Roational Position Graph
     layout6 = go.Layout(xaxis=dict(title = "Time"), yaxis = dict(title="Angular Position"), 
