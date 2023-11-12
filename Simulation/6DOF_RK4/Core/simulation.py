@@ -4,6 +4,8 @@ import estimation.ekf as ekf
 import estimation.r_ekf as r_ekf
 import dynamics.sensors as sensors
 import estimation.apogee_estimator as apg
+import dynamics.rocket as rocket_model
+import environment.atmosphere as atmosphere
 
 class Simulation:
     # dt can be dynamic in the future, so we need to 
@@ -124,4 +126,18 @@ class Simulation:
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, self.dt)
             self.time_step()
+
+def gen_sim_objs(config, atmo_args):
+    atm = atmosphere.Atmosphere(wind_direction_variance_stddev=atmo_args.get("wind_direction_stddev", 0),
+                            wind_magnitude_variance_stddev=atmo_args.get("wind_magnitude_stddev", 0),
+                            enable_direction_variance=atmo_args.get("enable_direction_variance", False),
+                            enable_magnitude_variance=atmo_args.get("enable_magnitude_variance", False),
+                            nominal_wind_magnitude=atmo_args.get("nominal_wind_magnitude", 0.0),
+                            nominal_wind_direction=atmo_args.get("nominal_wind_direction", np.array([0, 0, 0])))
+    stages = []
+    for stage in config['rocket']['stages'][1:]:
+        stages.append(rocket_model.Rocket(stage, atm=atm))
+    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm, stages=stages)
+
+    return atm, rocket
     

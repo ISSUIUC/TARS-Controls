@@ -293,7 +293,7 @@ class Atmosphere:
         current_wind_direction_ = np.zeros(3)
         if self.enable_direction_variance_:
             if((tStamp - self.last_direction_variance_update_) >= self.direction_variance_update_rate_):
-                generated_direction_variance = np.random.normal(self.nominal_wind_direction_, 3)
+                generated_direction_variance = np.random.normal(self.nominal_wind_direction_, self.wind_direction_variance_stddev_)
                 generated_direction_variance = generated_direction_variance / np.linalg.norm(generated_direction_variance)
                 self.last_direction_variance_update_ = tStamp
             

@@ -61,10 +61,8 @@ def simulator(x0, sim, rocket, atm, dt, kf_dt) -> None:
     t_end = time.time() - t_start
     print(f"Runtime: {t_end:.2f} seconds")
 
-def pysim(dt=0.01, kf_dt=0.01, config=dataloader.config):
+def pysim(x0, dt=0.01, kf_dt=0.01, config=dataloader.config):
     # Load desired config file
-    x0 = np.zeros((6, 3))
-    x0[3] = [0, 0.05, 0]
 
     atm = atmosphere.Atmosphere()
 
@@ -80,7 +78,9 @@ def pysim(dt=0.01, kf_dt=0.01, config=dataloader.config):
 
 if __name__ == "__main__":
     config = dataloader.config
-    record = pysim()
+    x0 = np.zeros((6, 3))
+    x0[3] = [0, 0.05, 0]
+    record = pysim(x0)
     print("Simulation complete")
     output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     data_process.save_record(record, output_file)
