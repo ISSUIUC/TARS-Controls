@@ -1,9 +1,6 @@
 name: pylint-check
 
-on:
-  pull_request:
-    types:
-      - opened
+on: pull_request
 
 jobs:
   build:
