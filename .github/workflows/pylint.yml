@@ -23,4 +23,4 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        Simulation/6DOF_RK4/**/*.py
+        pylint Simulation/6DOF_RK4/**/*.py
