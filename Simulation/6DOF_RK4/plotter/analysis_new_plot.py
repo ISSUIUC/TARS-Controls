@@ -68,34 +68,34 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     trace_kalman_accel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_accel"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
    
     #ang_pos line 
-    trace_ang_pos_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,0], mode = "lines");
-    trace_ang_pos_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,1], mode = "lines");
-    trace_ang_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,2], mode = "lines");
+    trace_ang_pos_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,0], mode = "lines", name = "X");
+    trace_ang_pos_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,1], mode = "lines", name = "Y");
+    trace_ang_pos_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_pos"][:,2], mode = "lines", name = "Z");
 
     #kalman_rpos 
-    trace_kalman_rpos_0 = go.Scatter(x = kalman_dict["time"],y = kalman_dict["kalman_rpos"][:,0], mode = "lines");
-    trace_kalman_rpos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rpos"][:,1], mode = "lines");
-    trace_kalman_rpos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rpos"][:,2], mode = "lines");
+    trace_kalman_rpos_0 = go.Scatter(x = kalman_dict["time"],y = kalman_dict["kalman_rpos"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'));
+    trace_kalman_rpos_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rpos"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'));
+    trace_kalman_rpos_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rpos"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'));
 
     #ang_vel 
-    trace_ang_vel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,0], mode = "lines");
-    trace_ang_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,1], mode = "lines");
-    trace_ang_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,2], mode = "lines");
+    trace_ang_vel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,0], mode = "lines", name = "X");
+    trace_ang_vel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,1], mode = "lines", name = "Y");
+    trace_ang_vel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_vel"][:,2], mode = "lines", name = "Z");
 
     #kalman_rvel 
-    trace_kalman_rvel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,0], mode = "lines")
-    trace_kalman_rvel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,1], mode = "lines")
-    trace_kalman_rvel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,2], mode = "lines")
+    trace_kalman_rvel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'))
+    trace_kalman_rvel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'))
+    trace_kalman_rvel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_rvel"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'))
 
     #kalman_raccel
-    trace_kalman_raccel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,0], mode = "lines")
-    trace_kalman_raccel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,1], mode = "lines")
-    trace_kalman_raccel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,2], mode = "lines")
+    trace_kalman_raccel_0 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,0], mode = "lines", name = "X Estimate", line=dict(dash ='dot'))
+    trace_kalman_raccel_1 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,1], mode = "lines", name = "Y Estimate", line=dict(dash ='dot'))
+    trace_kalman_raccel_2 = go.Scatter(x = kalman_dict["time"], y = kalman_dict["kalman_raccel"][:,2], mode = "lines", name = "Z Estimate", line=dict(dash ='dot'))
 
     #ang_accel 
-    trace_ang_accel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,0], mode = "lines")
-    trace_ang_accel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,1], mode = "lines")
-    trace_ang_accel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,2], mode = "lines")  
+    trace_ang_accel_0 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,0], mode = "lines", name = "X")
+    trace_ang_accel_1 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,1], mode = "lines", name = "Y")
+    trace_ang_accel_2 = go.Scatter(x = sim_dict["time"], y = sim_dict["ang_accel"][:,2], mode = "lines", name = "Z")  
     
     #position error
 
@@ -112,10 +112,19 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
                         title= "Position Vs. Kalman Estimated Position") #go.Layout meshes our traces together to form graphs  
     data1 = [trace_pos_0, trace_pos_1, trace_pos_2, trace_kalman_pos_0, trace_kalman_pos_1, trace_kalman_pos_2, trace_apogee_estimate];
     fig1_linear = go.Figure(layout = layout1, data = data1)
-    fig1_linear.show()
-
-    
+   
+    point = (np.where(sim_dict["event"] == 1)[0])
+    fig1_linear.add_scatter(x = point/100, y = sim_dict["pos"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Launch")
+    point = (np.where(sim_dict["event"] == 2)[0])
+    fig1_linear.add_scatter(x = point/100, y = sim_dict["pos"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Burnout")
+    point = (np.where(sim_dict["event"] == 3)[0])
+    fig1_linear.add_scatter(x = point/100, y = sim_dict["pos"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Apogee")
+    point = (np.where(sim_dict["event"] == 4)[0])
+    fig1_linear.add_scatter(x = point/100, y = sim_dict["pos"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Drogue Deployed")
+    point = (np.where(sim_dict["event"] == 5)[0])
+    fig1_linear.add_scatter(x = point/100, y = sim_dict["pos"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Deployed")
  
+    fig1_linear.show()
 
     # #Velocity Vs Kalman Estimated Velocity Graph
     layout2 = go.Layout(xaxis=dict(title = "Time"), yaxis=dict(title="Velocity"), 
@@ -133,7 +142,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     point = (np.where(sim_dict["event"] == 4)[0])
     fig2_linear.add_scatter(x = point/100, y = sim_dict["vel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Drogue Deployed")
     point = (np.where(sim_dict["event"] == 5)[0])
-    fig2_linear.add_scatter(x = point/100, y = sim_dict["vel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Demployed")
+    fig2_linear.add_scatter(x = point/100, y = sim_dict["vel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Deployed")
 
 
     fig2_linear.show();
@@ -144,11 +153,21 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     data3 = [trace_accel_0, trace_accel_1, trace_accel_2, trace_kalman_accel_0, trace_kalman_accel_1, trace_kalman_accel_2];
     fig3_linear = go.Figure(layout = layout3, data = data3);
 
-
+    point = (np.where(sim_dict["event"] == 1)[0])
+    fig3_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Launch")
     point = (np.where(sim_dict["event"] == 2)[0])
-    print(point/100)
-    print(sim_dict["accel"][:,0][point])
     fig3_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Burnout")
+    point = (np.where(sim_dict["event"] == 3)[0])
+    fig3_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Apogee")
+    point = (np.where(sim_dict["event"] == 4)[0])
+    fig3_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Drogue Deployed")
+    point = (np.where(sim_dict["event"] == 5)[0])
+    fig3_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Deployed")
+
+#    point = (np.where(sim_dict["event"] == 2)[0])
+#    print(point/100)
+#    print(sim_dict["accel"][:,0][point])
+#    fig3_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Burnout")
 
     fig3_linear.show();
     
@@ -159,6 +178,18 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     data4 = [trace_ang_vel_0,trace_ang_vel_1,trace_ang_vel_2,trace_kalman_rvel_0,trace_kalman_rvel_1,trace_kalman_rvel_2];
     fig4_linear = go.Figure(layout = layout4, data = data4)
     fig4_linear.add_scatter
+
+    point = (np.where(sim_dict["event"] == 1)[0])
+    fig4_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Launch")
+    point = (np.where(sim_dict["event"] == 2)[0])
+    fig4_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Burnout")
+    point = (np.where(sim_dict["event"] == 3)[0])
+    fig4_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Apogee")
+    point = (np.where(sim_dict["event"] == 4)[0])
+    fig4_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Drogue Deployed")
+    point = (np.where(sim_dict["event"] == 5)[0])
+    fig4_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Deployed")
+
     fig4_linear.show()
 
     #Angular acceleration Vs Kalman Rotation Acceleration Graph
@@ -167,6 +198,18 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     data5 = [trace_ang_accel_0, trace_ang_accel_1, trace_ang_accel_2, trace_kalman_raccel_0, trace_kalman_raccel_1, trace_kalman_raccel_2];
     fig5_linear = go.Figure(layout = layout5, data = data5)
     fig5_linear.add_scatter(x = [3], y = [3], mode="markers", marker=dict(size=10, color="Black"), name="Apogee")
+    
+    point = (np.where(sim_dict["event"] == 1)[0])
+    fig5_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Launch")
+    point = (np.where(sim_dict["event"] == 2)[0])
+    fig5_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Burnout")
+    point = (np.where(sim_dict["event"] == 3)[0])
+    fig5_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Apogee")
+    point = (np.where(sim_dict["event"] == 4)[0])
+    fig5_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Drogue Deployed")
+    point = (np.where(sim_dict["event"] == 5)[0])
+    fig5_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Deployed")
+    
     fig5_linear.show()
 
     
@@ -175,6 +218,18 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     layout6 = go.Layout(xaxis=dict(title = "Time"), yaxis = dict(title="Angular Position"), 
                         title = "Angular Position Vs Kalman Rotation Postion")
     data6 = [trace_ang_pos_0, trace_ang_pos_1, trace_ang_pos_2, trace_kalman_rpos_0, trace_kalman_rpos_1, trace_kalman_rpos_2]
+
+    point = (np.where(sim_dict["event"] == 1)[0])
+    fig6_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Launch")
+    point = (np.where(sim_dict["event"] == 2)[0])
+    fig6_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Burnout")
+    point = (np.where(sim_dict["event"] == 3)[0])
+    fig6_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Apogee")
+    point = (np.where(sim_dict["event"] == 4)[0])
+    fig6_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Drogue Deployed")
+    point = (np.where(sim_dict["event"] == 5)[0])
+    fig6_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Deployed")
+
     fig6_linear = go.Figure(layout = layout6, data = data6)
     fig6_linear.show()
 
