@@ -218,6 +218,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     layout6 = go.Layout(xaxis=dict(title = "Time"), yaxis = dict(title="Angular Position"), 
                         title = "Angular Position Vs Kalman Rotation Postion")
     data6 = [trace_ang_pos_0, trace_ang_pos_1, trace_ang_pos_2, trace_kalman_rpos_0, trace_kalman_rpos_1, trace_kalman_rpos_2]
+    fig6_linear = go.Figure(layout = layout6, data = data6)
 
     point = (np.where(sim_dict["event"] == 1)[0])
     fig6_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Launch")
@@ -230,17 +231,24 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     point = (np.where(sim_dict["event"] == 5)[0])
     fig6_linear.add_scatter(x = point/100, y = sim_dict["accel"][:,0][point], mode="markers", marker=dict(size=10, color="Black"), name="Main Chute Deployed")
 
-    fig6_linear = go.Figure(layout = layout6, data = data6)
     fig6_linear.show()
 
     #Position 3D Plot
     print(sim_dict["pos"])
-    fig = go.Figure(data=[go.Scatter3d(x=sim_dict["pos"][:,0], y=sim_dict["pos"][:,1], z=sim_dict["pos"][:,2], mode='markers')])
-    x_val = sim_dict["pos"][:,0][(sim_dict["event"].index(1))]
-    y_val = sim_dict["pos"][:,1][(sim_dict["event"].index(1))]
-    z_val = sim_dict["pos"][:,2][(sim_dict["event"].index(1))]
-    fig.add_scatter(x=sim_dict["pos"][:,0][(sim_dict["event"].index(1))], y=sim_dict["pos"][:,1][(sim_dict["event"].index(1))], z = sim_dict["pos"][:,2][(sim_dict["event"].index(1))])
+    data3d = go.Scatter3d(x= sim_dict["pos"][:,2], y=sim_dict["pos"][:,1], z=sim_dict["pos"][:,0], mode='markers', name = '3d plot', text = ["Z Position", "Y Position", "X Position"], showlegend=True)
+    #data3d is a trace, need to create traces for event points
+    layout3d = go.Layout(margin = dict(l=0,r=0,b=0,t=0))
+    fig = go.Figure(data=data3d, layout = layout3d)
+    fig.update_layout(scene = dict(xaxis_title='Z Position', yaxis_title='Y Position', zaxis_title='X Position'), width=700, 
+                      margin=dict(r=0, b=0, l=0, t=0))
     fig.show()
+
+    
+    #fig = go.Figure(data=[go.Scatter3d(x=sim_dict["pos"][:,0], y=sim_dict["pos"][:,1], z=sim_dict["pos"][:,2], mode='markers')])
+    #x_val = sim_dict["pos"][:,0][(sim_dict["event"].index(1))]
+    #y_val = sim_dict["pos"][:,1][(sim_dict["event"].index(1))]
+    #z_val = sim_dict["pos"][:,2][(sim_dict["event"].index(1))]
+    #fig.add_scatter(x=sim_dict["pos"][:,0][(sim_dict["event"].index(1))], y=sim_dict["pos"][:,1][(sim_dict["event"].index(1))], z = sim_dict["pos"][:,2][(sim_dict["event"].index(1))])
 
 
 
