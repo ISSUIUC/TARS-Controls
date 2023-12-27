@@ -99,7 +99,7 @@ class Apogee:
         vel = self.state[1]
         
         # Define mach number for csv lookup, rounded to hundreds place
-        mach_number = np.linalg.norm(vel) / atmosphere.AtmosphereModel.get_speed_of_sound(alt)
+        mach_number = np.linalg.norm(vel) / self.atm.model.get_speed_of_sound(alt)
         mach = round(mach_number, 2)
 
         Ca = self.approximate_cubic_spline(self.c, self.x_interpolate, mach)
@@ -116,7 +116,7 @@ class Apogee:
         # print("State: ", x_state)
         C_a = self.get_Ca()
         alt = self.state[0]
-        density = atmosphere.AtmosphereModel.get_density(alt)
+        density = self.atm.model.get_density(alt)
         drag = -0.5*(self.state[1]**2 * C_a*density*self.rocket.A)
         grav = self.gravitational_force(alt)
         force =  drag + grav

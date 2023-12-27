@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.constants
 import util.vectors as vct
-from ambiance import Atmosphere as ICAOmodel
+from ambiance import CONST as ICAOconstants
 from util.random_noise import Perlin
 
 class WindModel:
@@ -103,26 +103,116 @@ class WindModel:
 
 class AtmosphereModel:
     perlin = Perlin()
-    def get_temperature(altitude: float) -> float:
+
+    def get_geometric_to_geopotential(self, altitude)->float:
+        return (ICAOconstants.r*altitude)/(ICAOconstants.r+altitude)
+
+    def get_temperature(self, altitude: float) -> float:
         """Returns the temperature at a given altitude in meters"""
-        return ICAOmodel(altitude).temperature[0]
+        altitude_h = self.get_geometric_to_geopotential(altitude) / 1000.0 # Geopotential altitude in km
+        altitude_z = altitude / 1000.0 # Geometric altitude
+        if (altitude_h < 11.0) :
+            temperature = 288.15 - (6.5 * altitude_h)
+        elif (altitude_h < 20.0) :
+            temperature = 216.65
+        elif (altitude_h < 32.0) :
+            temperature = 196.65 + altitude_h
+        elif (altitude_h < 47.0) :
+            temperature = 139.05 + (2.8 * altitude_h)
+        elif (altitude_h < 51.0) :
+            temperature = 270.65
+        elif (altitude_h < 71.0) :
+            temperature = 413.45 - (2.8 * altitude_h)
+        elif (altitude_h < 84.852) :
+            temperature = 356.65 - (2.0 * altitude_h)
+        elif (altitude_z < 91) :
+            temperature = 186.8673
+        elif (altitude_z < 110) :
+            temperature = 263.1905 - 76.3232 * np.sqrt(1 - ((altitude_z - 91) / -19.9429)**2.0)
+        elif (altitude_z < 120) :
+            temperature = 240 + 12 * (altitude_z - 110)
+        elif (altitude_z < 1000) :
+            temperature = 1000 - 640 * np.exp(-0.01875 * ((altitude_z - 120) * (6356.766 + 120) /
+                                            (6356.766 + altitude_z)))
+        else :
+            print("Exceeding calculatable altitude!")
+            temperature = -1.0
+        
+        return temperature
     
-    def get_pressure(altitude: float) -> float:
+    def get_pressure(self, altitude: float) -> float:
         """Returns the pressure at a given altitude in meters"""
-        return ICAOmodel(altitude).pressure[0]
+        # Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
+        b = 0.0065
+        return ICAOconstants.P_0 * ((ICAOconstants.T_0 +(altitude)*b)/ICAOconstants.T_0)**(-ICAOconstants.g_0/(b*ICAOconstants.R))
     
-    def get_density(altitude: float, noise=False, position=np.array([0,0,0])) -> float:
+    def get_density(self, altitude: float, noise=False, position=np.array([0,0,0])) -> float:
         """Returns the pressure at a given altitude in meters"""
-        density = ICAOmodel(altitude).density[0]
+        R = ICAOconstants.R
+        pressure = self.get_pressure(altitude)
+        temperature = self.get_temperature(altitude)
+        altitude = altitude / 1000.0
+
+        if (altitude < 84.853) :
+            density = pressure / (R * temperature)
+        elif (altitude < 91) :
+            density = np.exp(
+                0.000000 * pow(altitude, 4) + -3.322622E-06 * pow(altitude, 3) +
+                9.111460E-04 * pow(altitude, 2) + -0.2609971 * altitude + 5.944694)
+        elif (altitude < 100) :
+            density = np.exp(
+                0.000000 * pow(altitude, 4) + 2.873405E-05 * pow(altitude, 3) +
+                -0.008492037 * pow(altitude, 2) + 0.6541179 * altitude + -23.62010)
+        elif (altitude < 110) :
+            density = np.exp(
+                -1.240774E-05 * pow(altitude, 4) + 0.005162063 * pow(altitude, 3) +
+                -0.8048342 * pow(altitude, 2) + 55.55996 * altitude + -1443.338)
+        elif (altitude < 120) :
+            density = np.exp(
+                0.00000 * pow(altitude, 4) + -8.854164E-05 * pow(altitude, 3) +
+                0.03373254 * pow(altitude, 2) + -4.390837 * altitude + 176.5294)
+        elif (altitude < 150) :
+            density = np.exp(
+                3.661771E-07 * pow(altitude, 4) + -2.154344E-04 * pow(altitude, 3) +
+                0.04809214 * pow(altitude, 2) + -4.884744 * altitude + 172.3597)
+        elif (altitude < 200) :
+            density = np.exp(
+                1.906032E-08 * pow(altitude, 4) + -1.527799E-05 * pow(altitude, 3) +
+                0.004724294 * pow(altitude, 2) + -0.6992340 * altitude + 20.50921)
+        elif (altitude < 300) :
+            density = np.exp(1.199282E-09 * pow(altitude, 4) +
+                        -1.451051E-06 * pow(altitude, 3) +
+                        6.910474E-04 * pow(altitude, 2) + -0.1736220 * altitude +
+                        -5.321644)
+        elif (altitude < 500) :
+            density = np.exp(1.140564E-10 * pow(altitude, 4) +
+                        -2.130756E-07 * pow(altitude, 3) +
+                        1.570762E-04 * pow(altitude, 2) + -0.07029296 * altitude +
+                        -12.89844)
+        elif (altitude < 750) :
+            density = np.exp(8.105631E-12 * pow(altitude, 4) +
+                        -2.358417E-09 * pow(altitude, 3) +
+                        -2.635110E-06 * pow(altitude, 2) +
+                        -0.01562608 * altitude + -20.02246)
+        elif (altitude < 1000) :
+            density = np.exp(-3.701195E-12 * pow(altitude, 4) +
+                        -8.608611E-09 * pow(altitude, 3) +
+                        5.118829E-05 * pow(altitude, 2) + -0.06600998 * altitude +
+                        -6.137674)
+        else :
+            print("Exceeding calculatable altitude!")
+            density = -1.0
+        
         if noise:
             density *= 1 + 0.005*self.perlin.f(*(position/100))
-        return density
+        return density 
     
-    def get_speed_of_sound(altitude: float) -> float:
+    def get_speed_of_sound(self, altitude: float) -> float:
         """Returns the speed of sound at a given altitude in meters"""
-        return ICAOmodel(altitude).speed_of_sound[0]
+        gamma = 1.4 # Heat capacity ratio of air
+        return np.sqrt(gamma * ICAOconstants.R * self.get_temperature(altitude))
     
-    def pressure_to_altitude(pressure: float) -> float:
+    def pressure_to_altitude(self, pressure: float) -> float:
         '''Returns altitude at a given pressure using the international barometric formula
         
         Args:
@@ -160,3 +250,4 @@ class Atmosphere:
                                      enable_direction_variance, enable_magnitude_variance,
                                      nominal_wind_direction, nominal_wind_magnitude)
         
+        self.model = AtmosphereModel()

@@ -64,7 +64,7 @@ class Forces:
         '''
         # TODO: Add random disturbances
         alt = x_state.copy()[0,0]
-        density = atmosphere.AtmosphereModel.get_density(alt, noise=density_noise, position=x_state[0])
+        density = self.atm.model.get_density(alt, noise=density_noise, position=x_state[0])
         thrust = self.motor.get_thrust(time_stamp)
         wind_vector = self.atm.wind.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
@@ -96,7 +96,7 @@ class Forces:
         '''
         alt = x_state[0,0]
         vel = x_state[1]
-        mach_number = np.linalg.norm(vel) / atmosphere.AtmosphereModel.get_speed_of_sound(alt)
+        mach_number = np.linalg.norm(vel) / self.atm.model.get_speed_of_sound(alt)
 
         # Define mach number for csv lookup, rounded to hundreds place
         mach = round(mach_number, 2)
