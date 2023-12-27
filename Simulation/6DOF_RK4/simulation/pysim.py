@@ -152,7 +152,7 @@ class Simulation:
 
     def coast(self):
         while self.x[1, 0] >= 0:
-        # Get sensor data
+            # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()

@@ -5,7 +5,6 @@ from ambiance import Atmosphere as ICAOmodel
 from util.random_noise import Perlin
 
 class WindModel:
-    perlin = Perlin()
     def __init__(self, wind_direction_variance_mean = 0.0, 
                  wind_direction_variance_stddev = 0.01,
                  wind_magnitude_variance_mean = 0.0, 
@@ -103,6 +102,7 @@ class WindModel:
         return current_wind_direction * current_wind_magnitude
 
 class AtmosphereModel:
+    perlin = Perlin()
     def get_temperature(altitude: float) -> float:
         """Returns the temperature at a given altitude in meters"""
         return ICAOmodel(altitude).temperature[0]
@@ -111,9 +111,12 @@ class AtmosphereModel:
         """Returns the pressure at a given altitude in meters"""
         return ICAOmodel(altitude).pressure[0]
     
-    def get_density(altitude: float) -> float:
+    def get_density(altitude: float, noise=False, position=np.array([0,0,0])) -> float:
         """Returns the pressure at a given altitude in meters"""
-        return ICAOmodel(altitude).density[0]
+        density = ICAOmodel(altitude).density[0]
+        if noise:
+            density *= 1 + 0.005*self.perlin.f(*(position/100))
+        return density
     
     def get_speed_of_sound(altitude: float) -> float:
         """Returns the speed of sound at a given altitude in meters"""
@@ -152,119 +155,8 @@ class Atmosphere:
                  nominal_wind_direction = np.array([-1.0, 0.0, 0.0]),
                  nominal_wind_magnitude = 0.0):
         
-        self.wind_model_ = WindModel(wind_direction_variance_mean, wind_direction_variance_stddev,
+        self.wind = WindModel(wind_direction_variance_mean, wind_direction_variance_stddev,
                                      wind_magnitude_variance_mean, wind_magnitude_variance_stddev,
                                      enable_direction_variance, enable_magnitude_variance,
                                      nominal_wind_direction, nominal_wind_magnitude)
         
-    def get_geometric_to_geopotential(self, altitude)->float:
-        r = 6371000.0 # Radius of Earth
-        return (r*altitude)/(r+altitude)
-    
-    def get_temperature(self, altitude):
-        '''Temperature getter function based on altitude
-        
-        Args:
-            altitude (float): Altitude above sea level, in meters
-        
-        Returns:
-            temperature (float): Temperature at altitude
-        '''
-        return AtmosphereModel.get_temperature(altitude)
-        
-    def get_pressure(self, altitude):
-        """Pressure getter function based on altitude
-        
-        Args:
-            altitude (float): Altitude above sea level, in meters
-            
-        Returns:
-            pressure (float): Pressure at altitude
-        """
-        return AtmosphereModel.get_pressure(altitude)
-    
-    def get_density(self, altitude, noise=False, position=np.array([0,0,0]))->float:
-        '''Returns the density at a given altitude
-        
-        Args:
-            altitude (float): Altitude above sea level, in meters
-        
-        Returns:
-            density (float): Density at altitude
-        '''
-        density = AtmosphereModel.get_density(altitude)
-        if noise:
-            density *= 1 + 0.005*self.perlin.f(*(position/100))
-        return density 
-    
-    def get_altitude(self, pressure):
-        '''Returns altitude at a given pressure using the international barometric formula
-        
-        Args:
-            pressure: Atmospheric pressure (pascals)
-        
-        Returns:
-            Altitude from sea level in meters
-        
-        '''
-        # temperature under standard condition (15 degrees C at sealevel) kelvin
-        P_0 = 101325
-
-        # pressure under standard condition in (Pa)
-        T_0 = 288.16 
-
-        # Temperature lapse rate in k/m assuming temperature varies linearly based on altitude 
-        b = 0.0065
-
-        # gravitational constant 
-        g = 9.81
-
-        R = 287.05
-
-        pressureRatio = pressure/P_0
-        return -(T_0*((pressureRatio)**(b*R/(g)) - 1) * (pressureRatio)**(-b*R/(g)))/b
-    
-    def get_speed_of_sound(self, altitude)->float:
-        '''Returns the speed of sound at a given altitude
-        
-        Args:
-            altitude (float): Altitude above sea level, in meters
-        
-        Returns:
-            speed of sound (float): Speed of sound at altitude
-        '''
-        return AtmosphereModel.get_speed_of_sound(altitude)
-    
-    
-    ########## Get Parameters ############
-    def get_nominal_wind_direction(self) -> float:
-        return self.wind_model_.get_nominal_wind_direction()
-    
-    def get_nominal_wind_magnitude(self) -> float:
-        return self.wind_model_.get_nominal_wind_magnitude()
-    
-    
-    ########## Set parameters ###########
-    def set_nominal_wind_direction(self, direction) -> None:
-        self.wind_model_.set_nominal_wind_direction(direction / np.linalg.norm(direction))
-    
-    def set_nominal_wind_magnitude(self, magnitude) -> None:
-        self.wind_model_.set_nominal_wind_magnitude(magnitude)
-    
-    ########## Wind modeling #################
-    def toggle_wind_direction_variance(self, toggle) -> None:
-        self.wind_model_.toggle_wind_direction_variance(toggle)
-    
-    def toggle_wind_magnitude_variance(self, toggle) -> None:
-        self.wind_model_.toggle_wind_magnitude_variance(toggle)
-        
-    def get_wind_vector(self, tStamp)->np.ndarray:
-        '''Returns the wind vector at a given time
-        
-        Args:
-            tStamp (float): Time stamp in seconds
-        
-        Returns:
-            wind_vector (float): Wind vector at time
-        '''
-        return self.wind_model_.get_wind_vector(tStamp)

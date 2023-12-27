@@ -50,9 +50,9 @@ def get_barometer_data(x_state, sensor_config):
     a = atm.Atmosphere()
     baro_rms = sensor_config["barometer"]["RMS"] * 100 # Pascals
     
-    pressure = a.get_pressure(x_state[0, 0])
+    pressure = atm.AtmosphereModel.get_pressure(x_state[0, 0])
     pressure = random.gauss(pressure, baro_rms)
-    altitude = a.get_altitude(pressure)
+    altitude = atm.AtmosphereModel.pressure_to_altitude(pressure)
     
     return altitude
     

@@ -36,7 +36,7 @@ class Forces:
     rasaero_file_location = "" # Will be set in constructor
     rasaero = None
 
-    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm):
+    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm: atmosphere.Atmosphere):
         self.max_ext_length = max_ext_length
         self.cm = cm
         self.cp = cp
@@ -64,9 +64,9 @@ class Forces:
         '''
         # TODO: Add random disturbances
         alt = x_state.copy()[0,0]
-        density = self.atm.get_density(alt, noise=density_noise, position=x_state[0])
+        density = atmosphere.AtmosphereModel.get_density(alt, noise=density_noise, position=x_state[0])
         thrust = self.motor.get_thrust(time_stamp)
-        wind_vector = self.atm.get_wind_vector(time_stamp)
+        wind_vector = self.atm.wind.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
@@ -96,7 +96,7 @@ class Forces:
         '''
         alt = x_state[0,0]
         vel = x_state[1]
-        mach_number = np.linalg.norm(vel) / self.atm.get_speed_of_sound(alt)
+        mach_number = np.linalg.norm(vel) / atmosphere.AtmosphereModel.get_speed_of_sound(alt)
 
         # Define mach number for csv lookup, rounded to hundreds place
         mach = round(mach_number, 2)
