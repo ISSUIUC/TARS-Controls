@@ -161,6 +161,7 @@ class Simulation:
             current_state, current_covariance, current_state_r = self.get_kalman_state()
             apogee_estimate = 0
 
+
             # Apogee optimization
             if self.rocket.current_stage == 0 and not is_ignited and do_apogee_optimization:
                 st = time.perf_counter()

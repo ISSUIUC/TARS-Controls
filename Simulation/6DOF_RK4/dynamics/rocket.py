@@ -148,7 +148,7 @@ class Rocket:
     def is_motor_burnout(self, timestamp):
         return self.motor.burnout(timestamp)
 
-    def get_motor_mass(self, timestamp) -> float:
+    def get_motor_mass(self, timestamp, start_timestamp) -> float:
         """Returns the mass of the motor at a given time
             Only used for upper stages, don't use for base stage
             use set_motor_mass for base stage
@@ -159,7 +159,7 @@ class Rocket:
         Returns:
             float: Mass of the motor
         """
-        return self.motor.get_mass(timestamp - self.separation_timestamp)
+        return self.motor.get_mass(timestamp - start_timestamp)
     
     def separate_stage(self, timestamp) -> bool:
         """ "Separates" the current stage from the rocket (increments the stage counter)
@@ -171,6 +171,7 @@ class Rocket:
             return False
         self.current_stage += 1
         self.separation_timestamp = timestamp
+        self.motor = self.stages[self.current_stage].motor
         self.forces = self.stages[self.current_stage].forces
         return True
 

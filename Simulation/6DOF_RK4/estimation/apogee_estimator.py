@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import math
 import sys
+import copy
 
 import dynamics.forces as forces
 import util.vectors as vct
@@ -157,7 +158,7 @@ class Apogee:
         '''
         self.state = state.copy()
 
-    def RK4(self, timestamp):
+    def RK4(self, timestamp, rocket_copy: rocket_model.Rocket):
         """Runge-Kutta 4th order method for state propogation
         """
 
@@ -175,7 +176,7 @@ class Apogee:
 
         p = (self.state[0] + (1/6)*(k1_p+(2*k2_p)+(2*k3_p)+k4_p)*self.dt)
 
-        a = self.get_accel(timestamp)
+        a = self.get_accel(timestamp, rocket_copy)
 
         self.state = np.array([p,v,a])
     
@@ -213,7 +214,7 @@ class Apogee:
         return Ca
 
 
-    def get_accel(self, timestamp) -> np.ndarray:
+    def get_accel(self, timestamp, rocket_copy: rocket_model.Rocket) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
         
         Returns:
@@ -223,12 +224,13 @@ class Apogee:
         # print("State: ", x_state)
         C_a = self.get_Ca()
         alt = self.state[0]
+        rocket_mass = rocket_copy.get_rocket_total_mass(timestamp + rocket_copy.separation_timestamp)
         density = self.atm.get_density(alt)
-        drag = -0.5*(self.state[1]**2 * C_a*density*self.rocket.A)
-        grav = self.gravitational_force(alt, timestamp)
-        thrust = self.rocket.get_motor().get_thrust(timestamp)
+        drag = -0.5*(self.state[1]**2 * C_a*density*rocket_copy.A)
+        grav = self.gravitational_force_generic(alt, rocket_mass)
+        thrust = rocket_copy.get_motor().get_thrust(timestamp)
         force = drag + grav + thrust[0]
-        return force/self.rocket.get_rocket_total_mass(timestamp)
+        return force/rocket_mass
 
     def gravitational_force(self, altitude, timestamp) -> np.ndarray:
         '''Calculates gravitational force acting on rocket based on altitude
@@ -241,7 +243,21 @@ class Apogee:
         Returns:
             (np.array): vector of gravitational forces on each axis [1x3]
         '''
-        return -(prop.G*prop.m_e*self.rocket.get_rocket_total_mass(timestamp))/((prop.r_e+altitude)**2)
+        return self.gravitational_force_generic(altitude, self.rocket.get_rocket_total_mass(timestamp))
+    
+    def gravitational_force_generic(self, altitude, small_mass):
+        '''Calculates gravitational force acting on rocket based on altitude
+        Relevant Equations:
+            F = GMm/r^2
+
+        Args:
+            altitude (float): current altitude of rocket
+            small_mass (float): Small body (not earth) to calculate force for.
+        
+        Returns:
+            (np.array): vector of gravitational forces on each axis [1x3]
+        '''
+        return -(prop.G*prop.m_e*small_mass)/((prop.r_e+altitude)**2)
 
     def step_v(self):
         
@@ -261,17 +277,22 @@ class Apogee:
         Returns:
             self.state[0] (float): predicted apogee of rocket
         '''
-        self.set_params(current_state.copy())
+
+        state_vector_1d = current_state[0:3]
+
+        rocket_copy = copy.deepcopy(self.rocket)
+
+        self.set_params(state_vector_1d.copy())
         timestamp = 0
         dt = self.dt
-        self.rocket.get_motor().ignite(timestamp)
-        while (self.state[1] > 0 and self.rocket.get_motor().burnout(timestamp)):
-            self.RK4(timestamp)
+        rocket_copy.get_motor().ignite(timestamp)
+        while (self.state[1] > 0 and not rocket_copy.get_motor().burnout(timestamp)):
+            self.RK4(timestamp, rocket_copy)
             timestamp += dt
 
-        dt = 1
+        # self.dt = 1
         while (self.state[1] > 0):
-            self.RK4(timestamp)
+            self.RK4(timestamp, rocket_copy)
             # Check if motor burnout and then we can have an even higher timestamp?
             timestamp += dt
         return self.state[0]
