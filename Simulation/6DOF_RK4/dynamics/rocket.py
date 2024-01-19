@@ -13,17 +13,7 @@ from estimation.navigation import Navigation
 class Rocket:
     motor = None
     forces = None
-<<<<<<< HEAD
     stage_config = None
-=======
-    
-    def __init__(self, ekf_args, rekf_args, cm_rocket=np.array([3.34-1.86, 0., 0.]), cm_motor=np.array([0.3755, 0., 0.]),impulse=9671.0,
-                 motor_mass=8.064, delay=60, motor_lookup_file='../lookup/m2500.csv',rocket_dry_mass=14.691,r_r=0.0508,l=3.34,
-                 max_ext_length=0.0178, atm=None):
-        self.Navigation = Navigation(*ekf_args,*rekf_args) 
-        self.cm_rocket = cm_rocket
-        self.cm_motor = cm_motor
->>>>>>> 2a92c88571381c89ec378fb68f985c3bf1dcef77
 
     def init_dicts(self):
         self.sim_dict = {
