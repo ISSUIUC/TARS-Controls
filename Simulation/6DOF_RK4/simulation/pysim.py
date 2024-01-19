@@ -60,37 +60,37 @@ class Simulation:
         self.sensor_config = self.rocket.stage_config['sensors']
         self.init_kalman_filters()
 
-    def init_kalman_filters(self):
-        # TODO: Init with previous rocket data
-        self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        # TODO: init this data with the previous rocket becuase of staging
-        x_data = []
-        y_data = []
-        z_data = []
-        for i in range(10):
-            reading = sensors.get_accelerometer_data(self.x, self.sensor_config)
-            x_data.append(reading[0])
-            y_data.append(reading[1])
-            z_data.append(reading[2])
+    # def init_kalman_filters(self):
+    #     # TODO: Init with previous rocket data
+    #     self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    #     # TODO: init this data with the previous rocket becuase of staging
+    #     x_data = []
+    #     y_data = []
+    #     z_data = []
+    #     for i in range(10):
+    #         reading = sensors.get_accelerometer_data(self.x, self.sensor_config)
+    #         x_data.append(reading[0])
+    #         y_data.append(reading[1])
+    #         z_data.append(reading[2])
 
-        accel_tracker = np.array([])
+    #     accel_tracker = np.array([])
 
-        ax = sum(x_data)/len(x_data)
-        ay = sum(y_data)/len(y_data)
-        az = sum(z_data)/len(z_data)
+    #     ax = sum(x_data)/len(x_data)
+    #     ay = sum(y_data)/len(y_data)
+    #     az = sum(z_data)/len(z_data)
 
-        pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
-        yaw = np.arctan2(-ax,-ay) + np.pi/2
-        self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
-        self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
+    #     pitch = -1 * (np.arctan2(-az,-ay) + np.pi/2)
+    #     yaw = np.arctan2(-ax,-ay) + np.pi/2
+    #     self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
+    #     self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
 
-    def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
-        self.kalman_filter.priori()
-        self.kalman_filter.update(bno_ang_pos, baro_alt,
-                            accel[0], accel[1], accel[2])
+    # def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
+    #     self.kalman_filter.priori()
+    #     self.kalman_filter.update(bno_ang_pos, baro_alt,
+    #                         accel[0], accel[1], accel[2])
         
-        self.r_kalman_filter.priori()
-        self.r_kalman_filter.update(*gyro, *accel)
+    #     self.r_kalman_filter.priori()
+    #     self.r_kalman_filter.update(*gyro, *accel)
     
     def time_step(self):
         self.time_stamp += self.dt
