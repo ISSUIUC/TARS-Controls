@@ -39,10 +39,20 @@ class KalmanFilter:
             #                                 [0.0, 1.0, dt],
             #                                 [0.0, 0.0, 1.0]]
             # self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 13.)
-        self.Q = np.block([[Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.)],
-                           [np.zeros((3,3)), Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.)],
-                           [np.zeros((3,3)), np.zeros((3,3)), Q_continuous_white_noise(3, dt, 13.)]])
-
+        # self.Q = np.block([[Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.)],
+        #                    [np.zeros((3,3)), Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.)],
+        #                    [np.zeros((3,3)), np.zeros((3,3)), Q_continuous_white_noise(3, dt, 13.)]])
+        noise = Q_continuous_white_noise(3, dt, 13.)
+        for i in range(3):
+            self.Q[i,i] = noise[0,0]
+            self.Q[i, i+3] = noise[0,1]
+            self.Q[i, i+6] = noise[0,2]
+            self.Q[i+3, i] = noise[1,0]
+            self.Q[i+3, i+3] = noise[1,1]
+            self.Q[i+3, i+6] = noise[1,2]
+            self.Q[i+6, i] = noise[2,0]
+            self.Q[i+6, i+3] = noise[2,1]
+            self.Q[i+6, i+6] = noise[2,2]
         # barometric altimeter 1 axis
         # accelerometer 3 axes
         self.H = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -64,7 +74,7 @@ class KalmanFilter:
         # State transition matrix
         A = np.block([[np.eye(3), self.dt*np.eye(3), (self.dt**2)/2*np.eye(3)],
                       [np.zeros((3,3)), np.eye(3), self.dt*np.eye(3)],
-                      [np.zeros((3,3)), np.zeros((3,3)), np.eye(3)]])
+                      [np.zeros((3,3)), -Cd*0.5*rho*np.linalg.norm(self.x_k[3:6])/m*R, np.eye(3)]])
         
         # B matrix (generally used for control input but we're using thrust as "control" input)
         B = np.block([[np.zeros((3,3))],
