@@ -34,12 +34,14 @@ class KalmanFilter:
 
         self.x_k = np.array([pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, accel_x, accel_y, accel_z]).T
 
-        for i in range(3):
+        # for i in range(3):
             # self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
             #                                 [0.0, 1.0, dt],
             #                                 [0.0, 0.0, 1.0]]
-            self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 13.)
-
+            # self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 13.)
+        self.Q = np.block([[Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.)],
+                           [np.zeros((3,3)), Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.)],
+                           [np.zeros((3,3)), np.zeros((3,3)), Q_continuous_white_noise(3, dt, 13.)]])
 
         # barometric altimeter 1 axis
         # accelerometer 3 axes
@@ -83,7 +85,7 @@ class KalmanFilter:
             z_accel (float): z acceleration
         """
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
-        acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
+        acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel]))
         y_k = np.array([x_pos, *acc]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
