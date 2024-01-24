@@ -12,14 +12,19 @@ def norm(x) -> np.ndarray:
         return x.copy()/norm
     return np.zeros(np.shape(x))
 
-def body_to_world(roll, pitch, yaw, body_vector):
+
+def body_to_world(roll, pitch, yaw, body_vector=None):
     roll = np.array([[1, 0, 0], [0, np.cos(roll), -np.sin(roll)], [0, np.sin(roll), np.cos(roll)]])
     pitch = np.array([[np.cos(pitch), 0, np.sin(pitch)], [0, 1, 0], [-np.sin(pitch), 0, np.cos(pitch)]])
     yaw = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
+    if body_vector is None:
+        return yaw @ pitch @ roll
     return yaw @ pitch @ roll @ body_vector
 
-def world_to_body(roll, pitch, yaw, world_vector):
+def world_to_body(roll, pitch, yaw, world_vector=None):
     roll = np.array([[1, 0, 0], [0, np.cos(roll), -np.sin(roll)], [0, np.sin(roll), np.cos(roll)]])
     pitch = np.array([[np.cos(pitch), 0, np.sin(pitch)], [0, 1, 0], [-np.sin(pitch), 0, np.cos(pitch)]])
     yaw = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
+    if world_vector is None:
+        return (yaw @ pitch @ roll).T
     return (yaw @ pitch @ roll).T @ world_vector

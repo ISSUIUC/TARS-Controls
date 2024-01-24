@@ -42,6 +42,7 @@ import time
 import estimation.apogee_estimator as apg
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
+import util.vectors as vct
 
 # Load desired config file
 config = dataloader.config
@@ -85,7 +86,19 @@ class Simulation:
         self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
 
     def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
-        self.kalman_filter.priori()
+        mu = 1.789*10**(-5) # Dynamic viscosity of air, Pa*s
+        rho = self.rocket.atm.get_density(self.x[0, 0])
+        u = np.linalg.norm(self.x[1])+0.0001 # Speed of rocket, m/s
+        L = 4.5 # Length of rocket, m
+        Re = rho*u*L/mu
+        # Cd = 4*np.pi/(Re*(2-np.log(Re))) # Drag coefficient
+        Cd = 1
+        
+        self.kalman_filter.priori(vct.body_to_world(*self.x[3]), 
+                                  np.array([np.linalg.norm(self.rocket.get_motor().get_thrust(self.time_stamp)), 0, 0]), 
+                                  self.rocket.get_rocket_total_mass(self.time_stamp), 
+                                  rho, 
+                                  Cd)
         self.kalman_filter.update(bno_ang_pos, baro_alt,
                             accel[0], accel[1], accel[2])
         
@@ -119,7 +132,8 @@ class Simulation:
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            # apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            apogee_est = 0
 
             self.rocket.set_motor_mass(self.time_stamp)
 
@@ -157,7 +171,8 @@ class Simulation:
             self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            # apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            apogee_est = 0
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 

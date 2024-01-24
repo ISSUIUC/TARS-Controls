@@ -32,31 +32,45 @@ class KalmanFilter:
         self.current_time = 0
         self.s_dt = dt
 
-        self.x_k = np.array([pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z]).T
+        self.x_k = np.array([pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, accel_x, accel_y, accel_z]).T
 
         for i in range(3):
-            self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
-                                            [0.0, 1.0, dt],
-                                            [0.0, 0.0, 1.0]]
+            # self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
+            #                                 [0.0, 1.0, dt],
+            #                                 [0.0, 0.0, 1.0]]
             self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 13.)
 
 
-        # accelerometer 3 axes
         # barometric altimeter 1 axis
+        # accelerometer 3 axes
         self.H = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-    def priori(self):
+    def priori(self, R: np.ndarray, T: np.ndarray, m: float, rho: float, Cd: float):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
-            But basically predicts step
+            But basically this is the prediction step
         Args:
-            u (float): control input
+            R (np.ndarray): rotation matrix from body to world frame
+            T (np.ndarray): thrust in body frame
+            m (float): mass
+            rho (float): air density
+            Cd (float): drag coefficient
         """
-        self.x_priori = self.F @ self.x_k
-        self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
+        # State transition matrix
+        A = np.block([[np.eye(3), self.dt*np.eye(3), (self.dt**2)/2*np.eye(3)],
+                      [np.zeros((3,3)), np.eye(3), self.dt*np.eye(3)],
+                      [np.zeros((3,3)), np.zeros((3,3)), np.eye(3)]])
+        
+        # B matrix (generally used for control input but we're using thrust as "control" input)
+        B = np.block([[np.zeros((3,3))],
+                      [np.zeros((3,3))],
+                      [R/m]])
+        
+        self.x_priori = A @ self.x_k + B @ T + np.array([0,0,0,0,0,0,-9.81,0,0])
+        self.P_priori = (A @ self.P_k @ A.T) + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         """Updates state and covariance
