@@ -92,7 +92,6 @@ class Simulation:
         L = 4.5 # Length of rocket, m
         Re = rho*u*L/mu
         Cd = 4*np.pi/(Re*(2-np.log(Re))) # Drag coefficient
-        # Cd = 1
         
         self.kalman_filter.priori(vct.body_to_world(*self.x[3]), 
                                   np.array([np.linalg.norm(self.rocket.get_motor().get_thrust(self.time_stamp)), 0, 0]), 
