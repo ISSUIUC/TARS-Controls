@@ -62,7 +62,7 @@ class Rocket:
             "apogee_estimate": []
         }
 
-    def __init__(self, ekf_args, rekf_args, stage_config, atm:atmosphere.Atmosphere=None, stages:list=[]):
+    def __init__(self, dt, x0, stage_config, atm:atmosphere.Atmosphere=None, stages:list=[]):
         self.stage_config = stage_config
         self.cm_rocket = stage_config["rocket_body"]["structure_cm"]
         self.cm_motor = stage_config["motor"]["cm"]
@@ -73,7 +73,7 @@ class Rocket:
         self.motor_mass = stage_config["motor"]["motor_mass"]
         self.delay = stage_config["motor"]["delay"]
         self.motor_lookup_file = stage_config["motor"]["motor_lookup_file"]
-        self.Navigation = Navigation(*ekf_args,*rekf_args) 
+        self.Navigation = Navigation(dt, stage_config['sensors'],x0) 
 
         self.rocket_dry_mass = stage_config["rocket_body"]["dry_mass"]
         self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
