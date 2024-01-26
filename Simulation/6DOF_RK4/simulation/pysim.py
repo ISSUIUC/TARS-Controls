@@ -58,7 +58,7 @@ class Simulation:
         self.baro = 0
         self.time_stamp = time_stamp
         self.sensor_config = self.rocket.stage_config['sensors']
-        self.init_kalman_filters()
+    #    self.init_kalman_filters()
 
     # def init_kalman_filters(self):
     #     # TODO: Init with previous rocket data
@@ -196,8 +196,8 @@ if __name__ == '__main__':
 
     stages = []
     for stage in config['rocket']['stages'][1:]:
-        stages.append(rocket_model.Rocket(stage, atm=atm))
-    rocket = rocket_model.Rocket(config['rocket']['stages'][0], atm=atm, stages=stages)
+        stages.append(rocket_model.Rocket(dt, x0, stage, atm=atm))
+    rocket = rocket_model.Rocket(dt, x0, config['rocket']['stages'][0], atm=atm, stages=stages)
 
     motor = rocket.motor
     sim = sim_class.Simulator(atm=atm, rocket=rocket)
