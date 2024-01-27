@@ -4,7 +4,14 @@ import util.vectors as vct
 from ambiance import CONST as ICAOconstants
 from util.random_noise import Perlin
 
-class WindModel:
+class AbstractWindModel:
+    def __init__(self):
+        pass
+
+    def get_wind_vector(self, altitude, time_stamp) ->np.ndarray:
+        return np.zeros(3)
+
+class WindModel(AbstractWindModel):
     def __init__(self, wind_direction_variance_mean = 0.0, 
                  wind_direction_variance_stddev = 0.01,
                  wind_magnitude_variance_mean = 0.0, 
@@ -59,7 +66,7 @@ class WindModel:
     def toggle_wind_magnitude_variance(self, toggle) -> None:
         self.enable_magnitude_variance_ = toggle
         
-    def get_wind_vector(self, tStamp)->np.ndarray:
+    def get_wind_vector(self, altitude, tStamp)->np.ndarray:
         '''Returns the wind vector at a given time
         
         Args:
