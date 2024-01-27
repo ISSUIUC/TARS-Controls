@@ -23,7 +23,16 @@ class KalmanFilter:
         self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
         self.R = np.diag([2., 1.9, 1.9, 1.9])
-        self.P_k = np.zeros((9,9))
+        # self.P_k = np.zeros((9,9), dtype=float)
+        self.P_k = np.array([[0,0,0,0,0,0,0,0,0],
+                             [0,0,0,0,0,0,0,0,0],
+                             [0,0,0,0,0,0,0,0,0],
+                             [0,0,0,0,0,0,0.00002,0,0],
+                             [0,0,0,0,0,0,0,0.00002,0],
+                             [0,0,0,0,0,0,0,0,0.00002],
+                             [0,0,0,0.00002,0,0,0,0,0],
+                             [0,0,0,0,0.00002,0,0,0,0],
+                             [0,0,0,0,0,0.00002,0,0,0]], dtype=np.float64)
         self.x_priori = np.zeros((9,1))
         self.P_priori = np.zeros((9,9))
         self.F = np.zeros((9,9))
@@ -72,7 +81,7 @@ class KalmanFilter:
             Cd (float): drag coefficient
         """
         # State transition matrix
-        A = np.block([[np.eye(3), self.dt*np.eye(3), (self.dt**2)/2*np.eye(3)],
+        A = np.block([[np.eye(3), self.dt*np.eye(3), ((self.dt)**2)/2*np.eye(3)],
                       [np.zeros((3,3)), np.eye(3), self.dt*np.eye(3)],
                       [np.zeros((3,3)), -Cd*0.5*rho/m*R@np.diag([self.x_k[3], self.x_k[4], self.x_k[5]]), np.eye(3)]])
         
