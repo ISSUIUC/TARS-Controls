@@ -24,15 +24,34 @@ class KalmanFilter:
         self.Q = np.zeros((9,9))
         self.R = np.diag([2., 1.9, 1.9, 1.9])
         # self.P_k = np.zeros((9,9), dtype=float)
-        self.P_k = np.array([[0,0,0,0,0,0,0,0,0],
-                             [0,0,0,0,0,0,0,0,0],
-                             [0,0,0,0,0,0,0,0,0],
-                             [0,0,0,0,0,0,0.00002,0,0],
-                             [0,0,0,0,0,0,0,0.00002,0],
-                             [0,0,0,0,0,0,0,0,0.00002],
-                             [0,0,0,0.00002,0,0,0,0,0],
-                             [0,0,0,0,0.00002,0,0,0,0],
-                             [0,0,0,0,0,0.00002,0,0,0]], dtype=np.float64)
+        
+        # Define covariance matrices by state variable
+        # P_pp: Position, position variances
+        # P_pv: Position, velocity covariances
+        # P_pa: Position, acceleration covariances,
+        # etc.
+        P_pp = np.array([[0,0,0],
+                         [0,0,0],
+                         [0,0,0]], dtype=np.float64)
+        P_pv = np.array([[0,0,0],
+                         [0,0,0],
+                         [0,0,0]], dtype=np.float64)
+        P_pa = np.array([[0,0,0],
+                         [0,0,0],
+                         [0,0,0]], dtype=np.float64)
+        P_vv = np.array([[0,0,0],
+                         [0,0,0],
+                         [0,0,0]], dtype=np.float64)
+        P_va = np.array([[0.0002,0,0],
+                         [0,0.0002,0],
+                         [0,0,0.0002]], dtype=np.float64)
+        P_aa = np.array([[0,0,0],
+                         [0,0,0],
+                         [0,0,0]], dtype=np.float64)
+        
+        self.P_k = np.block([[P_pp, P_pv, P_pa],
+                             [P_pv, P_vv, P_va],
+                             [P_pa, P_va, P_aa]])
         self.x_priori = np.zeros((9,1))
         self.P_priori = np.zeros((9,9))
         self.F = np.zeros((9,9))
