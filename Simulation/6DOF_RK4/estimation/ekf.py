@@ -102,14 +102,14 @@ class KalmanFilter:
         # State transition matrix
         A = np.block([[np.eye(3), self.dt*np.eye(3), ((self.dt)**2)/2*np.eye(3)],
                       [np.zeros((3,3)), np.eye(3), self.dt*np.eye(3)],
-                      [np.zeros((3,3)), -Cd*0.5*rho/m*R@np.diag([self.x_k[3], self.x_k[4], self.x_k[5]]), np.eye(3)]])
-        
+                      [np.zeros((3,3)), np.zeros((3,3)), np.eye(3)]])
+        # -Cd*0.5*rho/m*R@np.diag([self.x_k[3], self.x_k[4], self.x_k[5]])
         # B matrix (generally used for control input but we're using thrust as "control" input)
         B = np.block([[np.zeros((3,3))],
                       [np.zeros((3,3))],
                       [R/m]])
         
-        self.x_priori = A @ self.x_k + B @ T + np.array([0,0,0,0,0,0,-9.81,0,0])
+        self.x_priori = A @ self.x_k + np.array([0,0,0,0,0,0,-9.81,0,0])
         self.P_priori = (A @ self.P_k @ A.T) + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):

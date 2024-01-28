@@ -86,12 +86,14 @@ class Simulation:
         self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
 
     def update_kalman(self, baro_alt, accel, gyro, bno_ang_pos):
-        mu = 1.789*10**(-5) # Dynamic viscosity of air, Pa*s
+        # mu = 1.789*10**(-5) # Dynamic viscosity of air, Pa*s
         rho = self.rocket.atm.get_density(self.x[0, 0])
-        u = np.linalg.norm(self.x[1])+0.0001 # Speed of rocket, m/s
-        L = 4.5 # Length of rocket, m
-        Re = rho*u*L/mu
-        Cd = 4*np.pi/(Re*(2-np.log(Re))) # Drag coefficient
+        # u = np.linalg.norm(self.x[1])+0.0001 # Speed of rocket, m/s
+        # L = 4.5 # Length of rocket, m
+        # Re = rho*u*L/mu
+        # print(Re)
+        # Cd = 4*np.pi/(Re*(2-np.log(Re))) # Drag coefficient
+        _, Cn, _ = self.rocket.forces.get_Ca_Cn_Cp(self.x, 0, self.rocket.get_Rasaero(), self.rocket.get_motor().is_motor_burnout(), 0)
         
         self.kalman_filter.priori(vct.body_to_world(*self.x[3]), 
                                   np.array([np.linalg.norm(self.rocket.get_motor().get_thrust(self.time_stamp)), 0, 0]), 
