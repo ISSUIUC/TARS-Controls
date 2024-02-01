@@ -10,83 +10,47 @@ class KalmanFilter:
         dt (float): time step
         pos_x (float): initial x position
         vel_x (float): initial x velocity
-        accel_x (float): initial x acceleration
         pos_y (float): initial y position
         vel_y (float): initial y velocity
-        accel_y (float): initial y acceleration
         pos_z (float): initial z position
         vel_z (float): initial z velocity
-        accel_z (float): initial z acceleration
     """
-    def __init__(self, dt, pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z):
+    def __init__(self, dt, pos_x, pos_y, pos_z, psi, theta, phi, vel_x, vel_y, vel_z, psi_dot, theta_dot, phi_dot):
         self.dt = dt
-        self.x_k = np.zeros((9,1))
-        self.Q = np.zeros((9,9))
-        self.R = np.diag([2., 1.9, 1.9, 1.9])
-        # self.P_k = np.zeros((9,9), dtype=float)
+        self.x_k = np.zeros((12,1))
+        self.Q = np.zeros((12,12))
+        self.R = np.diag([2., 1.9, 1.9, 1.9, 1.9, 1.9, 1.9])
+        self.P_k = np.zeros((12,12), dtype=float)
         
-        # Define covariance matrices by state variable
-        # P_pp: Position, position variances
-        # P_pv: Position, velocity covariances
-        # P_pa: Position, acceleration covariances,
-        # etc.
-        P_pp = np.array([[0,0,0],
-                         [0,0,0],
-                         [0,0,0]], dtype=np.float64)
-        P_pv = np.array([[0,0,0],
-                         [0,0,0],
-                         [0,0,0]], dtype=np.float64)
-        P_pa = np.array([[0,0,0],
-                         [0,0,0],
-                         [0,0,0]], dtype=np.float64)
-        P_vv = np.array([[0,0,0],
-                         [0,0,0],
-                         [0,0,0]], dtype=np.float64)
-        P_va = np.array([[0.0002,0,0],
-                         [0,0.0002,0],
-                         [0,0,0.0002]], dtype=np.float64)
-        P_aa = np.array([[0,0,0],
-                         [0,0,0],
-                         [0,0,0]], dtype=np.float64)
-        
-        self.P_k = np.block([[P_pp, P_pv, P_pa],
-                             [P_pv, P_vv, P_va],
-                             [P_pa, P_va, P_aa]])
-        self.x_priori = np.zeros((9,1))
-        self.P_priori = np.zeros((9,9))
-        self.F = np.zeros((9,9))
-        self.H = np.zeros((4,9))
+        self.x_priori = np.zeros((12,1))
+        self.P_priori = np.zeros((12,12))
+        self.A = np.zeros((12,12))
+        self.H = np.zeros((7,12))
+        self.B = np.zeros((12,3))
 
         self.current_time = 0
         self.s_dt = dt
 
-        self.x_k = np.array([pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, accel_x, accel_y, accel_z]).T
+        self.x_k = np.array([pos_x, pos_y, pos_z, psi, theta, phi, vel_x, vel_y, vel_z, psi_dot, theta_dot, phi_dot]).T
 
-        # for i in range(3):
-            # self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
-            #                                 [0.0, 1.0, dt],
-            #                                 [0.0, 0.0, 1.0]]
-            # self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 13.)
-        # self.Q = np.block([[Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.)],
-        #                    [np.zeros((3,3)), Q_continuous_white_noise(3, dt, 13.), Q_continuous_white_noise(3, dt, 13.)],
-        #                    [np.zeros((3,3)), np.zeros((3,3)), Q_continuous_white_noise(3, dt, 13.)]])
-        noise = Q_continuous_white_noise(3, dt, 13.)
-        for i in range(3):
+        noise = Q_continuous_white_noise(2, dt, 13.)
+        for i in range(6):
             self.Q[i,i] = noise[0,0]
-            self.Q[i, i+3] = noise[0,1]
-            self.Q[i, i+6] = noise[0,2]
-            self.Q[i+3, i] = noise[1,0]
-            self.Q[i+3, i+3] = noise[1,1]
-            self.Q[i+3, i+6] = noise[1,2]
-            self.Q[i+6, i] = noise[2,0]
-            self.Q[i+6, i+3] = noise[2,1]
-            self.Q[i+6, i+6] = noise[2,2]
+            self.Q[i, i+6] = noise[0,1]
+            self.Q[i+6, i] = noise[1,0]
+            self.Q[i+6, i+6] = noise[1,1]
+
         # barometric altimeter 1 axis
         # accelerometer 3 axes
-        self.H = np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
+        self.H = np.array([[1,0,0,0,0,0,0,0,0,0,0,0],
+                           [0,0,0,0,0,0,dt,0,0,0,0,0],
+                           [0,0,0,0,0,0,0,dt,0,0,0,0],
+                           [0,0,0,0,0,0,0,0,dt,0,0,0],
+                           [0,0,0,0,0,0,0,0,0,1,0,0],
+                           [0,0,0,0,0,0,0,0,0,0,1,0],
+                           [0,0,0,0,0,0,0,0,0,0,0,1]], dtype=float)
+
+        self.g = 9.81
 
     def priori(self, R: np.ndarray, T: np.ndarray, m: float, rho: float, Cd: float):
         """Sets priori state and covariance
@@ -99,18 +63,35 @@ class KalmanFilter:
             rho (float): air density
             Cd (float): drag coefficient
         """
-        # State transition matrix
-        A = np.block([[np.eye(3), self.dt*np.eye(3), ((self.dt)**2)/2*np.eye(3)],
-                      [np.zeros((3,3)), np.eye(3), self.dt*np.eye(3)],
-                      [np.zeros((3,3)), np.zeros((3,3)), np.eye(3)]])
-        # -Cd*0.5*rho/m*R@np.diag([self.x_k[3], self.x_k[4], self.x_k[5]])
-        # B matrix (generally used for control input but we're using thrust as "control" input)
-        B = np.block([[np.zeros((3,3))],
-                      [np.zeros((3,3))],
-                      [R/m]])
+        # State transition matrix, L means Lateral (ur welcome)
+        R = vct.body_to_world(*self.x_k[3:6])
+        psi, theta, phi = self.x_k[3:6]
+        J_x, J_y, J_z = np.ones((3,1))
+        A_Lpp = np.eye(3)
+        A_Lpv = R * self.dt
+        A_App = np.eye(3)
+        A_Apv = np.array([[0,np.sin(phi)/np.cos(theta),np.cos(phi)/np.cos(theta)],
+                          [0,np.cos(phi),-np.sin(phi)],
+                         [1,np.sin(phi)*np.tan(theta),np.cos(phi)*np.tan(theta)]]) * self.dt
+        A_Lvv = np.array([[1,self.x_k[11] * self.dt,-self.x_k[10] * self.dt],
+                          [-self.x_k[11] * self.dt,1,self.x_k[9]*self.dt],
+                          [self.x_k[10]*self.dt,-self.x_k[9]*self.dt,1]])
+        A_Avv = np.array([[1,self.x_k[11] * J_y / J_x * self.dt,-self.x_k[10] * J_z/ J_x * self.dt],
+                          [-self.x_k[11] * J_x / J_y * self.dt,1,self.x_k[9] * J_z / J_y * self.dt],
+                          [self.x_k[10] * J_x / J_z * self.dt,self.x_k[9] * J_y/J_z * self.dt,1]])
         
-        self.x_priori = A @ self.x_k + np.array([0,0,0,0,0,0,-9.81,0,0])
-        self.P_priori = (A @ self.P_k @ A.T) + self.Q
+        self.A = np.block([[A_Lpp, np.zeros((3,3)), A_Lpv, np.zeros((3,3))],
+                      [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
+                      [np.zeros((3,3)), np.zeros((3,3)), A_Lvv, np.zeros((3,3))],
+                      [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), A_Avv]])
+        
+        self.B = np.block([[np.zeros((3,3))],
+                           [np.zeros((3,3))],
+                           [R/m] * self.dt,
+                           [np.zeros((3,3))]])
+        
+        self.x_priori = self.A @ self.x_k + self.B @ T + np.array([0,0,0,0,0,0,self.g * np.sin(theta),-self.g*np.sin(phi)*np.cos(theta),-self.g*np.cos(phi)*np.cos(theta),0,0,0])
+        self.P_priori = (self.A @ self.P_k @ self.A.T) + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         """Updates state and covariance
