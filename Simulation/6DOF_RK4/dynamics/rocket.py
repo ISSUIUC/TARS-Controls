@@ -240,13 +240,13 @@ class Rocket:
         self.sensor_dict["imu_gyro_z"].append(gyro[2])
         self.sensor_dict["apogee_estimate"].append(apogee_estimation)
 
-        self.kalman_dict["x"].append([kalman_filter[0], kalman_filter[3], kalman_filter[6]])
-        self.kalman_dict["y"].append([kalman_filter[1], kalman_filter[4], kalman_filter[7]])
-        self.kalman_dict["z"].append([kalman_filter[2], kalman_filter[5], kalman_filter[8]])
+        self.kalman_dict["x"].append([kalman_filter[0], kalman_filter[6], kalman_filter[-1]])
+        self.kalman_dict["y"].append([kalman_filter[1], kalman_filter[7], kalman_filter[7]])
+        self.kalman_dict["z"].append([kalman_filter[2], kalman_filter[8], kalman_filter[8]])
         self.kalman_dict["cov_x"].append([kf_cov[0], kf_cov[3], kf_cov[6]])
         self.kalman_dict["cov_y"].append([kf_cov[1], kf_cov[4], kf_cov[7]])
         self.kalman_dict["cov_z"].append([kf_cov[2], kf_cov[5], kf_cov[8]])
-        self.kalman_dict["rx"].append(kalman_filter_r[0:3])
+        self.kalman_dict["rx"].append(kalman_filter[0:3])
         self.kalman_dict["ry"].append(kalman_filter_r[3:6])
         self.kalman_dict["rz"].append(kalman_filter_r[6:9])
 

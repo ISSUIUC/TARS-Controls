@@ -63,7 +63,7 @@ class Simulation:
 
     def init_kalman_filters(self):
         # TODO: Init with previous rocket data
-        self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         # TODO: init this data with the previous rocket becuase of staging
         x_data = []
         y_data = []
@@ -93,15 +93,15 @@ class Simulation:
         # Re = rho*u*L/mu
         # print(Re)
         # Cd = 4*np.pi/(Re*(2-np.log(Re))) # Drag coefficient
-        _, Cn, _ = self.rocket.forces.get_Ca_Cn_Cp(self.x, 0, self.rocket.get_Rasaero(), self.rocket.get_motor().is_motor_burnout(), 0)
+        # _, Cn, _ = self.rocket.forces.get_Ca_Cn_Cp(self.x, 0, self.rocket.get_Rasaero(), self.rocket.get_motor().is_motor_burnout(), 0)
         
         self.kalman_filter.priori(vct.body_to_world(*self.x[3]), 
                                   np.array([np.linalg.norm(self.rocket.get_motor().get_thrust(self.time_stamp)), 0, 0]), 
                                   self.rocket.get_rocket_total_mass(self.time_stamp), 
-                                  rho, 
-                                  Cd)
+                                  0.1016, 
+                                  4.5)
         self.kalman_filter.update(bno_ang_pos, baro_alt,
-                            accel[0], accel[1], accel[2])
+                            accel[0], accel[1], accel[2], *gyro)
         
         self.r_kalman_filter.priori()
         self.r_kalman_filter.update(*gyro, *accel)

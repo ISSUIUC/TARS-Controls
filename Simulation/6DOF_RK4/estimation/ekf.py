@@ -52,7 +52,7 @@ class KalmanFilter:
 
         self.g = 9.81
 
-    def priori(self, R: np.ndarray, T: np.ndarray, m: float, rho: float, Cd: float):
+    def priori(self, R: np.ndarray, T: np.ndarray, m: float, r:float, h:float):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
             But basically this is the prediction step
@@ -67,6 +67,9 @@ class KalmanFilter:
         R = vct.body_to_world(*self.x_k[3:6])
         psi, theta, phi = self.x_k[3:6]
         J_x, J_y, J_z = np.ones((3,1))
+        J_x = 1/2 * m * r**2
+        J_y = 1/12 * m * h**2 + 1/4 * m * r**2
+        J_z = J_y
         A_Lpp = np.eye(3)
         A_Lpv = R * self.dt
         A_App = np.eye(3)
@@ -87,13 +90,13 @@ class KalmanFilter:
         
         self.B = np.block([[np.zeros((3,3))],
                            [np.zeros((3,3))],
-                           [R/m] * self.dt,
+                           [R / m * self.dt] ,
                            [np.zeros((3,3))]])
         
         self.x_priori = self.A @ self.x_k + self.B @ T + np.array([0,0,0,0,0,0,self.g * np.sin(theta),-self.g*np.sin(phi)*np.cos(theta),-self.g*np.cos(phi)*np.cos(theta),0,0,0])
         self.P_priori = (self.A @ self.P_k @ self.A.T) + self.Q
 
-    def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
+    def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel, psi_vel, theta_vel, phi_vel):
         """Updates state and covariance
         
         Args:
@@ -105,7 +108,8 @@ class KalmanFilter:
         """
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
         acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel]))
-        y_k = np.array([x_pos, *acc]).T
+        ang_vel = vct.body_to_world(*bno_attitude, np.array([psi_vel, theta_vel, phi_vel]))
+        y_k = np.array([x_pos, *acc, *ang_vel]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori
