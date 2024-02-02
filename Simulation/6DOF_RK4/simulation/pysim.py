@@ -39,7 +39,7 @@ import properties.data_loader as dataloader
 import simulator as sim_class
 import dynamics.sensors as sensors
 import time
-import estimation.apogee_estimator as apg
+# import estimation.apogee_estimator as apg
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 
@@ -98,8 +98,9 @@ class Simulation:
     def idle_stage(self):
         while self.time_stamp < self.rocket.delay:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
-            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
-            self.kalman_filter.reset_lateral_pos()
+            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
+            # self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            self.rocket.Navigation.kalman_filter.reset_lateral_pos()
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
@@ -116,17 +117,17 @@ class Simulation:
         while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
             # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
-            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            # apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
 
             self.rocket.set_motor_mass(self.time_stamp)
 
             is_staging = start and self.rocket.current_stage != -1
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, is_staging, 0)
 
-            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
+            self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
             if start:
                 start = False
@@ -145,19 +146,19 @@ class Simulation:
                 self.rocket.get_bno_orientation(self.x, self.sensor_config))
 
     def get_kalman_state(self):
-        current_state = self.kalman_filter.get_state()
-        current_cov = self.kalman_filter.get_covariance()
-        current_state_r = self.r_kalman_filter.get_state()
+        current_state = self.rocket.Navigation.kalman_filter.get_state()
+        current_cov = self.rocket.Navigation.kalman_filter.get_covariance()
+        current_state_r = self.rocket.Navigation.r_kalman_filter.get_state()
         return (current_state, current_cov, current_state_r)
 
     def coast(self):
         while self.x[1, 0] >= 0:
         # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
-            self.update_kalman(baro_alt, accel, gyro, bno_ang_pos)
+            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
+            # apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 

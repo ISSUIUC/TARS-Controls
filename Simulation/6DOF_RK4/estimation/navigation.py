@@ -16,6 +16,8 @@ class Navigation:
         # TODO: Init with previous rocket data
         self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self.sensor_config = sensor_config
+        #self.ekf = ekf
+        #self.r_ekf = r_ekf
         self.x = x0
         # TODO: init this data with the previous rocket becuase of staging
         x_data = []
@@ -37,8 +39,12 @@ class Navigation:
         yaw = np.arctan2(-ax,-ay) + np.pi/2
         self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
         ## self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
-    def update_state(self,bno_attitude, x_pos, x_accel, y_accel, z_accel, vel_x,  vel_y,  vel_z, alpha_x, alpha_y, alpha_z):
-        self.ekf.priori()
-        self.r_ekf.priori()
-        self.ekf.update(bno_attitude, x_pos, x_accel, y_accel, z_accel)
-        self.r_ekf.update(vel_x,  vel_y,  vel_z, alpha_x, alpha_y, alpha_z)
+    def update_state(self,baro_alt, accel, gyro, bno_ang_pos):
+        # x_pos, vel_x,  vel_y,  vel_z, alpha_x, alpha_y, alpha_z
+        bno_attitude = bno_ang_pos
+        x_pos = baro_alt    
+        x_accel, y_accel, z_accel = accel[0], accel[1], accel[2]
+        self.kalman_filter.priori()
+        self.r_kalman_filter.priori()
+        self.kalman_filter.update(bno_attitude, x_pos, x_accel, y_accel, z_accel)
+        self.r_kalman_filter.update(*gyro, *accel)

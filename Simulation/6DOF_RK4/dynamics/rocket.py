@@ -59,7 +59,6 @@ class Rocket:
             "imu_gyro_x": [],
             "imu_gyro_y": [],
             "imu_gyro_z": [],
-            "apogee_estimate": []
         }
 
     def __init__(self, dt, x0, stage_config, atm:atmosphere.Atmosphere=None, stages:list=[]):
