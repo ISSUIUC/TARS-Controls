@@ -15,7 +15,7 @@ class KalmanFilter:
         pos_z (float): initial z position
         vel_z (float): initial z velocity
     """
-    def __init__(self, dt, pos_x, pos_y, pos_z, psi, theta, phi, vel_x, vel_y, vel_z, psi_dot, theta_dot, phi_dot):
+    def __init__(self, dt, pos_x, pos_y, pos_z, phi, theta, psi, vel_x, vel_y, vel_z, phi_dot, theta_dot, psi_dot):
         self.dt = dt
         self.x_k = np.zeros((12,1))
         self.Q = np.zeros((12,12))
@@ -31,7 +31,7 @@ class KalmanFilter:
         self.current_time = 0
         self.s_dt = dt
 
-        self.x_k = np.array([pos_x, pos_y, pos_z, psi, theta, phi, vel_x, vel_y, vel_z, psi_dot, theta_dot, phi_dot]).T
+        self.x_k = np.array([pos_x, pos_y, pos_z, phi, theta, psi, vel_x, vel_y, vel_z, phi_dot, theta_dot, psi_dot]).T
 
         noise = Q_continuous_white_noise(2, dt, 13.)
         for i in range(6):
@@ -52,6 +52,9 @@ class KalmanFilter:
 
         self.g = 9.81
 
+        with open('kalman.csv', 'w') as f:
+            f.write("current_time, z, y, x, r, p, y, vz, vy, vx, rdot, pdot, ydot\n")
+
     def priori(self, R: np.ndarray, T: np.ndarray, m: float, r:float, h:float):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
@@ -64,24 +67,32 @@ class KalmanFilter:
             Cd (float): drag coefficient
         """
         # State transition matrix, L means Lateral (ur welcome)
-        R = vct.body_to_world(*self.x_k[3:6])
-        psi, theta, phi = self.x_k[3:6]
+        phi, theta, psi = self.x_k[3:6]
+        theta = -theta
+        # psi, theta, phi = self.x_k[3:6]
+        R = vct.body_to_world(phi, theta, psi)
+        
         J_x, J_y, J_z = np.ones((3,1))
         J_x = 1/2 * m * r**2
         J_y = 1/12 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
-        A_Lpp = np.eye(3)
+
+        A_Lpp = np.array([[1,0,0],
+                          [0,-1,0],
+                          [0,0,1]])
         A_Lpv = R * self.dt
-        A_App = np.eye(3)
-        A_Apv = np.array([[0,np.sin(phi)/np.cos(theta),np.cos(phi)/np.cos(theta)],
-                          [0,np.cos(phi),-np.sin(phi)],
-                         [1,np.sin(phi)*np.tan(theta),np.cos(phi)*np.tan(theta)]]) * self.dt
-        A_Lvv = np.array([[1,self.x_k[11] * self.dt,-self.x_k[10] * self.dt],
-                          [-self.x_k[11] * self.dt,1,self.x_k[9]*self.dt],
-                          [self.x_k[10]*self.dt,-self.x_k[9]*self.dt,1]])
-        A_Avv = np.array([[1,self.x_k[11] * J_y / J_x * self.dt,-self.x_k[10] * J_z/ J_x * self.dt],
-                          [-self.x_k[11] * J_x / J_y * self.dt,1,self.x_k[9] * J_z / J_y * self.dt],
-                          [self.x_k[10] * J_x / J_z * self.dt,self.x_k[9] * J_y/J_z * self.dt,1]])
+        A_App = np.array([[1,0,0],
+                          [0,-1,0],
+                          [0,0,1]])
+        A_Apv = np.array([[1,np.sin(phi)*np.tan(theta),np.cos(phi)*np.tan(theta)],
+                          [0,-np.cos(phi),np.sin(phi)],
+                         [0,np.sin(phi)/np.cos(theta),np.cos(phi)/np.cos(theta)]]) * self.dt
+        A_Lvv = np.array([[self.x_k[10]*self.dt,-self.x_k[9]*self.dt,1],
+                          [self.x_k[11] * self.dt,-1,-self.x_k[9]*self.dt],
+                          [1,self.x_k[11] * self.dt,-self.x_k[10] * self.dt]])
+        A_Avv = np.array([[self.x_k[10] * J_x / J_z * self.dt,self.x_k[9] * J_y/J_z * self.dt,1],
+                          [self.x_k[11] * J_x / J_y * self.dt,-1,-self.x_k[9] * J_z / J_y * self.dt],
+                          [1,self.x_k[11] * J_y / J_x * self.dt,-self.x_k[10] * J_z/ J_x * self.dt]])
         
         self.A = np.block([[A_Lpp, np.zeros((3,3)), A_Lpv, np.zeros((3,3))],
                       [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
@@ -93,7 +104,7 @@ class KalmanFilter:
                            [R / m * self.dt] ,
                            [np.zeros((3,3))]])
         
-        self.x_priori = self.A @ self.x_k + self.B @ T + np.array([0,0,0,0,0,0,self.g * np.sin(theta),-self.g*np.sin(phi)*np.cos(theta),-self.g*np.cos(phi)*np.cos(theta),0,0,0])
+        self.x_priori = self.A @ self.x_k + self.B @ T + np.array([0,0,0,0,0,0,-self.g*np.cos(phi)*np.cos(theta),self.g*np.sin(phi)*np.cos(theta),self.g * np.sin(theta),0,0,0])*self.dt
         self.P_priori = (self.A @ self.P_k @ self.A.T) + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel, psi_vel, theta_vel, phi_vel):
@@ -115,6 +126,8 @@ class KalmanFilter:
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori
 
         self.current_time += self.s_dt
+        with open('kalman.csv', 'a') as f:
+            f.write(f'{self.current_time}, {self.x_k[0]}, {self.x_k[1]}, {self.x_k[2]}, {self.x_k[6]}, {self.x_k[7]}, {self.x_k[8]}, {self.x_k[3]}, {self.x_k[4]}, {self.x_k[5]}\n')
 
     def get_state(self):
         """Returns current state

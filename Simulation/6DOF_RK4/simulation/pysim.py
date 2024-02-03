@@ -98,7 +98,7 @@ class Simulation:
         self.kalman_filter.priori(vct.body_to_world(*self.x[3]), 
                                   np.array([np.linalg.norm(self.rocket.get_motor().get_thrust(self.time_stamp)), 0, 0]), 
                                   self.rocket.get_rocket_total_mass(self.time_stamp), 
-                                  0.1016, 
+                                  0.14/2, 
                                   4.5)
         self.kalman_filter.update(bno_ang_pos, baro_alt,
                             accel[0], accel[1], accel[2], *gyro)
