@@ -53,12 +53,14 @@ class KalmanFilter:
         self.g = 9.81
 
         with open('kalman.csv', 'w') as f:
-            f.write("current_time, z, y, x, r, p, y, vz, vy, vx, rdot, pdot, ydot\n")
+            f.write("current_time, x, y, z, r, p, y, vx, vy, vz, rdot, pdot, ydot\n")
 
     def priori(self, R: np.ndarray, T: np.ndarray, m: float, r:float, h:float):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
             But basically this is the prediction step
+            
+            Kalman Filter states are in world frame, so all data should be reported/converted to world frame
         Args:
             R (np.ndarray): rotation matrix from body to world frame
             T (np.ndarray): thrust in body frame
@@ -66,45 +68,47 @@ class KalmanFilter:
             rho (float): air density
             Cd (float): drag coefficient
         """
-        # State transition matrix, L means Lateral (ur welcome)
+        pos_x, pos_y, pos_z = self.x_k[0:3]
         phi, theta, psi = self.x_k[3:6]
+        vel_x, vel_y, vel_z = self.x_k[6:9]
+        w_x, w_y, w_z = self.x_k[9:12]
         theta = -theta
         # psi, theta, phi = self.x_k[3:6]
         R = vct.body_to_world(phi, theta, psi)
         
-        J_x, J_y, J_z = np.ones((3,1))
         J_x = 1/2 * m * r**2
         J_y = 1/12 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
 
-        A_Lpp = np.array([[1,0,0],
-                          [0,-1,0],
-                          [0,0,1]])
+        # State transition matrix, L means Lateral, A means angular (ur welcome)
+        A_Lpp = np.array([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 0, 1]])
         A_Lpv = R * self.dt
-        A_App = np.array([[1,0,0],
-                          [0,-1,0],
-                          [0,0,1]])
-        A_Apv = np.array([[1,np.sin(phi)*np.tan(theta),np.cos(phi)*np.tan(theta)],
-                          [0,-np.cos(phi),np.sin(phi)],
-                         [0,np.sin(phi)/np.cos(theta),np.cos(phi)/np.cos(theta)]]) * self.dt
-        A_Lvv = np.array([[self.x_k[10]*self.dt,-self.x_k[9]*self.dt,1],
-                          [self.x_k[11] * self.dt,-1,-self.x_k[9]*self.dt],
-                          [1,self.x_k[11] * self.dt,-self.x_k[10] * self.dt]])
-        A_Avv = np.array([[self.x_k[10] * J_x / J_z * self.dt,self.x_k[9] * J_y/J_z * self.dt,1],
-                          [self.x_k[11] * J_x / J_y * self.dt,-1,-self.x_k[9] * J_z / J_y * self.dt],
-                          [1,self.x_k[11] * J_y / J_x * self.dt,-self.x_k[10] * J_z/ J_x * self.dt]])
+        A_App = np.array([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 0, 1]])
+        A_Apv = np.array([[np.cos(phi) * np.tan(theta) * self.dt, -np.sin(phi) * np.tan(theta) * self.dt, 1],
+                          [np.sin(phi) * self.dt, -np.cos(phi) * self.dt, 0],
+                         [np.cos(phi) / np.cos(theta) * self.dt, -np.sin(phi) / np.cos(theta) * self.dt, 0]])
+        A_Lvv = np.array([[1, -w_x * self.dt, w_y * self.dt],
+                          [-w_x * self.dt, -1, w_z * self.dt],
+                          [-w_y * self.dt, w_z * self.dt, 1]])
+        A_Avv = np.array([[1, (-w_z * J_z + w_z * J_y) / J_x * self.dt, 0],
+                          [(w_z * J_z - J_x * w_z) / J_y * self.dt, -1, 0],
+                          [(-w_y * J_y + J_x * w_y) / J_z * self.dt, 0, 1]])
         
         self.A = np.block([[A_Lpp, np.zeros((3,3)), A_Lpv, np.zeros((3,3))],
-                      [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
-                      [np.zeros((3,3)), np.zeros((3,3)), A_Lvv, np.zeros((3,3))],
-                      [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), A_Avv]])
+                        [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
+                        [np.zeros((3,3)), np.zeros((3,3)), A_Lvv, np.zeros((3,3))], 
+                        [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), A_Avv]])
         
         self.B = np.block([[np.zeros((3,3))],
                            [np.zeros((3,3))],
                            [R / m * self.dt] ,
                            [np.zeros((3,3))]])
         
-        self.x_priori = self.A @ self.x_k + self.B @ T + np.array([0,0,0,0,0,0,-self.g*np.cos(phi)*np.cos(theta),self.g*np.sin(phi)*np.cos(theta),self.g * np.sin(theta),0,0,0])*self.dt
+        self.x_priori = self.A @ self.x_k + self.B @ T + np.array([0,0,0,0,0,0,-self.g,0,0,0,0,0])*self.dt
         self.P_priori = (self.A @ self.P_k @ self.A.T) + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel, psi_vel, theta_vel, phi_vel):

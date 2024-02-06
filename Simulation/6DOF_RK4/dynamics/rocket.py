@@ -246,9 +246,9 @@ class Rocket:
         self.kalman_dict["cov_x"].append([kf_cov[0], kf_cov[3], kf_cov[6]])
         self.kalman_dict["cov_y"].append([kf_cov[1], kf_cov[4], kf_cov[7]])
         self.kalman_dict["cov_z"].append([kf_cov[2], kf_cov[5], kf_cov[8]])
-        self.kalman_dict["rx"].append(kalman_filter[0:3])
-        self.kalman_dict["ry"].append(kalman_filter_r[3:6])
-        self.kalman_dict["rz"].append(kalman_filter_r[6:9])
+        self.kalman_dict["rx"].append([kalman_filter[3], kalman_filter[9], kalman_filter[9]])
+        self.kalman_dict["ry"].append([kalman_filter[4], kalman_filter[10], kalman_filter[10]])
+        self.kalman_dict["rz"].append([kalman_filter[5], kalman_filter[11], kalman_filter[11]])
 
         # Update Simulator Log
         self.sim_dict["pos"].append(x[0])
