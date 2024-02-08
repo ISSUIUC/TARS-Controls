@@ -15,7 +15,7 @@ class KalmanFilter:
         pos_z (float): initial z position
         vel_z (float): initial z velocity
     """
-    def __init__(self, dt, pos_x, pos_y, pos_z, phi, theta, psi, vel_x, vel_y, vel_z, phi_dot, theta_dot, psi_dot):
+    def __init__(self, dt, pos_x, pos_y, pos_z, psi, theta, phi, vel_x, vel_y, vel_z, psi_dot, theta_dot, phi_dot):
         self.dt = dt
         self.x_k = np.zeros((12,1))
         self.Q = np.zeros((12,12))
@@ -31,7 +31,7 @@ class KalmanFilter:
         self.current_time = 0
         self.s_dt = dt
 
-        self.x_k = np.array([pos_x, pos_y, pos_z, phi, theta, psi, vel_x, vel_y, vel_z, phi_dot, theta_dot, psi_dot]).T
+        self.x_k = np.array([pos_x, pos_y, pos_z, psi, theta, phi, vel_x, vel_y, vel_z, psi_dot, theta_dot, phi_dot]).T
 
         noise = Q_continuous_white_noise(2, dt, 13.)
         for i in range(6):
@@ -42,6 +42,7 @@ class KalmanFilter:
 
         # barometric altimeter 1 axis
         # accelerometer 3 axes
+        # gyro 3 axes
         self.H = np.array([[1,0,0,0,0,0,0,0,0,0,0,0],
                            [0,0,0,0,0,0,dt,0,0,0,0,0],
                            [0,0,0,0,0,0,0,dt,0,0,0,0],
@@ -68,35 +69,37 @@ class KalmanFilter:
             rho (float): air density
             Cd (float): drag coefficient
         """
-        pos_x, pos_y, pos_z = self.x_k[0:3]
-        phi, theta, psi = self.x_k[3:6]
-        vel_x, vel_y, vel_z = self.x_k[6:9]
-        w_x, w_y, w_z = self.x_k[9:12]
-        theta = -theta
-        # psi, theta, phi = self.x_k[3:6]
-        R = vct.body_to_world(phi, theta, psi)
+        # Transformation array switching x and z and the negative of y
+        P = np.array([[0, 0, 1],
+                      [0, -1, 0],
+                      [1, 0, 0]])
+        transformation = np.block([[P, np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3))],
+                                   [np.zeros((3,3)), P, np.zeros((3,3)), np.zeros((3,3))],
+                                   [np.zeros((3,3)), np.zeros((3,3)), P, np.zeros((3,3))],
+                                   [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), P]])
+        
+        x_k = np.linalg.inv(transformation) @ self.x_k
+        pos_x, pos_y, pos_z = x_k[0:3]
+        psi, theta, phi = x_k[3:6]
+        vel_x, vel_y, vel_z = x_k[6:9]
+        w_x, w_y, w_z = x_k[9:12]
+        R = vct.body_to_world(psi, theta, phi)
         
         J_x = 1/2 * m * r**2
         J_y = 1/12 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
-
-        # State transition matrix, L means Lateral, A means angular (ur welcome)
-        A_Lpp = np.array([[1, 0, 0],
-                          [0, 1, 0],
-                          [0, 0, 1]])
-        A_Lpv = R * self.dt
-        A_App = np.array([[1, 0, 0],
-                          [0, 1, 0],
-                          [0, 0, 1]])
-        A_Apv = np.array([[np.cos(phi) * np.tan(theta) * self.dt, -np.sin(phi) * np.tan(theta) * self.dt, 1],
-                          [np.sin(phi) * self.dt, -np.cos(phi) * self.dt, 0],
-                         [np.cos(phi) / np.cos(theta) * self.dt, -np.sin(phi) / np.cos(theta) * self.dt, 0]])
-        A_Lvv = np.array([[1, -w_x * self.dt, w_y * self.dt],
-                          [-w_x * self.dt, -1, w_z * self.dt],
-                          [-w_y * self.dt, w_z * self.dt, 1]])
-        A_Avv = np.array([[1, (-w_z * J_z + w_z * J_y) / J_x * self.dt, 0],
-                          [(w_z * J_z - J_x * w_z) / J_y * self.dt, -1, 0],
-                          [(-w_y * J_y + J_x * w_y) / J_z * self.dt, 0, 1]])
+        A_Lpp = np.eye(3)
+        A_Lpv = np.eye(3) * self.dt
+        A_App = np.eye(3)
+        A_Apv = np.array([[0, np.sin(phi)/np.cos(theta), np.cos(phi)/np.cos(theta)],
+                          [0, np.cos(phi), -np.sin(phi)],
+                         [1/self.dt, np.sin(phi)*np.tan(theta), np.cos(phi)*np.tan(theta)]]) * self.dt
+        A_Lvv = np.array([[1, w_z * self.dt, -w_y * self.dt],
+                          [-w_z * self.dt, 1, w_x * self.dt],
+                          [w_y*self.dt, -w_x*self.dt, 1]])
+        A_Avv = np.array([[1, w_z * J_y / J_x * self.dt, -w_y * J_z/ J_x * self.dt],
+                          [-w_z * J_x / J_y * self.dt, 1, w_x * J_z / J_y * self.dt],
+                          [w_y * J_x / J_z * self.dt, w_x * J_y/J_z * self.dt, 1]])
         
         self.A = np.block([[A_Lpp, np.zeros((3,3)), A_Lpv, np.zeros((3,3))],
                         [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
@@ -105,10 +108,14 @@ class KalmanFilter:
         
         self.B = np.block([[np.zeros((3,3))],
                            [np.zeros((3,3))],
-                           [R / m * self.dt] ,
+                           [np.eye(3) / m * self.dt] ,
                            [np.zeros((3,3))]])
         
-        self.x_priori = self.A @ self.x_k + self.B @ T + np.array([0,0,0,0,0,0,-self.g,0,0,0,0,0])*self.dt
+        self.A = np.linalg.inv(transformation) @ self.A @ transformation
+        self.B = np.linalg.inv(transformation) @ self.B
+        g = np.linalg.inv(transformation) @ np.array([0,0,0,0,0,0,self.g*np.sin(theta), -self.g*np.sin(theta)*np.cos(theta), -self.g*np.cos(theta)*np.cos(phi),0,0,0])*self.dt
+        
+        self.x_priori = self.A @ self.x_k + self.B @ T + g
         self.P_priori = (self.A @ self.P_k @ self.A.T) + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel, psi_vel, theta_vel, phi_vel):
