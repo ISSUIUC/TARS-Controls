@@ -188,7 +188,7 @@ define: &cool_srad_motor
 	impulse: 30000.0
 	motor_mass: 17.0
 	delay: 0
-	motor_lookup_file: "../lookup/srad_motor.csv"
+	motor_lookup_file: "../LookUp/srad_motor.csv"
 	cm: !numpy/array [0.3755, 0., 0.]
 ```
 

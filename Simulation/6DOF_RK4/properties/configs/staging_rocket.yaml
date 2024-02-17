@@ -6,7 +6,7 @@ rocket:
       <<: *simulated_stage
       rocket_body:
         <<: *simulated_rocket_body
-        rasaero_lookup_file: "../lookup/RASAero.csv"
+        rasaero_lookup_file: "../LookUp/RASAero.csv"
         C_d: 0.5
         C_d_s: 1.2
         length: 6.68
@@ -34,7 +34,7 @@ rocket:
       <<: *simulated_stage
       rocket_body:
         <<: *simulated_rocket_body
-        rasaero_lookup_file: "../lookup/RASAero.csv"
+        rasaero_lookup_file: "../LookUp/RASAero.csv"
         C_d: 0.5
         C_d_s: 1.2
         length: 3.34
@@ -60,7 +60,7 @@ rocket:
         max_ext_spd: 0.001
 desired_apogee: 4572
 meta:
-  output_file: '../output/simulated_6dof.csv'
-  monte_carlo_output_folder: '../output/monte_carlo'
+  output_file: '../Output/simulated_6dof.csv'
+  monte_carlo_output_folder: '../Output/monte_carlo'
 
 

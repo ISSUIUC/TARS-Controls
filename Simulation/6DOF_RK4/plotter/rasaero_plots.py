@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import math
 
-data = pd.read_csv(os.path.join(os.path.dirname(__file__), '../lookup', 'RASAero.csv'), usecols=['Mach Number', 'Protuberance (%)', 'Alpha (deg)', 'CA Power-Off'])
+data = pd.read_csv(os.path.join(os.path.dirname(__file__), '../LookUp', 'RASAero.csv'), usecols=['Mach Number', 'Protuberance (%)', 'Alpha (deg)', 'CA Power-Off'])
 
 data = data[data['Alpha (deg)'] == 0.0]
 data = data[data['Protuberance (%)'] == 0.0]

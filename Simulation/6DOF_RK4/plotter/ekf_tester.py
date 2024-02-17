@@ -25,7 +25,7 @@ def readData () :
 
     # df = pandas.read_csv("Simulation/6DOF_RK4/lookup/flight_computer_20221029.csv" , 
     #     usecols= ['timestamp_ms', 'highg_ax', 'highg_ay', 'highg_az', 'barometer_altitude', 'state_est_x'])
-    df = pandas.read_csv("../lookup/flight_computer_20221029.csv" ,
+    df = pandas.read_csv("../LookUp/flight_computer_20221029.csv" ,
         usecols= ['timestamp_ms', 'highg_ax', 'highg_ay', 'highg_az', 'barometer_altitude', 'state_est_x'])
 
     return df.to_dict()

@@ -4,7 +4,7 @@
 desired_apogee: 4572
 rocket:
   <<: *simulated_rocket
-  rasaero_lookup_file: "../lookup/RASAero.csv"
+  rasaero_lookup_file: "../LookUp/RASAero.csv"
   C_d: 0.5
   C_d_s: 1.2
   length: 3.34
@@ -31,5 +31,5 @@ sensors:
   bno:
     error: !eval 2.5/3
 meta:
-  output_file: '../output/simulated_6dof.csv'
-  monte_carlo_output_folder: '../output/monte_carlo'
+  output_file: '../Output/simulated_6dof.csv'
+  monte_carlo_output_folder: '../Output/monte_carlo'
