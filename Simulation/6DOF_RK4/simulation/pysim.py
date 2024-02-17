@@ -201,7 +201,7 @@ if __name__ == '__main__':
 
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0]
-    dt = args.dta
+    dt = args.dt
 
     atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 
