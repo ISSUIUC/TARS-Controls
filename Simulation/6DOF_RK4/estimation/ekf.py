@@ -1,3 +1,5 @@
+
+
 # all the linear positions
 from filterpy.common import Q_continuous_white_noise
 import numpy as np
@@ -19,14 +21,12 @@ class KalmanFilter:
         self.dt = dt
         self.x_k = np.zeros((12,1))
         self.Q = np.zeros((12,12))
-        self.R = np.diag([2., 1.9, 1.9, 1.9, 1.9, 1.9, 1.9])
+        self.R = np.diag([2., 1.9, 1.9, 1.9, 1.3, 1.3, 1.0])
         self.P_k = np.zeros((12,12), dtype=float)
         
         self.x_priori = np.zeros((12,1))
         self.P_priori = np.zeros((12,12))
-        self.A = np.zeros((12,12))
         self.H = np.zeros((7,12))
-        self.B = np.zeros((12,3))
 
         self.current_time = 0
         self.s_dt = dt
@@ -54,7 +54,7 @@ class KalmanFilter:
         self.g = 9.81
 
         with open('kalman.csv', 'w') as f:
-            f.write("current_time, x, y, z, r, p, y, vx, vy, vz, rdot, pdot, ydot\n")
+            f.write("current_time,x,y,z,r,p,y,vx,vy,vz,rdot,pdot,ydot\n")
 
     def priori(self, R: np.ndarray, T: np.ndarray, m: float, r:float, h:float):
         """Sets priori state and covariance
@@ -70,6 +70,8 @@ class KalmanFilter:
             Cd (float): drag coefficient
         """
         # Transformation array switching x and z and the negative of y
+        # P converts from the state in Anshuk's paper (z vertical up) to the state in the Kalman filter (x vertical up)
+        
         P = np.array([[0, 0, 1],
                       [0, -1, 0],
                       [1, 0, 0]])
@@ -89,34 +91,37 @@ class KalmanFilter:
         J_y = 1/12 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
         A_Lpp = np.eye(3)
-        A_Lpv = np.eye(3) * self.dt
+        A_Lpv = np.eye(3) @ R * self.dt
         A_App = np.eye(3)
-        A_Apv = np.array([[0, np.sin(phi)/np.cos(theta), np.cos(phi)/np.cos(theta)],
+        A_Apv = np.array([[0, np.sin(phi) / np.cos(theta), np.cos(phi) / np.cos(theta)],
                           [0, np.cos(phi), -np.sin(phi)],
-                         [1/self.dt, np.sin(phi)*np.tan(theta), np.cos(phi)*np.tan(theta)]]) * self.dt
+                          [1 / self.dt, np.sin(phi) * np.tan(theta), np.cos(phi) * np.tan(theta)]]) * self.dt
         A_Lvv = np.array([[1, w_z * self.dt, -w_y * self.dt],
                           [-w_z * self.dt, 1, w_x * self.dt],
-                          [w_y*self.dt, -w_x*self.dt, 1]])
-        A_Avv = np.array([[1, w_z * J_y / J_x * self.dt, -w_y * J_z/ J_x * self.dt],
+                          [w_y * self.dt, -w_x * self.dt, 1]])
+        A_Avv = np.array([[1, w_z * J_y / J_x * self.dt, -w_y * J_z / J_x * self.dt],
                           [-w_z * J_x / J_y * self.dt, 1, w_x * J_z / J_y * self.dt],
-                          [w_y * J_x / J_z * self.dt, w_x * J_y/J_z * self.dt, 1]])
+                          [w_y * J_x / J_z * self.dt, w_x * J_y / J_z * self.dt, 1]])
         
-        self.A = np.block([[A_Lpp, np.zeros((3,3)), A_Lpv, np.zeros((3,3))],
-                        [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
-                        [np.zeros((3,3)), np.zeros((3,3)), A_Lvv, np.zeros((3,3))], 
-                        [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), A_Avv]])
+        A = np.block([[A_Lpp, np.zeros((3,3)), A_Lpv, np.zeros((3,3))],
+                      [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
+                      [np.zeros((3,3)), np.zeros((3,3)), A_Lvv, np.zeros((3,3))], 
+                      [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), A_Avv]])
         
-        self.B = np.block([[np.zeros((3,3))],
-                           [np.zeros((3,3))],
-                           [np.eye(3) / m * self.dt] ,
-                           [np.zeros((3,3))]])
+        B = np.block([[np.zeros((3,3))],
+                      [np.zeros((3,3))],
+                      [np.eye(3) / m * self.dt],
+                      [np.zeros((3,3))]])
         
-        self.A = np.linalg.inv(transformation) @ self.A @ transformation
-        self.B = np.linalg.inv(transformation) @ self.B
+        # Puts A and B matrix back into our states
+        # For transformation => x = transformation inverse (xbar) transformation (A matrix)
+        # (B matrix) = transformation inverse (b bar)
+        # change of state variables on page 50-->ECE 515 Course Notes https://arxiv.org/abs/2007.01367
+        A = np.linalg.inv(transformation) @ A @ transformation
+        B = np.linalg.inv(transformation) @ B
         g = np.linalg.inv(transformation) @ np.array([0,0,0,0,0,0,self.g*np.sin(theta), -self.g*np.sin(theta)*np.cos(theta), -self.g*np.cos(theta)*np.cos(phi),0,0,0])*self.dt
-        
-        self.x_priori = self.A @ self.x_k + self.B @ T + g
-        self.P_priori = (self.A @ self.P_k @ self.A.T) + self.Q
+        self.x_priori = A @ self.x_k + B @ T + g
+        self.P_priori = (A @ self.P_k @ A.T) + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel, psi_vel, theta_vel, phi_vel):
         """Updates state and covariance
@@ -138,7 +143,7 @@ class KalmanFilter:
 
         self.current_time += self.s_dt
         with open('kalman.csv', 'a') as f:
-            f.write(f'{self.current_time}, {self.x_k[0]}, {self.x_k[1]}, {self.x_k[2]}, {self.x_k[6]}, {self.x_k[7]}, {self.x_k[8]}, {self.x_k[3]}, {self.x_k[4]}, {self.x_k[5]}\n')
+            f.write(f'{self.current_time}, {self.x_k[0]}, {self.x_k[1]}, {self.x_k[2]}, {self.x_k[3]}, {self.x_k[4]}, {self.x_k[5]}, {self.x_k[6]}, {self.x_k[7]}, {self.x_k[8]}\n')
 
     def get_state(self):
         """Returns current state

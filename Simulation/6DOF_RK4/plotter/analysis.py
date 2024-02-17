@@ -24,6 +24,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
         sensor_dict (dict, optional): Dictionary containing sensor data. Defaults to 0.
         kalmann_dict (dict, optional): Dictionary containing kalman filter data. Defaults to 0.
     """
+    plt.grid()
     fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);   
     fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20);  
 
@@ -34,14 +35,14 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,2], label="Z", color="tab:blue", linewidth = 2);    
     # pos_nc.plot(sensor_dict["time"], sensor_dict["baro_alt"], label="Baro Alt", color="darkred", linestyle = ":",linewidth = 2);    
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);   
-    # pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
+    pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
     pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
     # pos_nc.plot(sensor_dict["time"], sensor_dict["apogee_estimate"], label="Apogee Estimate",color="brown", linewidth = 2); 
     pos_nc.axhline(y=sim_dict["pos"][-1,0], label="Sim Apogee", linestyle = "dashed", color="gray", linewidth = 2); 
     # pos_nc.axhline(y=config["desired_apogee"], label="Desired Apogee", linestyle = "dashed", color="orange", linewidth = 2); 
     pos_nc.set_ylabel("Position (m)", fontsize = 10);   
-    pos_nc.legend(fontsize=10, loc='upper left', ncol=3);   
-
+    pos_nc.legend(fontsize=10, loc='upper left', ncol=3);
+    
     # Real Velocity vs Kalman Filter Graph (No Control)
     vel_nc.plot(sim_dict["time"], sim_dict["vel"][:,0],label="X",color="tab:red", linewidth = 2);  
     vel_nc.plot(sim_dict["time"], sim_dict["vel"][:,1],label="Y",color="tab:green", linewidth = 2);  
@@ -69,7 +70,9 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     flap_nc.set_ylabel("Flap Extension (m)", fontsize = 10);  
     flap_nc.legend(fontsize=10, loc='upper left',ncol=1);   
 
-    plt.tight_layout(); 
+    plt.tight_layout();
+    plt.grid()
+
 
     fig_angular,(ang_pos_nc, ang_vel_nc, ang_accel_nc, alpha_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);  
     fig_angular.suptitle("PYSIM 6DOF ANGULAR PLOT", color='#F5B14C', fontsize = 20);    
@@ -112,6 +115,8 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     alpha_nc.set_ylabel("AoA (degrees)", fontsize = 10);   
     alpha_nc.legend(fontsize=10, loc='center left',ncol=1)
     plt.tight_layout() 
+    plt.grid()
+
 
     fig_error, (pos_error_nc, vel_error_nc, accel_error_nc) = plt.subplots(3, 1, figsize = (15,10), sharex=True)
     fig_error.suptitle("Kalman Filter Position, Velocity, and Acceleration Error", fontsize = 16)
@@ -151,6 +156,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     accel_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["accel_cov"][:,2]), color="tab:blue", linestyle = "dashed",linewidth = 1);
     accel_error_nc.set_ylabel("Acceleration Error (m/s$^2$)", fontsize = 10)
     accel_error_nc.legend(fontsize=10, loc='upper left',ncol=3)
+    plt.grid()
     
     fig_3d = plt.figure()
     ax_3d = fig_3d.add_subplot(111, projection='3d')
@@ -161,6 +167,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     plot = ax_3d.scatter(y, z, x, label="Simulated Position", c=velocity_magnitude, cmap='viridis', linewidth=0.5)
     ax_3d.set_zlabel("Altitude (m)")
     fig_3d.colorbar(plot)
+    plt.grid()
     plt.show()
 
 def rocket_mass_plot(sim_dict, sensor_dict=0, kalman_dict=0):
@@ -170,6 +177,7 @@ def rocket_mass_plot(sim_dict, sensor_dict=0, kalman_dict=0):
     plt.legend()
     plt.xlabel("Time (s)")
     plt.ylabel("Mass (kg)")
+    plt.grid()
     plt.show(block=False)
 
 if __name__ == "__main__":
