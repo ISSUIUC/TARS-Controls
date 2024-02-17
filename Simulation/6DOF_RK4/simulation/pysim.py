@@ -28,6 +28,8 @@ import matplotlib.pyplot as plt
 import os
 import sys
 import shutil
+import argparse
+import enum
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -45,6 +47,11 @@ import environment.atmosphere as atmosphere
 
 # Load desired config file
 config = dataloader.config
+
+class SimulationStage(enum.Enum):
+    IDLE = 1
+    EXECUTE = 2
+    COAST = 3
 
 # Runs simulation for the specific component of the rocket
 class Simulation:
@@ -92,7 +99,7 @@ class Simulation:
         self.r_kalman_filter.priori()
         self.r_kalman_filter.update(*gyro, *accel)
     
-    def time_step(self):
+    def time_step(self, stage):
         self.time_stamp += self.dt
 
     def idle_stage(self):
@@ -103,7 +110,7 @@ class Simulation:
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, 0, current_state[0], self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
-            self.time_step()
+            self.time_step(SimulationStage.IDLE)
 
     def execute_stage(self):
         # Run the stages
@@ -127,7 +134,7 @@ class Simulation:
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, is_staging, 0)
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
-            self.time_step()
+            self.time_step(SimulationStage.EXECUTE)
             if start:
                 start = False
 
@@ -162,7 +169,7 @@ class Simulation:
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, apogee_est, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
-            self.time_step()
+            self.time_step(SimulationStage.COAST)
     
 def simulator(x0, rocket, motor, dt) -> None:
     '''Method which handles running the simulation and logging sim data to dict
@@ -176,7 +183,7 @@ def simulator(x0, rocket, motor, dt) -> None:
             [ang_pos,   ang_pos,   ang_pos],
             [ang_vel,   ang_vel,   ang_vel],
             [ang_accel, ang_accel, ang_accel]]
-        dt (float): time step between each iteration in simulation
+        dt ((SimulationStage) -> float): time step between each iteration in simulation, depending on context
     '''
     simulator = Simulation(rocket, motor, dt, x0, stages=rocket.stages)
     simulator.idle_stage()
@@ -188,9 +195,13 @@ def simulator(x0, rocket, motor, dt) -> None:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dt", type=float, default=0.01)
+    args = parser.parse_args()
+
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0]
-    dt = 0.01
+    dt = args.dta
 
     atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 
