@@ -139,10 +139,10 @@ class Simulation:
 
     # Function to retrive all sensor data
     def get_sensor_data(self):
-        return (sensors.get_barometer_data(self.x, self.sensor_config),
-                sensors.get_accelerometer_data(self.x, self.sensor_config),
-                sensors.get_gyro_data(self.x, self.sensor_config), 
-                sensors.get_bno_orientation(self.x, self.sensor_config))
+        return (self.rocket.get_barometer_data(self.x, self.sensor_config),
+                self.rocket.get_accelerometer_data(self.x, self.sensor_config),
+                self.rocket.get_gyro_data(self.x, self.sensor_config), 
+                self.rocket.get_bno_orientation(self.x, self.sensor_config))
 
     def get_kalman_state(self):
         current_state = self.kalman_filter.get_state()
