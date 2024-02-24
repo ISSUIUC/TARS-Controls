@@ -68,7 +68,7 @@ class Simulation:
         y_data = []
         z_data = []
         for i in range(10):
-            reading = sensors.get_accelerometer_data(self.x, self.sensor_config)
+            reading = self.rocket.get_accelerometer_data(self.x, self.sensor_config)
             x_data.append(reading[0])
             y_data.append(reading[1])
             z_data.append(reading[2])
