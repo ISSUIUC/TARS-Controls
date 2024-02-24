@@ -96,7 +96,7 @@ class Simulation:
         # _, Cn, _ = self.rocket.forces.get_Ca_Cn_Cp(self.x, 0, self.rocket.get_Rasaero(), self.rocket.get_motor().is_motor_burnout(), 0)
         length = 1/(self.rocket.current_stage+1) * L if self.rocket.current_stage != -1 else L
         self.kalman_filter.priori(vct.body_to_world(*self.x[3]), 
-                                  vct.body_to_world(*self.x[3], np.array([np.linalg.norm(self.rocket.get_motor().get_thrust(self.time_stamp)), 0, 0]))  , 
+                                  np.linalg.norm(self.rocket.get_motor().get_thrust(self.time_stamp)), 
                                   self.rocket.get_rocket_total_mass(self.time_stamp), 
                                   0.14/2, 
                                   length)
