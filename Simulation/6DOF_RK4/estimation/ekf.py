@@ -4,9 +4,7 @@
 from filterpy.common import Q_continuous_white_noise
 import numpy as np
 import util.vectors as vct
-from numpy import sin
-from numpy import cos
-from numpy import tan
+from numpy import sin, cos, tan, pi
 class KalmanFilter:
     """Kalman Filter for 3D position estimation
     
@@ -58,7 +56,7 @@ class KalmanFilter:
         with open('kalman.csv', 'w') as f:
             f.write("current_time,x,y,z,r,p,y,vx,vy,vz,rdot,pdot,ydot\n")
 
-    def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float):
+    def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float, Cd: float, rho: float):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
             But basically this is the prediction step
@@ -120,11 +118,10 @@ class KalmanFilter:
             w_x + w_y*sin(phi)*tan(theta) + w_z*cos(phi)*tan(theta),
             (g*m*sin(theta)+m*vel_y*w_z-m*vel_z*w_y) / m,
             (-g*m*sin(phi)*cos(theta) - m*vel_x*w_z+m*vel_z*w_x) / m,
-            (abs(T) - g*m*cos(phi)*cos(theta) + m*vel_x*w_y - m*vel_y*w_x) / m,
+            (abs(T) - (0.5*rho*vel_z**2*Cd*np.pi*r**2) - g*m*cos(phi)*cos(theta) + m*vel_x*w_y - m*vel_y*w_x) / m,
             (J_y*w_z*w_y - J_z*w_z*w_y) / J_x,
             (-J_x*w_z*w_x + J_z*w_z*w_x) / J_y,
-            (J_x*w_y*w_x - J_y*w_x*w_y) / J_z
-        ])
+            (J_x*w_y*w_x - J_y*w_x*w_y) / J_z])
         # B = np.block([[np.zeros((3,3))],
         #               [np.zeros((3,3))],
         #               [np.eye(3) / m * self.dt],
@@ -139,9 +136,9 @@ class KalmanFilter:
         # TODO: Check if transformations are correct (should there be an inverse behind x_dot) jk it seems right now
         self.x_priori = self.x_k + (transformation@x_dot)*self.dt
         
-        A = transformation@np.array([[0, 0, 0, vel_y*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)) + vel_z*(-sin(phi)*sin(theta)*cos(psi) + sin(psi)*cos(phi)), -vel_x*sin(theta)*cos(psi) + vel_y*sin(phi)*cos(psi)*cos(theta) + 
-vel_z*cos(phi)*cos(psi)*cos(theta), -vel_x*sin(psi)*cos(theta) + vel_y*(-sin(phi)*sin(psi)*sin(theta) - cos(phi)*cos(psi)) + vel_z*(sin(phi)*cos(psi) - sin(psi)*sin(theta)*cos(phi)), cos(psi)*cos(theta), sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi), sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi), 0, 0, 0], [0, 0, 0, vel_y*(-sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi)) + vel_z*(-sin(phi)*sin(psi)*sin(theta) - cos(phi)*cos(psi)), -vel_x*sin(psi)*sin(theta) + vel_y*sin(phi)*sin(psi)*cos(theta) + vel_z*sin(psi)*cos(phi)*cos(theta), vel_x*cos(psi)*cos(theta) + vel_y*(sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi)) + vel_z*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)), sin(psi)*cos(theta), sin(phi)*sin(psi)*sin(theta) + cos(phi)*cos(psi), -sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi), 0, 0, 0], [0, 0, 0, vel_y*cos(phi)*cos(theta) - vel_z*sin(phi)*cos(theta), -vel_x*cos(theta) - vel_y*sin(phi)*sin(theta) - vel_z*sin(theta)*cos(phi), 0, -sin(theta), sin(phi)*cos(theta), cos(phi)*cos(theta), 0, 0, 0], [0, 0, 0, w_y*cos(phi)/cos(theta) - w_z*sin(phi)/cos(theta), w_y*sin(phi)*sin(theta)/cos(theta)**2 + w_z*sin(theta)*cos(phi)/cos(theta)**2, 0, 0, 0, 0, 0, sin(phi)/cos(theta), cos(phi)/cos(theta)], [0, 0, 0, -w_y*sin(phi) - w_z*cos(phi), 0, 0, 0, 0, 0, 0, cos(phi), -sin(phi)], [0, 0, 0, w_y*cos(phi)*tan(theta) - w_z*sin(phi)*tan(theta), w_y*(tan(theta)**2 + 1)*sin(phi) + w_z*(tan(theta)**2 + 1)*cos(phi), 0, 0, 0, 0, 1, sin(phi)*tan(theta), cos(phi)*tan(theta)], [0, 0, 0, 0, g*cos(theta), 0, 0, w_z, -w_y, 0, -vel_z, vel_y], [0, 0, 0, -g*cos(phi)*cos(theta), g*sin(phi)*sin(theta), 
-0, -w_z, 0, w_x, vel_z, 0, -vel_x], [0, 0, 0, g*sin(phi)*cos(theta), g*sin(theta)*cos(phi), 0, w_y, -w_x, 0, -vel_y, vel_x, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (J_y*w_z - J_z*w_z)/J_x, (J_y*w_y - J_z*w_y)/J_x], [0, 0, 0, 0, 0, 0, 0, 0, 0, (-J_x*w_z + J_z*w_z)/J_y, 0, (-J_x*w_x + J_z*w_x)/J_y], [0, 0, 0, 0, 0, 0, 0, 0, 0, (J_x*w_y - J_y*w_y)/J_z, (J_x*w_x - J_y*w_x)/J_z, 0]])
+        A = transformation@np.array([[0, 0, 0, vel_y*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)) + vel_z*(-sin(phi)*sin(theta)*cos(psi) + sin(psi)*cos(phi)), -vel_x*sin(theta)*cos(psi) + vel_y*sin(phi)*cos(psi)*cos(theta) + vel_z*cos(phi)*cos(psi)*cos(theta), -vel_x*sin(psi)*cos(theta) + vel_y*(-sin(phi)*sin(psi)*sin(theta) - cos(phi)*cos(psi)) + vel_z*(sin(phi)*cos(psi) - sin(psi)*sin(theta)*cos(phi)), cos(psi)*cos(theta), sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi), sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi), 0, 0, 0], 
+[0, 0, 0, vel_y*(-sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi)) + vel_z*(-sin(phi)*sin(psi)*sin(theta) - cos(phi)*cos(psi)), -vel_x*sin(psi)*sin(theta) + vel_y*sin(phi)*sin(psi)*cos(theta) + vel_z*sin(psi)*cos(phi)*cos(theta), vel_x*cos(psi)*cos(theta) + vel_y*(sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi)) + vel_z*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)), sin(psi)*cos(theta), sin(phi)*sin(psi)*sin(theta) + cos(phi)*cos(psi), -sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi), 0, 0, 0], [0, 0, 0, vel_y*cos(phi)*cos(theta) - vel_z*sin(phi)*cos(theta), -vel_x*cos(theta) - vel_y*sin(phi)*sin(theta) - vel_z*sin(theta)*cos(phi), 0, -sin(theta), sin(phi)*cos(theta), cos(phi)*cos(theta), 0, 0, 0], [0, 0, 0, w_y*cos(phi)/cos(theta) - w_z*sin(phi)/cos(theta), w_y*sin(phi)*sin(theta)/cos(theta)**2 + w_z*sin(theta)*cos(phi)/cos(theta)**2, 0, 0, 0, 0, 0, sin(phi)/cos(theta), cos(phi)/cos(theta)], [0, 0, 0, -w_y*sin(phi) - w_z*cos(phi), 0, 0, 0, 0, 0, 0, cos(phi), -sin(phi)], [0, 0, 0, w_y*cos(phi)*tan(theta) - w_z*sin(phi)*tan(theta), w_y*(tan(theta)**2 + 1)*sin(phi) + w_z*(tan(theta)**2 + 1)*cos(phi), 0, 0, 0, 0, 1, sin(phi)*tan(theta), cos(phi)*tan(theta)], [0, 0, 0, 0, g*cos(theta), 0, 0, w_z, -w_y, 0, -vel_z, vel_y], [0, 0, 0, -g*cos(phi)*cos(theta), g*sin(phi)*sin(theta), 0, -w_z, 0, w_x, vel_z, 0, -vel_x], [0, 0, 0, g*sin(phi)*cos(theta), g*sin(theta)*cos(phi), 0, w_y, -w_x, -1.0*pi*Cd*r**2*rho*vel_z/m, -vel_y, vel_x, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (J_y*w_z - J_z*w_z)/J_x, (J_y*w_y - J_z*w_y)/J_x], [0, 0, 0, 
+0, 0, 0, 0, 0, 0, (-J_x*w_z + J_z*w_z)/J_y, 0, (-J_x*w_x + J_z*w_x)/J_y], [0, 0, 0, 0, 0, 0, 0, 0, 0, (J_x*w_y - J_y*w_y)/J_z, (J_x*w_x - J_y*w_x)/J_z, 0]])
         
         self.P_priori = (A @ self.P_k @ A.T) + self.Q
 

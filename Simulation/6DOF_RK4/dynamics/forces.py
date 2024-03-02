@@ -78,7 +78,7 @@ class Forces:
             moment += ejection_force * self.stages[self.current_stage].cm * dir
         return np.array([force, moment]), alpha
 
-    def get_Ca_Cn_Cp(self, x_state, alpha, rasaero, before_burnout, flap_ext) -> list:
+    def get_Ca_Cn_Cp(self, x_state, alpha, before_burnout, flap_ext) -> list:
         '''References lookup table to find C_a, C_n, C_p based on flap extension
 
         Args:
@@ -110,7 +110,7 @@ class Forces:
         Cn_up = 0
 
         # define csv file to search throughs
-        csv_file = rasaero
+        csv_file = self.rasaero
 
         # Define protuberance percentage of full extension given current extension
         protub_perc = flap_ext/self.max_ext_length
@@ -168,7 +168,7 @@ class Forces:
             (np.array): vector of aerodynamic forces in each axis [1x3]
         '''
         vel = vct.world_to_body(*x_state[2].copy(), x_state[1].copy() - wind_vector.copy())
-        C_a,C_n,self.cp = self.get_Ca_Cn_Cp(x_state, alpha, self.rasaero, before_burnout, flap_ext)
+        C_a,C_n,self.cp = self.get_Ca_Cn_Cp(x_state, alpha, before_burnout, flap_ext)
         roll_aero = np.arctan2(x_state[1,2], x_state[1,1])
 
         C_n_y = np.abs(C_n * np.cos(roll_aero)) #TODO: Check with other values

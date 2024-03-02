@@ -93,13 +93,15 @@ class Simulation:
         # Re = rho*u*L/mu
         # print(Re)
         # Cd = 4*np.pi/(Re*(2-np.log(Re))) # Drag coefficient
-        # _, Cn, _ = self.rocket.forces.get_Ca_Cn_Cp(self.x, 0, self.rocket.get_Rasaero(), self.rocket.get_motor().is_motor_burnout(), 0)
+        Ca, Cn, Cp = self.rocket.forces.get_Ca_Cn_Cp(self.x, 0, self.rocket.is_motor_burnout(self.time_stamp), 0)
         length = 1/(self.rocket.current_stage+1) * L if self.rocket.current_stage != -1 else L
         self.kalman_filter.priori(vct.body_to_world(*self.x[3]), 
                                   np.linalg.norm(self.rocket.get_motor().get_thrust(self.time_stamp)), 
                                   self.rocket.get_rocket_total_mass(self.time_stamp), 
                                   0.14/2, 
-                                  length)
+                                  length,
+                                  Cn,
+                                  rho)
         self.kalman_filter.update(bno_ang_pos, baro_alt,
                             accel[0], accel[1], accel[2], *gyro)
         
@@ -206,7 +208,7 @@ def simulator(x0, rocket, motor, dt) -> None:
 if __name__ == '__main__':
     x0 = np.zeros((6, 3))
     x0[3] = [0, 0.05, 0.05]
-    dt = 0.01
+    dt = 0.02
 
     atm = atmosphere.Atmosphere(enable_direction_variance=True, enable_magnitude_variance=True)
 
