@@ -67,7 +67,7 @@ class Rocket:
         self.motor_mass = stage_config["motor"]["motor_mass"]
         self.delay = stage_config["motor"]["delay"]
         self.motor_lookup_file = stage_config["motor"]["motor_lookup_file"]
-        self.Navigation = Navigation(dt, stage_config['sensors'],x0) 
+        self.Navigation = Navigation(dt, stage_config['sensors'], x0) 
 
         self.rocket_dry_mass = stage_config["rocket_body"]["dry_mass"]
         self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
