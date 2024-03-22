@@ -8,6 +8,11 @@ import environment.atmosphere as atmosphere
 import dynamics.motor as motor
 from dynamics.motor import Motor
 import dynamics.forces as forces
+import util.vectors as vct
+import random
+import properties.properties as prop
+import properties.data_loader as dataloader
+import environment.atmosphere as atm
 from estimation.navigation import Navigation
 
 class Rocket:
