@@ -7,11 +7,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import environment.atmosphere as atmosphere
 import dynamics.motor as motor
 from dynamics.motor import Motor
-import dynamics.forces as forces
+# import dynamics.forces as forces
 
 class Rocket:
     motor = None
-    forces = None
+    # forces = None
     stage_config = None
 
     def init_dicts(self):
@@ -105,15 +105,15 @@ class Rocket:
                                  mass=self.motor_mass, 
                                  delay=self.delay, 
                                  lookup_file=self.motor_lookup_file)
-        self.forces = forces.Forces(self.max_ext_length,
-                                    self.cm,
-                                    self.cp,
-                                    self.A,
-                                    self.A_s,
-                                    self.rocket_dry_mass,
-                                    self.motor,
-                                    stage_config["rocket_body"]["rasaero_lookup_file"],
-                                    self.atm)
+        # self.forces = forces.Forces(self.max_ext_length,
+        #                             self.cm,
+        #                             self.cp,
+        #                             self.A,
+        #                             self.A_s,
+        #                             self.rocket_dry_mass,
+        #                             self.motor,
+        #                             stage_config["rocket_body"]["rasaero_lookup_file"],
+        #                             self.atm)
 
 
     def get_total_motor_mass(self, timestamp) -> float:
@@ -163,13 +163,13 @@ class Rocket:
         """ "Separates" the current stage from the rocket (increments the stage counter)
             and updates the separation timestamp
             
-            Retuns True if there are more stages to separate, False if there are no more stages to separate
+            Returns True if there are more stages to separate, False if there are no more stages to separate
         """
         if self.current_stage == len(self.stages) - 1:
             return False
         self.current_stage += 1
         self.separation_timestamp = timestamp
-        self.forces = self.stages[self.current_stage].forces
+        # self.forces = self.stages[self.current_stage].forces
         return True
 
     def get_motor(self) -> Motor:

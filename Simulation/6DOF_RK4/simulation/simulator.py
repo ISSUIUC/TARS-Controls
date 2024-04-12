@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import util.vectors as vct
 # import properties.properties as prop
 import dynamics.rocket as rocket_model
+from dynamics.forces import Forces
 import environment.atmosphere as atm_model
 
 class Simulator():
@@ -17,10 +18,13 @@ class Simulator():
     def __init__(self, atm: atm_model.Atmosphere, rocket: rocket_model.Rocket):
         self.atm = atm
         self.rocket = rocket
+        self.forces = Forces()
+
+
         
     ### TEST PURPOSES ###
     def newtonProp(self, y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
-        temp = (self.rocket.forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))
+        temp = (self.forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp, self.rocket))
         a = temp[0]/self.rocket.rocket_total_mass
 
         moment = temp[1]
@@ -91,7 +95,7 @@ class Simulator():
 
         ang_p = (y0[3] + (1/6)*(k1_ap+(2*k2_ap)+(2*k3_ap)+k4_ap)*dt)
 
-        temp,alpha = (self.rocket.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi, density_noise=density_noise))
+        temp,alpha = (self.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi, self.rocket, density_noise=density_noise))
         a = temp[0]/rocket_total_mass
 
         return np.array([p, v, a, ang_p, ang_v, I_inv @ temp[1]]), alpha
@@ -123,4 +127,4 @@ class Simulator():
         Returns:
             (np.array): rate of change of velocity (acceleration) in form of state vector
         '''
-        return self.rocket.forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi)[0] # return slope times mass/inertia 
+        return self.forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi, self.rocket)[0] # return slope times mass/inertia 
