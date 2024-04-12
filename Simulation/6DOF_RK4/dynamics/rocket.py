@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import environment.atmosphere as atmosphere
 import dynamics.motor as motor
 from dynamics.motor import Motor
+import pandas as pd
 # import dynamics.forces as forces
 
 class Rocket:
@@ -77,6 +78,9 @@ class Rocket:
         self.max_ext_length = stage_config["flaps"]["max_ext_length"]
         self.atm = atm
 
+        self.rasaero_file_location = os.path.join(os.path.dirname(__file__), self.stage_config["rocket_body"]["rasaero_lookup_file"])
+        #problematic ^
+        self.rasaero = pd.read_csv(self.rasaero_file_location)
         self.init_dicts()
         
         # Add stages to rocket via this list. Only the base rocket object should have stages, each stage should be its own rocket object with no stages

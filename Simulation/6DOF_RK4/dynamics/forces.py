@@ -37,7 +37,8 @@ class Forces:
     # rasaero_file_location = "" # Will be set in constructor
     # rasaero = None
     # def __init__(self):
-        # x = 9
+    #      selrasaero_file_location = os.path.join(os.path.dirname(__file__), rocket.stage_config["rocket_body"]["rasaero_lookup_file"])
+         
     # def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm):
     # def __init__(self, rocket: rocket_model.Rocket):
     #     self.rocket = rocket
@@ -68,8 +69,7 @@ class Forces:
             (float): angle of attack (radians)
         '''
         # TODO: Add random disturbances
-        rasaero_file_location = os.path.join(os.path.dirname(__file__), rocket.stage_config["rocket_body"]["rasaero_lookup_file"])
-        rasaero = pd.read_csv(rasaero_file_location)
+        rasaero = rocket.rasaero
         alt = x_state.copy()[0,0]
         density = rocket.atm.get_density(alt, noise=density_noise, position=x_state[0])
         thrust = rocket.motor.get_thrust(time_stamp)
