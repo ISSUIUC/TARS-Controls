@@ -113,6 +113,7 @@ class Simulation:
         ignition_time = self.time_stamp
         start = True
         print(f"Staged at {self.time_stamp}")
+        print(ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay)
         while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
             # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()

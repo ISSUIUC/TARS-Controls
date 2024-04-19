@@ -72,7 +72,7 @@ class Forces:
         rasaero = rocket.rasaero
         alt = x_state.copy()[0,0]
         density = rocket.atm.get_density(alt, noise=density_noise, position=x_state[0])
-        thrust = rocket.motor.get_thrust(time_stamp)
+        thrust = rocket.get_motor().get_thrust(time_stamp)
         wind_vector = rocket.atm.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, rasaero, thrust.dot(thrust) > 0, flap_ext, rocket)

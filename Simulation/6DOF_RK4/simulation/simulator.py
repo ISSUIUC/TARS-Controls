@@ -127,4 +127,5 @@ class Simulator():
         Returns:
             (np.array): rate of change of velocity (acceleration) in form of state vector
         '''
+        
         return self.forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi, self.rocket)[0] # return slope times mass/inertia 
