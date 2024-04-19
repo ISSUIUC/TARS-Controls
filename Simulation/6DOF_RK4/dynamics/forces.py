@@ -16,45 +16,8 @@ import random
 import dynamics.rocket as rocket_model
 
 # Define Objects
-
+# Note: Forces No Longer Is Separate For Each Rocket Object, Methods Now Take In A Rocket Object
 class Forces:
-    """Forces on rocket:
-    
-    Args:
-        max_ext_length (float): maximum extension length of flaps
-        cm (np.array): center of mass of rocket
-        cp (np.array): center of pressure of rocket
-        A (float): cross sectional area of rocket
-        A_s (float): cross sectional area of the side of the rocket
-        rocket_dry_mass (float): mass of rocket without motor
-        motor (motor.Motor): motor object
-        atm (atmosphere.Atmosphere): atmosphere object
-    """
-    # Define class objects
-    # atm = None
-    # motor = None
-    
-    # rasaero_file_location = "" # Will be set in constructor
-    # rasaero = None
-    # def __init__(self):
-    #      selrasaero_file_location = os.path.join(os.path.dirname(__file__), rocket.stage_config["rocket_body"]["rasaero_lookup_file"])
-         
-    # def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm):
-    # def __init__(self, rocket: rocket_model.Rocket):
-    #     self.rocket = rocket
-    #     self.max_ext_length = rocket.max_ext_length
-    #     self.cm = rocket.cm
-    #     self.cp = rocket.cp
-    #     self.A = rocket.A
-    #     self.A_s = rocket.A_s
-    #     self.rocket_dry_mass = rocket.rocket_dry_mass
-    #     self.motor = rocket.motor
-    #     self.atm = rocket.atm
-    #     self.rasaero_file_location = os.path.join(os.path.dirname(__file__), rocket.stage_config["rocket_body"]["rasaero_lookup_file"])
-    #     self.rasaero = pd.read_csv(self.rasaero_file_location)
-
-
-    
 
     def get_force(self, x_state, flap_ext, time_stamp, ejection_force, theta, phi, rocket: rocket_model.Rocket, density_noise=False) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
@@ -63,7 +26,10 @@ class Forces:
             x_state (np.array): State Vector [4x3]
             flap_ext (float): current flap extention config
             time_stamp (float): current time stamp of rocket in simulation
-        
+            ejection_force (float): force of charge we use to do separation
+            theta (float), phi (float): angles describing thrust orientation
+            rocket (Rocket): rocket object forces are for
+
         Returns:
             (np.array): 2D array of forces and moments --> ([Fx, Fy, Fz], [Mx, My, Mz])
             (float): angle of attack (radians)
@@ -94,6 +60,7 @@ class Forces:
             rasaero (csv): lookup file for flight properties
             before_burnout (float): if greater than 0, then it is before burnout
             flap_ext (float): current flap extention config
+            rocket (Rocket): rocket object forces are for
                     
         Returns:
             [Ca, Cn, Cp]
@@ -170,6 +137,7 @@ class Forces:
         Args:
             x_state (np.array): State Vector [4x3]
             flap_ext (float): current flap extention config
+            rocket (Rocket): rocket object forces are for
         
         Returns:
             (np.array): vector of aerodynamic forces in each axis [1x3]
@@ -193,6 +161,7 @@ class Forces:
         Args:
             altitude (float): current altitude of rocket
             time_stamp (float): current time stamp of rocket in simulation
+            rocket (Rocket): rocket object forces are for
         
         Returns:
             (np.array): vector of gravitational forces on each axis [1x3]

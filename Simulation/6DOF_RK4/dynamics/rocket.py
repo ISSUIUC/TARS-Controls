@@ -8,11 +8,9 @@ import environment.atmosphere as atmosphere
 import dynamics.motor as motor
 from dynamics.motor import Motor
 import pandas as pd
-# import dynamics.forces as forces
 
 class Rocket:
     motor = None
-    # forces = None
     stage_config = None
 
     def init_dicts(self):
@@ -109,16 +107,6 @@ class Rocket:
                                  mass=self.motor_mass, 
                                  delay=self.delay, 
                                  lookup_file=self.motor_lookup_file)
-        # self.forces = forces.Forces(self.max_ext_length,
-        #                             self.cm,
-        #                             self.cp,
-        #                             self.A,
-        #                             self.A_s,
-        #                             self.rocket_dry_mass,
-        #                             self.motor,
-        #                             stage_config["rocket_body"]["rasaero_lookup_file"],
-        #                             self.atm)
-
 
     def get_total_motor_mass(self, timestamp) -> float:
         mass = 0
@@ -174,7 +162,6 @@ class Rocket:
         self.current_stage += 1
         self.separation_timestamp = timestamp
 
-        # self.forces = self.stages[self.current_stage].forces
         return True
 
     def get_motor(self) -> Motor:
