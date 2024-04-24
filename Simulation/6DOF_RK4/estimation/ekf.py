@@ -56,91 +56,151 @@ class KalmanFilter:
         with open('kalman.csv', 'w') as f:
             f.write("current_time,x,y,z,r,p,y,vx,vy,vz,rdot,pdot,ydot\n")
 
-    def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float, Cd: float, rho: float):
-        """Sets priori state and covariance
-            Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
-            But basically this is the prediction step
+#     def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float, Cd: float, rho: float):
+#         """Sets priori state and covariance
+#             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
+#             But basically this is the prediction step
             
-            Kalman Filter states are in world frame, so all data should be reported in/converted to world frame
-        Args:
-            R (np.ndarray): rotation matrix from body to world frame
-            T (float): thrust magnitude (assumed to be along rocket body)
-            m (float): mass
-            rho (float): air density
-            Cd (float): drag coefficient
-        """
-        # Transformation array switching x and z and the negative of y
-        # P converts from the state in Anshuk's paper (z vertical up) to the state in our body frame (x vertical up) to the world frame
+#             Kalman Filter states are in world frame, so all data should be reported in/converted to world frame
+#         Args:
+#             R (np.ndarray): rotation matrix from body to world frame
+#             T (float): thrust magnitude (assumed to be along rocket body)
+#             m (float): mass
+#             rho (float): air density
+#             Cd (float): drag coefficient
+#         """
+#         # Transformation array switching x and z and the negative of y
+#         # P converts from the state in Anshuk's paper (z vertical up) to the state in our body frame (x vertical up) to the world frame
         
-        P = np.array([[0, 0, 1],
-                      [0, -1, 0],
-                      [1, 0, 0]])
-        transformation = np.block([[R@P, np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3))],
-                                   [np.zeros((3,3)), R@P, np.zeros((3,3)), np.zeros((3,3))],
-                                   [np.zeros((3,3)), np.zeros((3,3)), R@P, np.zeros((3,3))],
-                                   [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), R@P]])
+#         P = np.array([[0, 0, 1],
+#                       [0, -1, 0],
+#                       [1, 0, 0]])
+#         transformation = np.block([[R@P, np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3))],
+#                                    [np.zeros((3,3)), R@P, np.zeros((3,3)), np.zeros((3,3))],
+#                                    [np.zeros((3,3)), np.zeros((3,3)), R@P, np.zeros((3,3))],
+#                                    [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), R@P]])
         
-        x_k = np.linalg.inv(transformation) @ self.x_k  
-        pos_x, pos_y, pos_z = x_k[0:3]
-        phi, theta, psi = x_k[3:6]
-        vel_x, vel_y, vel_z = x_k[6:9]
-        w_x, w_y, w_z = x_k[9:12]
-        # R = vct.body_to_world(phi, theta, psi)
+#         x_k = np.linalg.inv(transformation) @ self.x_k  
+#         pos_x, pos_y, pos_z = x_k[0:3]
+#         phi, theta, psi = x_k[3:6]
+#         vel_x, vel_y, vel_z = x_k[6:9]
+#         w_x, w_y, w_z = x_k[9:12]
+#         # R = vct.body_to_world(phi, theta, psi)
         
-        J_z = 1/2 * m * r**2
-        J_y = 1/3 * m * h**2 + 1/4 * m * r**2
-        J_x = J_y
-        # J_z = J_y
-        # A_Lpp = np.eye(3)
-        # A_Lpv = np.eye(3) @ R * self.dt
-        # A_App = np.eye(3)
-        # A_Apv = np.array([[0, np.sin(phi) / np.cos(theta), np.cos(phi) / np.cos(theta)],
-        #                   [0, np.cos(phi), -np.sin(phi)],
-        #                   [1 / self.dt, np.sin(phi) * np.tan(theta), np.cos(phi) * np.tan(theta)]]) * self.dt
-        # A_Lvv = np.array([[1, w_z * self.dt, -w_y * self.dt],
-        #                   [-w_z * self.dt, 1, w_x * self.dt],
-        #                   [w_y * self.dt, -w_x * self.dt, 1]])
-        # A_Avv = np.array([[1, w_z * J_y / J_x * self.dt, -w_y * J_z / J_x * self.dt],
-        #                   [-w_z * J_x / J_y * self.dt, 1, w_x * J_z / J_y * self.dt],
-        #                   [w_y * J_x / J_z * self.dt, w_x * J_y / J_z * self.dt, 1]])
+#         J_z = 1/2 * m * r**2
+#         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
+#         J_x = J_y
+#         # J_z = J_y
+#         # A_Lpp = np.eye(3)
+#         # A_Lpv = np.eye(3) @ R * self.dt
+#         # A_App = np.eye(3)
+#         # A_Apv = np.array([[0, np.sin(phi) / np.cos(theta), np.cos(phi) / np.cos(theta)],
+#         #                   [0, np.cos(phi), -np.sin(phi)],
+#         #                   [1 / self.dt, np.sin(phi) * np.tan(theta), np.cos(phi) * np.tan(theta)]]) * self.dt
+#         # A_Lvv = np.array([[1, w_z * self.dt, -w_y * self.dt],
+#         #                   [-w_z * self.dt, 1, w_x * self.dt],
+#         #                   [w_y * self.dt, -w_x * self.dt, 1]])
+#         # A_Avv = np.array([[1, w_z * J_y / J_x * self.dt, -w_y * J_z / J_x * self.dt],
+#         #                   [-w_z * J_x / J_y * self.dt, 1, w_x * J_z / J_y * self.dt],
+#         #                   [w_y * J_x / J_z * self.dt, w_x * J_y / J_z * self.dt, 1]])
         
-        # A = np.block([[A_Lpp, np.zeros((3,3)), A_Lpv, np.zeros((3,3))],
-        #               [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
-        #               [np.zeros((3,3)), np.zeros((3,3)), A_Lvv, np.zeros((3,3))], 
-        #               [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), A_Avv]])
-        g = 9.81
-        x_dot = np.array([
-            vel_x*cos(psi)*cos(theta) + vel_y*(sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi)) + vel_z*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)),
-            vel_x*sin(psi)*cos(theta) + vel_y*(sin(phi)*sin(psi)*sin(theta) + cos(phi)*cos(psi)) + vel_z*(-sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi)),
-            -vel_x*sin(theta) + vel_y*sin(phi)*cos(theta) + vel_z*(cos(phi)*cos(theta)),
-            (w_y*sin(phi))/(cos(theta)) + (w_z*cos(phi))/(cos(theta)),
-            w_y*cos(phi) - w_z*sin(phi),
-            w_x + w_y*sin(phi)*tan(theta) + w_z*cos(phi)*tan(theta),
-            (g*m*sin(theta)+m*vel_y*w_z-m*vel_z*w_y) / m,
-            (-g*m*sin(phi)*cos(theta) - m*vel_x*w_z+m*vel_z*w_x) / m,
-            (abs(T) - (0.5*rho*vel_z**2*Cd*np.pi*r**2) - g*m*cos(phi)*cos(theta) + m*vel_x*w_y - m*vel_y*w_x) / m,
-            (J_y*w_z*w_y - J_z*w_z*w_y) / J_x,
-            (-J_x*w_z*w_x + J_z*w_z*w_x) / J_y,
-            (J_x*w_y*w_x - J_y*w_x*w_y) / J_z])
-        # B = np.block([[np.zeros((3,3))],
-        #               [np.zeros((3,3))],
-        #               [np.eye(3) / m * self.dt],
-        #               [np.zeros((3,3))]])
-        # Puts A and B matrix back into our states
-        # For transformation => x = transformation inverse (xbar) transformation (A matrix)
-        # (B matrix) = transformation inverse (b bar)
-        # change of state variables on page 50-->ECE 515 Course Notes https://arxiv.org/abs/2007.01367
-        # A = np.linalg.inv(transformation) @ A @ transformation
-        # B = np.linalg.inv(transformation) @ B
-        # g = np.array([0,0,0,0,0,0,self.g*np.sin(theta), -self.g*np.sin(theta)*np.cos(theta), -self.g*np.cos(theta)*np.cos(phi),0,0,0])*self.dt
-        # TODO: Check if transformations are correct (should there be an inverse behind x_dot) jk it seems right now
-        self.x_priori = self.x_k + (transformation@x_dot)*self.dt
+#         # A = np.block([[A_Lpp, np.zeros((3,3)), A_Lpv, np.zeros((3,3))],
+#         #               [np.zeros((3,3)), A_App, np.zeros((3,3)), A_Apv],
+#         #               [np.zeros((3,3)), np.zeros((3,3)), A_Lvv, np.zeros((3,3))], 
+#         #               [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3)), A_Avv]])
+#         g = 9.81
+#         x_dot = np.array([
+#             vel_x*cos(psi)*cos(theta) + vel_y*(sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi)) + vel_z*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)),
+#             vel_x*sin(psi)*cos(theta) + vel_y*(sin(phi)*sin(psi)*sin(theta) + cos(phi)*cos(psi)) + vel_z*(-sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi)),
+#             -vel_x*sin(theta) + vel_y*sin(phi)*cos(theta) + vel_z*(cos(phi)*cos(theta)),
+#             (w_y*sin(phi))/(cos(theta)) + (w_z*cos(phi))/(cos(theta)),
+#             w_y*cos(phi) - w_z*sin(phi),
+#             w_x + w_y*sin(phi)*tan(theta) + w_z*cos(phi)*tan(theta),
+#             (g*m*sin(theta)+m*vel_y*w_z-m*vel_z*w_y) / m,
+#             (-g*m*sin(phi)*cos(theta) - m*vel_x*w_z+m*vel_z*w_x) / m,
+#             (abs(T) - (0.5*rho*vel_z**2*Cd*np.pi*r**2) - g*m*cos(phi)*cos(theta) + m*vel_x*w_y - m*vel_y*w_x) / m,
+#             (J_y*w_z*w_y - J_z*w_z*w_y) / J_x,
+#             (-J_x*w_z*w_x + J_z*w_z*w_x) / J_y,
+#             (J_x*w_y*w_x - J_y*w_x*w_y) / J_z])
+#         # B = np.block([[np.zeros((3,3))],
+#         #               [np.zeros((3,3))],
+#         #               [np.eye(3) / m * self.dt],
+#         #               [np.zeros((3,3))]])
+#         # Puts A and B matrix back into our states
+#         # For transformation => x = transformation inverse (xbar) transformation (A matrix)
+#         # (B matrix) = transformation inverse (b bar)
+#         # change of state variables on page 50-->ECE 515 Course Notes https://arxiv.org/abs/2007.01367
+#         # A = np.linalg.inv(transformation) @ A @ transformation
+#         # B = np.linalg.inv(transformation) @ B
+#         # g = np.array([0,0,0,0,0,0,self.g*np.sin(theta), -self.g*np.sin(theta)*np.cos(theta), -self.g*np.cos(theta)*np.cos(phi),0,0,0])*self.dt
+#         # TODO: Check if transformations are correct (should there be an inverse behind x_dot) jk it seems right now
+#         self.x_priori = self.x_k + (transformation@x_dot)*self.dt
         
-        A = transformation@np.array([[0, 0, 0, vel_y*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)) + vel_z*(-sin(phi)*sin(theta)*cos(psi) + sin(psi)*cos(phi)), -vel_x*sin(theta)*cos(psi) + vel_y*sin(phi)*cos(psi)*cos(theta) + vel_z*cos(phi)*cos(psi)*cos(theta), -vel_x*sin(psi)*cos(theta) + vel_y*(-sin(phi)*sin(psi)*sin(theta) - cos(phi)*cos(psi)) + vel_z*(sin(phi)*cos(psi) - sin(psi)*sin(theta)*cos(phi)), cos(psi)*cos(theta), sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi), sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi), 0, 0, 0], 
-[0, 0, 0, vel_y*(-sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi)) + vel_z*(-sin(phi)*sin(psi)*sin(theta) - cos(phi)*cos(psi)), -vel_x*sin(psi)*sin(theta) + vel_y*sin(phi)*sin(psi)*cos(theta) + vel_z*sin(psi)*cos(phi)*cos(theta), vel_x*cos(psi)*cos(theta) + vel_y*(sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi)) + vel_z*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)), sin(psi)*cos(theta), sin(phi)*sin(psi)*sin(theta) + cos(phi)*cos(psi), -sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi), 0, 0, 0], [0, 0, 0, vel_y*cos(phi)*cos(theta) - vel_z*sin(phi)*cos(theta), -vel_x*cos(theta) - vel_y*sin(phi)*sin(theta) - vel_z*sin(theta)*cos(phi), 0, -sin(theta), sin(phi)*cos(theta), cos(phi)*cos(theta), 0, 0, 0], [0, 0, 0, w_y*cos(phi)/cos(theta) - w_z*sin(phi)/cos(theta), w_y*sin(phi)*sin(theta)/cos(theta)**2 + w_z*sin(theta)*cos(phi)/cos(theta)**2, 0, 0, 0, 0, 0, sin(phi)/cos(theta), cos(phi)/cos(theta)], [0, 0, 0, -w_y*sin(phi) - w_z*cos(phi), 0, 0, 0, 0, 0, 0, cos(phi), -sin(phi)], [0, 0, 0, w_y*cos(phi)*tan(theta) - w_z*sin(phi)*tan(theta), w_y*(tan(theta)**2 + 1)*sin(phi) + w_z*(tan(theta)**2 + 1)*cos(phi), 0, 0, 0, 0, 1, sin(phi)*tan(theta), cos(phi)*tan(theta)], [0, 0, 0, 0, g*cos(theta), 0, 0, w_z, -w_y, 0, -vel_z, vel_y], [0, 0, 0, -g*cos(phi)*cos(theta), g*sin(phi)*sin(theta), 0, -w_z, 0, w_x, vel_z, 0, -vel_x], [0, 0, 0, g*sin(phi)*cos(theta), g*sin(theta)*cos(phi), 0, w_y, -w_x, -1.0*pi*Cd*r**2*rho*vel_z/m, -vel_y, vel_x, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (J_y*w_z - J_z*w_z)/J_x, (J_y*w_y - J_z*w_y)/J_x], [0, 0, 0, 
-0, 0, 0, 0, 0, 0, (-J_x*w_z + J_z*w_z)/J_y, 0, (-J_x*w_x + J_z*w_x)/J_y], [0, 0, 0, 0, 0, 0, 0, 0, 0, (J_x*w_y - J_y*w_y)/J_z, (J_x*w_x - J_y*w_x)/J_z, 0]])
+#         A = transformation@np.array([[0, 0, 0, vel_y*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)) + vel_z*(-sin(phi)*sin(theta)*cos(psi) + sin(psi)*cos(phi)), -vel_x*sin(theta)*cos(psi) + vel_y*sin(phi)*cos(psi)*cos(theta) + vel_z*cos(phi)*cos(psi)*cos(theta), -vel_x*sin(psi)*cos(theta) + vel_y*(-sin(phi)*sin(psi)*sin(theta) - cos(phi)*cos(psi)) + vel_z*(sin(phi)*cos(psi) - sin(psi)*sin(theta)*cos(phi)), cos(psi)*cos(theta), sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi), sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi), 0, 0, 0], 
+# [0, 0, 0, vel_y*(-sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi)) + vel_z*(-sin(phi)*sin(psi)*sin(theta) - cos(phi)*cos(psi)), -vel_x*sin(psi)*sin(theta) + vel_y*sin(phi)*sin(psi)*cos(theta) + vel_z*sin(psi)*cos(phi)*cos(theta), vel_x*cos(psi)*cos(theta) + vel_y*(sin(phi)*sin(theta)*cos(psi) - sin(psi)*cos(phi)) + vel_z*(sin(phi)*sin(psi) + sin(theta)*cos(phi)*cos(psi)), sin(psi)*cos(theta), sin(phi)*sin(psi)*sin(theta) + cos(phi)*cos(psi), -sin(phi)*cos(psi) + sin(psi)*sin(theta)*cos(phi), 0, 0, 0], [0, 0, 0, vel_y*cos(phi)*cos(theta) - vel_z*sin(phi)*cos(theta), -vel_x*cos(theta) - vel_y*sin(phi)*sin(theta) - vel_z*sin(theta)*cos(phi), 0, -sin(theta), sin(phi)*cos(theta), cos(phi)*cos(theta), 0, 0, 0], [0, 0, 0, w_y*cos(phi)/cos(theta) - w_z*sin(phi)/cos(theta), w_y*sin(phi)*sin(theta)/cos(theta)**2 + w_z*sin(theta)*cos(phi)/cos(theta)**2, 0, 0, 0, 0, 0, sin(phi)/cos(theta), cos(phi)/cos(theta)], [0, 0, 0, -w_y*sin(phi) - w_z*cos(phi), 0, 0, 0, 0, 0, 0, cos(phi), -sin(phi)], [0, 0, 0, w_y*cos(phi)*tan(theta) - w_z*sin(phi)*tan(theta), w_y*(tan(theta)**2 + 1)*sin(phi) + w_z*(tan(theta)**2 + 1)*cos(phi), 0, 0, 0, 0, 1, sin(phi)*tan(theta), cos(phi)*tan(theta)], [0, 0, 0, 0, g*cos(theta), 0, 0, w_z, -w_y, 0, -vel_z, vel_y], [0, 0, 0, -g*cos(phi)*cos(theta), g*sin(phi)*sin(theta), 0, -w_z, 0, w_x, vel_z, 0, -vel_x], [0, 0, 0, g*sin(phi)*cos(theta), g*sin(theta)*cos(phi), 0, w_y, -w_x, -1.0*pi*Cd*r**2*rho*vel_z/m, -vel_y, vel_x, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (J_y*w_z - J_z*w_z)/J_x, (J_y*w_y - J_z*w_y)/J_x], [0, 0, 0, 
+# 0, 0, 0, 0, 0, 0, (-J_x*w_z + J_z*w_z)/J_y, 0, (-J_x*w_x + J_z*w_x)/J_y], [0, 0, 0, 0, 0, 0, 0, 0, 0, (J_x*w_y - J_y*w_y)/J_z, (J_x*w_x - J_y*w_x)/J_z, 0]])
         
-        self.P_priori = (A @ self.P_k @ A.T) + self.Q
+#         self.P_priori = (A @ self.P_k @ A.T) + self.Q
+
+    def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho: float):
+            """
+            https://www.intechopen.com/chapters/64567
+            new dynamics dropped
+            
+            Args:
+                R (np.ndarray): rotation matrix from body to world frame
+                T (float): thrust magnitude (assumed to be along rocket body)
+                m (float): mass
+                r: radius of rocket
+                h: height of rocket
+                Cn: normal force coefficient
+                Ca: axial force coefficient
+                Cp: pitch moment coefficient
+                rho (float): air density
+            """
+            pos_x, pos_y, pos_z = self.x_k[0:3]
+            phi, theta, psi = self.x_k[3:6] # phi = roll, theta = pitch, psi = yaw
+            vel_x, vel_y, vel_z = self.x_k[6:9]
+            vel_mag = np.linalg.norm(self.x_k[6:9])
+            w_x, w_y, w_z = self.x_k[9:12]
+
+            J_z = 1/2 * m * r**2
+            J_y = 1/3 * m * h**2 + 1/4 * m * r**2
+            J_x = J_y
+
+            Fax, Fay, Faz = 0,0,0 # aerodynamic forces expressed on the body in each direction
+            Fax = -0.5*rho*(vel_mag**2)*Ca*(np.pi*r**2) # drag force
+            # get Cn cp
+            g = 9.81
+            Fg = np.array([0,0,-g])
+            Fg_body = np.linalg.inv(R) @ Fg
+            Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2] # gravitational forces expressed on the body in each direction
+            Ftx, Fty, Ftz = T,0,0 # thrust forces in each direciton ( we assume that is in one direction)
+            # we can do some trig to figure this out (it's in the textbook)
+            # states tracked: x, y, z, vx, vy, vz, ax, ay, az, phi, theta, psi, phidot, thetadot, psidot, phiddot, thetaddot, psiddot,
+            # aero_coeff = forces.get_Ca_Cn_Cp(self, self.x_k, )
+            La, Ma, Na = 0,0,0
+            Lp, Mp, Np = 0,0,0
+            La  = 0.5*rho*(vel_mag) * (Cp) * np.pi*r**2 * (h) # pitch moment
+
+            xdot = np.array([[vel_x], [vel_y], [vel_z], 
+                            [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)],
+                            [w_x], [w_y], [w_z],
+                            [La + Lp - w_y*w_z*(J_z - J_y) / J_x], [Ma + Mp - w_z*w_x*(J_x - J_z) / J_y], [Na + Np - w_x*w_y*(J_y - J_x) / J_z]
+                            ])
+
+            self.x_priori = self.x_k + xdot*self.dt
+            print((Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y))
+            print((Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y))
+            print((Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x))
+            A = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 
+                        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], 
+                        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+                        [0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0, 0, 0], 
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)], 
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), 0]])
+            
+            self.P_priori = (A @ self.P_k @ A.T) + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel, phi_vel, theta_vel, psi_vel):
         """Updates state and covariance
@@ -183,7 +243,8 @@ class KalmanFilter:
     def reset_lateral_pos(self):
         """Resets lateral position to 0
         """
-        self.x_k[1:3] = [0,0]
+        self.x_k[0:3] = [0,0,0]
+        self.x_k[6:9] = [0,0,0]
         
 
 

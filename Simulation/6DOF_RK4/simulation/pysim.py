@@ -100,7 +100,9 @@ class Simulation:
                                   self.rocket.get_rocket_total_mass(self.time_stamp), 
                                   0.14/2, 
                                   length,
+                                  Ca,
                                   Cn,
+                                  Cp,
                                   rho)
         self.kalman_filter.update(bno_ang_pos, baro_alt,
                             accel[0], accel[1], accel[2], *gyro)

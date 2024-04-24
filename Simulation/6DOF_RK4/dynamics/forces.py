@@ -157,7 +157,7 @@ class Forces:
             
         return [0,0,0]
 
-    def aerodynamic_force(self, x_state, density, wind_vector, alpha, rasaero, before_burnout, flap_ext) -> np.ndarray:
+    def aerodynamic_force(self, x_state, density, wind_vector=np.array([0,0,0]), alpha=0, before_burnout=False, flap_ext=0) -> np.ndarray:
         '''Calculates aerodynamic drag force acting on rocket based on velocity and altitude
 
         Args:
