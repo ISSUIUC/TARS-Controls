@@ -2,9 +2,7 @@ import numpy as np
 import scipy
 import random
 import matplotlib.pyplot as plt
-# import dynamics.forces as forces
 import util.vectors as vct
-# import properties.properties as prop
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atm_model
 

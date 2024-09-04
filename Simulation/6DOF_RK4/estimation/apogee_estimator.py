@@ -178,7 +178,6 @@ class Apogee:
         """
         
         # get interpolation points (uniform) and delta x
-        ### YOUR CODE HERE ###
         x_interpolate = np.linspace(a, b, n+1).tolist()
         dx = x_interpolate[1] - x_interpolate[0]
 
@@ -234,7 +233,6 @@ class Apogee:
             
 
         # solve matrix system
-        ### YOUR CODE HERE ###
         c = np.linalg.solve(A, f)
         return c, x_interpolate
     

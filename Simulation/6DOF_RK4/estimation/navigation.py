@@ -32,6 +32,7 @@ class Navigation:
         yaw = np.arctan2(-ax,-ay) + np.pi/2
         self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
         ## self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
+        
     def update_state(self,baro_alt, accel, gyro, bno_ang_pos):
         self.kalman_filter.priori()
         self.r_kalman_filter.priori()

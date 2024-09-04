@@ -39,7 +39,6 @@ import properties.data_loader as dataloader
 import simulator as sim_class
 import dynamics.sensors as sensors
 import time
-# import estimation.apogee_estimator as apg
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 
@@ -86,8 +85,6 @@ class Simulation:
             self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
-            # apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
-
             self.rocket.set_motor_mass(self.time_stamp)
 
             is_staging = start and self.rocket.current_stage != -1
@@ -123,8 +120,6 @@ class Simulation:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
-
-            # apogee_est = self.apogee_estimator.predict_apogee(current_state[0:3])
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
 

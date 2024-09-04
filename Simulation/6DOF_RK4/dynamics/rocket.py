@@ -376,8 +376,3 @@ class Rocket:
 
             record.append(cur_point)
         return record
-
-        
-# if __name__ == '__main__':
-    # rocket = Rocket(motor_mass=5,rocket_dry_mass=2)
-    # print(rocket.rocket_total_mass)

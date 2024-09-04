@@ -1,4 +1,4 @@
-    # all the linear positions
+# all the linear positions
 from filterpy.common import Q_continuous_white_noise
 import numpy as np
 import util.vectors as vct

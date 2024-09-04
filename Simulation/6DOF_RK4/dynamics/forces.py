@@ -205,7 +205,4 @@ class Forces:
         if(np.linalg.norm(incident_velocity) == 0):
             alpha = 0
         return alpha
-
-if __name__ == '__main__':
-    forces = Forces()
-    print(forces.rasaero)
+    

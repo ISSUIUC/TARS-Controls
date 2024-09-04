@@ -61,12 +61,6 @@ class Motor():
         Args:
             time: Time stamp of the current state
         """
-        # if (time_stamp < 7/.01):
-        #     return np.array([2500.,0.,0.])
-        # else:
-        #     return np.array([0.,0.,0.])
-        # shift time_stamp to reflect the time_stamp since ignition
-        # time_stamp = (time_stamp - self.start_time)*.01
         time_stamp = time_stamp - self.start_time
         temp = 0
         # only linearly interpolate if within the bounds of the thrust curve
@@ -148,18 +142,3 @@ class Motor():
         """Gets the burn time of the motor
         """
         return float(self.thrust_data["Time (s)"].iloc[-1])
-
-
-if __name__ == '__main__':
-    motor = Motor(69, 420, 21, '../Lookup/cesaroni_n5800 copy.csv')
-    time = np.linspace(0, 10, 1000)
-    # print(time)
-    # print(motor.get_thrust(0))
-    # thrust = np.array([motor.get_thrust(t) for t in time], dtype=np.float64)
-    thrust = np.array([motor.get_mass(t) for t in time], dtype=np.float64)
-    # print(thrust.shape)
-    # print(time.shape)
-    # print(thrust)
-    # print(motor.lerp_(0.0, 1.0, 0.0, 1.0, 0.5))
-    plt.plot(time, thrust)
-    plt.show()
