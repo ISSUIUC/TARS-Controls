@@ -23,8 +23,6 @@ kalman_dict = {"x": []}
 def readData () :
     global df_lowG_timestamp, df_highG_data, df_barometer_data
 
-    # df = pandas.read_csv("Simulation/6DOF_RK4/lookup/flight_computer_20221029.csv" , 
-    #     usecols= ['timestamp_ms', 'highg_ax', 'highg_ay', 'highg_az', 'barometer_altitude', 'state_est_x'])
     df = pandas.read_csv("../lookup/flight_computer_20221029.csv" ,
         usecols= ['timestamp_ms', 'highg_ax', 'highg_ay', 'highg_az', 'barometer_altitude', 'state_est_x'])
 
@@ -47,10 +45,6 @@ def implementKF (measuredDict):
 
 def plotGraph (measuredDict):
     global df_lowG_timestamp, df_highG_data, df_barometer_data
-
-    # print((measuredDict["lowG_data.timestamp"]).values)
-    # plt.plot(measuredDict["lowG_data.timestamp"].values, measuredDict["barometer_data.altitude"].values, label = "barometer data")
-    # plt.plot(measuredDict["lowG_data.timestamp"].values, kalman_filter.kalman_dict["altitude"].values, label = "state estimate")
     
     # convert the dict to a list of the values in each column so the data can be plotted
     df_lowG_timestamp = measuredDict['timestamp_ms'].values()

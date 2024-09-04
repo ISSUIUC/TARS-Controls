@@ -52,7 +52,6 @@ def approximate_cubicspline(a, b, n, x_test):
     """
     
     # get interpolation points (uniform) and delta x
-    ### YOUR CODE HERE ###
     x_interpolate = np.linspace(a, b, n+1).tolist()
     dx = x_interpolate[1] - x_interpolate[0]
 
@@ -100,12 +99,7 @@ def approximate_cubicspline(a, b, n, x_test):
             # update values from condition (4)
             A[ind + 3, ind] = 0
             A[ind + 3, ind + 1] = 1
-            # A[ind + 3, ind + 2] = ### YOUR CODE HERE ###
-            # A[ind + 3, ind + 3] = ### YOUR CODE HERE ###
             A[ind + 3, ind + 4] = -1
-            # A[ind + 3, ind + 5] = ### YOUR CODE HERE ###
-            # A[ind + 3, ind + 6] = ### YOUR CODE HERE ###
-            # A[ind + 3, ind + 7] = ### YOUR CODE HERE ###
 
         # update values from conditions (3), (4) and "extra" conditions (7)-(8)
         f[ind + 2] = 0 # f_true(0)
@@ -113,7 +107,6 @@ def approximate_cubicspline(a, b, n, x_test):
         
 
     # solve matrix system
-    ### YOUR CODE HERE ###
     c = np.linalg.solve(A, f)
     # get fa (vector of approximated function values for x_test)
     fa = []
@@ -136,13 +129,10 @@ def approximate_cubicspline(a, b, n, x_test):
         fa.append(fa_val)
 
     # get f (vector of true function values for x_test)
-    ### YOUR CODE HERE ###
     f = np.array([f_true(x) for x in x_test])
     # get e (error vector)
-    ### YOUR CODE HERE ###
     e = f - fa
     # calculate error (2-norm)
-    ### YOUR CODE HERE ###
     err = np.sqrt(e.T@e)
     return fa, f, err, x_interpolate
 
@@ -176,10 +166,8 @@ def approximate_cubicspline_custom_interpolation(a, b, x_interpolate, x_test):
     """
     
     # get interpolation points (uniform) and delta x
-    ### YOUR CODE HERE ###
     # x_interpolate = np.linspace(a, b, n+1).tolist()
     n = len(x_interpolate) - 1
-    # dx = x_interpolate[1] - x_interpolate[0]
 
     # get A matrix and f vector
     A = np.zeros((4 * n, 4 * n))
@@ -225,12 +213,7 @@ def approximate_cubicspline_custom_interpolation(a, b, x_interpolate, x_test):
             # update values from condition (4)
             A[ind + 3, ind] = 0
             A[ind + 3, ind + 1] = 1
-            # A[ind + 3, ind + 2] = ### YOUR CODE HERE ###
-            # A[ind + 3, ind + 3] = ### YOUR CODE HERE ###
             A[ind + 3, ind + 4] = -1
-            # A[ind + 3, ind + 5] = ### YOUR CODE HERE ###
-            # A[ind + 3, ind + 6] = ### YOUR CODE HERE ###
-            # A[ind + 3, ind + 7] = ### YOUR CODE HERE ###
 
         # update values from conditions (3), (4) and "extra" conditions (7)-(8)
         f[ind + 2] = 0 # f_true(0)
@@ -238,7 +221,6 @@ def approximate_cubicspline_custom_interpolation(a, b, x_interpolate, x_test):
         
 
     # solve matrix system
-    ### YOUR CODE HERE ###
     c = np.linalg.solve(A, f)
     # get fa (vector of approximated function values for x_test)
     fa = []
@@ -261,13 +243,10 @@ def approximate_cubicspline_custom_interpolation(a, b, x_interpolate, x_test):
         fa.append(fa_val)
 
     # get f (vector of true function values for x_test)
-    ### YOUR CODE HERE ###
     f = np.array([f_true(x) for x in x_test])
     # get e (error vector)
-    ### YOUR CODE HERE ###
     e = f - fa
     # calculate error (2-norm)
-    ### YOUR CODE HERE ###
     err = np.sqrt(e.T@e)
     return fa, f, err, x_interpolate
 
@@ -279,20 +258,14 @@ fa_300, f, err, x_interpolate = approximate_cubicspline(0.01, 3, 300, data['Mach
 x_interp = [0.01, 0.13, 0.2, 0.4, 0.71, 0.8, 1.06, 1.3, 1.5, 1.7, 2.0, 2.3, 3.0]
 fa_custom, f, err, x_interpolate = approximate_cubicspline_custom_interpolation(0.01, 3, x_interp, data['Mach Number'])
 plt.plot(data['Mach Number'], data['CA Power-Off'], label='RASAero')
-# plt.plot(data['Mach Number'], fa_polyfit, label='Polynomial Fit')
-# plt.plot(data['Mach Number'], fa_10, label='Cubic Spline, n=10')
-# plt.plot(data['Mach Number'], fa_15, label='Cubic Spline, n=15')
 plt.plot(data['Mach Number'], fa_20, label='Cubic Spline, n=20')
 plt.plot(data['Mach Number'], fa_30, label='Cubic Spline, n=30')
 plt.plot(data['Mach Number'], fa_300, label='Cubic Spline, n=300')
-# plt.plot(data['Mach Number'], fa_custom, label='Cubic Spline, custom interpolation')
 plt.legend()
 plt.figure()
-# plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_10)/data['CA Power-Off'], label='Error, n=10')
-# plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_15)/data['CA Power-Off'], label='Error, n=15')
+
 plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_20)/data['CA Power-Off'], label='Error, n=20')
 plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_30)/data['CA Power-Off'], label='Error, n=30')
 plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_300)/data['CA Power-Off'], label='Error, n=300')
-# plt.plot(data['Mach Number'], (data['CA Power-Off'] - fa_custom)/data['CA Power-Off'], label='Error, custom interpolation')
 plt.legend()
 plt.show()

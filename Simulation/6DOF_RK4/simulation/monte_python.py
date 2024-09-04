@@ -12,7 +12,6 @@ import estimation.r_ekf as r_ekf
 import properties.properties as prop
 import properties.data_loader as dataloader
 import simulator as sim_class
-# import plotter.plotSIM as plotter
 import dynamics.sensors as sensors
 import time
 import estimation.apogee_estimator as apg
