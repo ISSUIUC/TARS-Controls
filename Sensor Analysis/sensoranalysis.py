@@ -30,6 +30,12 @@ from plotly.subplots import make_subplots
 
 #also trim the flight data
 
+""" 
+    Aditya Srikanth 9-28-2024
+    - Removed commented code that wasn't used with sensors or unnecessarily caused errors
+    - Changed certain arr.values used in functions to dict_sensor value
+        +++ arr_df[:,7] to dict_sensor["lowG_data.timeStamp_lowG"]
+"""
     
 def main():
     arr = pd.read_csv("Sensor Analysis/csvfinal.csv")
@@ -48,37 +54,13 @@ def main():
         "highG_data.hg_ay": arr_df[:,10],
         "highG_data.hg_az": arr_df[:,11],
         "highG_data.timeStamp_highG": arr_df[:,12],
-        # "has_gps_data": arr_df[:,13],                          ### GPS HAS NO DATA FOR THIS SO WILL THROW ERRORS ###
-        # "gps_data.latitude": arr_df[:,14],
-        # "gps_data.longitude": arr_df[:,15],
-        # "gps_data.altitude": arr_df[:,16],
-        # "gps_data.siv_count": arr_df[:,17],
-        # "gps_data.fix_type": arr_df[:,18],
-        # "gps_data.posLock": arr_df[:,19],
-        # "gps_data.timeStamp_GPS": arr_df[:,20],
+       
         "has_barometer_data": arr_df[:,21],
         "barometer_data.temperature": arr_df[:,22],
         "barometer_data.pressure": arr_df[:,23],
         "barometer_data.altitude": arr_df[:,24],
         "barometer_data.timeStamp_barometer": arr_df[:,25],
-        # "has_kalman_data": arr_df[:,26],
-        # "kalman_data.kalman_pos_x": arr_df[:,27],
-        # "kalman_data.kalman_vel_x": arr_df[:,28],
-        # "kalman_data.kalman_acc_x": arr_df[:,29],
-        # "kalman_data.kalman_pos_y": arr_df[:,30],
-        # "kalman_data.kalman_vel_y": arr_df[:,31],
-        # "kalman_data.kalman_acc_y": arr_df[:,32],
-        # "kalman_data.kalman_pos_z": arr_df[:,33],
-        # "kalman_data.kalman_vel_z": arr_df[:,34],
-        # "kalman_data.kalman_acc_z": arr_df[:,35],
-        # "kalman_data.kalman_apo": arr_df[:,36], 
-        # "kalman_data.timeStamp_state": arr_df[:,37],
-        # "has_rocketState_data": arr_df[:,38],
-        # "rocketState_data.rocketStates": arr_df[:,39],
-        # "rocketState_data.timestamp": arr_df[:,40],
-        # "has_flap_data": arr_df[:,41], 
-        # "flap_data.extension": arr_df[:,42],
-        # "flap_data.timeStamp_flaps": arr_df[:,45],
+    
         "has_voltage_data": arr_df[:,44],
         "voltage_data.v_battery": arr_df[:,45],
         "voltage_data.timestamp": arr_df[:,46],
@@ -111,7 +93,7 @@ def main():
     }
 
     items_to_find = ['False']
-    data_i = dict_sensor.get("has_lowG_data")
+    data_i1 = dict_sensor.get("has_lowG_data")
     data_i2 = dict_sensor.get("has_highG_data")
     data_i3 = dict_sensor.get("has_gps_data")
     data_i4 = dict_sensor.get("has_barometer_data")
@@ -127,7 +109,7 @@ def main():
         new_array = []
         new_array = dict_sensor[key2][np.logical_and(dict_sensor[key2]!=0.0, dict_sensor[key2]!=0)]
         dict_sensor[key2] = new_array
-        counter = counter + 1
+        counter += 1
     #    dict_sensor[key2]==new_array
 
     # dict_sensor = {k: [dict_sensor[k].remove[removed_index] for removed_index in indices_to_remove]
@@ -172,24 +154,18 @@ def main():
     count = 0
     count2 = 0
     for key in dict_sensor:
-        count2 = count2 + 1
+        count2 += 1
         # plotting only columns that contain important data
         if key !="has_lowG_data" and key !="lowG_data.timeStamp_lowG" and key !="has_highG_data" and key!="has_gps_data" and key!="has_barometer_data"and key!="has_kalman_data"and key!="has_rocketState_data"and key!="has_flap_data"and key!="has_voltage_data"and key!="has_orientation_data"and key!="has_magnetometer_data"and key!="highG_data.timeStamp_highG"and key!="gps_data.timeStamp_GPS"and key!="barometer_data.timeStamp_barometer"and key!="kalman_data.timeStamp_state"and key!="rocketState_data.timestamp"and key!="flap_data.timeStamp_flaps"and key!="voltage_data.timestamp"and key!="has_gas_data"and key!="orientation_data.timeStamp_orientation"and key!="magnetometer_data.timestamp"and key!="gas_data.timestamp":
-            count = count + 1
+            count += 1
             if (count2 <= 7):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,7],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(dict_sensor["lowG_data.timeStamp_lowG"],dict_sensor[key],t1,t2)
             if (8 <= count2 <= 12):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,12],dict_sensor[key],t1,t2)
-            # if (13 <= count2 <= 20):
-            #     std_plot, time_plot, data_plot = stddev_plot(arr_df[:,20],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(dict_sensor["highG_data.timeStamp_highG"],dict_sensor[key],t1,t2)
+            
             if (13 <= count2 <= 17):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,25],dict_sensor[key],t1,t2)
-            # if (26 <= count2 <= 33):
-            #     std_plot, time_plot, data_plot = stddev_plot(arr_df[:,37],dict_sensor[key],t1,t2)
-            # if (34 <= count2 <= 36):
-            #     std_plot, time_plot, data_plot = stddev_plot(arr_df[:,40],dict_sensor[key],t1,t2)
-            # if (37 <= count2 <= 39):
-            #     std_plot, time_plot, data_plot = stddev_plot(arr_df[:,43],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(dict_sensor["barometer_data.timeStamp_barometer"],dict_sensor[key],t1,t2)
+            
             if (18 <= count2 <= 20):
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,46],dict_sensor[key],t1,t2)
             if (21 <= count2 <= 34):
