@@ -30,6 +30,13 @@ from plotly.subplots import make_subplots
 
 #also trim the flight data
 
+""" 
+    Aditya Srikanth 9-28-2024
+    - Removed commented code that wasn't used with sensors or unnecessarily caused errors
+    - Changed certain arr.values used in functions to dict_sensor value
+        +++ arr_df[:,7] to dict_sensor["lowG_data.timeStamp_lowG"]
+    - When figuring graph titles, isntead of keeping a long list of != statements, i made a list of excluded tags and checked to make sure element was not in the list
+"""
     
 def main():
     arr = pd.read_csv("Sensor Analysis/csvfinal.csv")
@@ -125,7 +132,7 @@ def main():
     counter = 0
     for key2 in dict_sensor.keys():
         new_array = []
-        new_array = dict_sensor[key2][np.logical_and(dict_sensor[key2]!=0.0, dict_sensor[key2]!=0)]
+        new_array = dict_sensor[key2][np.logical_and(dict_sensor[key2]!=0.0, dict_sensor[key2] != 0)]
         dict_sensor[key2] = new_array
         counter = counter + 1
     #    dict_sensor[key2]==new_array
@@ -147,12 +154,12 @@ def main():
     print("*************************************************")
     while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (min(arr_df[:,7]) > t1)): #checking if time values are out of bounds or not of int type
         try:
-            t1 = int(input(f"What time do you want to start({min(arr_df[:,7])} to {max(arr_df[:,7])})?: "))
+            t1 = int(input(f'What time do you want to start({min(arr_df[:,7])} to {max(arr_df[:,7])})?: '))
         except Exception: # having the while loop run again if an integer is not entered
             pass
     while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999  or (max(arr_df[:,7]) < t2)): #checking if time values are out of bounds or not of int type
         try:
-            t2 = int(input(f"What time do you want to stop({min(arr_df[:,7])} to {max(arr_df[:,7])})?: "))
+            t2 = int(input(f'What time do you want to stop({min(arr_df[:,7])} to {max(arr_df[:,7])})?: '))
         except Exception: # having the while loop run again if an integer is not entered
             pass
 
@@ -163,9 +170,18 @@ def main():
     # (2) Plot the data via a LRQ / Plot statistcal model
     titles = []
     count1 = 0
+    excluded_strings = [
+    "has_lowG_data", "lowG_data.timeStamp_lowG", "has_highG_data", "has_gps_data", 
+    "has_barometer_data", "has_kalman_data", "has_rocketState_data", "has_flap_data", 
+    "has_voltage_data", "has_orientation_data", "has_magnetometer_data", 
+    "highG_data.timeStamp_highG", "gps_data.timeStamp_GPS", "barometer_data.timeStamp_barometer", 
+    "kalman_data.timeStamp_state", "rocketState_data.timestamp", "flap_data.timeStamp_flaps", 
+    "voltage_data.timestamp", "has_gas_data", "orientation_data.timeStamp_orientation", 
+    "magnetometer_data.timestamp", "gas_data.timestamp"
+    ]
     for j in dict_sensor:
         # appending only titles of things to be graphed (no time or has data columns)
-        if j !="has_lowG_data" and j !="lowG_data.timeStamp_lowG" and j !="has_highG_data" and j!="has_gps_data" and j !="has_barometer_data"and j !="has_kalman_data"and j !="has_rocketState_data"and j!="has_flap_data"and j!="has_voltage_data"and j!="has_orientation_data"and j!="has_magnetometer_data"and j!="highG_data.timeStamp_highG"and j!="gps_data.timeStamp_GPS"and j!="barometer_data.timeStamp_barometer"and j!="kalman_data.timeStamp_state"and j!="rocketState_data.timestamp"and j!="flap_data.timeStamp_flaps"and j!="voltage_data.timestamp"and j!="has_gas_data"and j!="orientation_data.timeStamp_orientation"and j!="magnetometer_data.timestamp"and j!="gas_data.timestamp":
+        if j not in excluded_strings:
             titles.append(j)
             count1 += count1
     fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles)
@@ -174,8 +190,8 @@ def main():
     for key in dict_sensor:
         count2 = count2 + 1
         # plotting only columns that contain important data
-        if key !="has_lowG_data" and key !="lowG_data.timeStamp_lowG" and key !="has_highG_data" and key!="has_gps_data" and key!="has_barometer_data"and key!="has_kalman_data"and key!="has_rocketState_data"and key!="has_flap_data"and key!="has_voltage_data"and key!="has_orientation_data"and key!="has_magnetometer_data"and key!="highG_data.timeStamp_highG"and key!="gps_data.timeStamp_GPS"and key!="barometer_data.timeStamp_barometer"and key!="kalman_data.timeStamp_state"and key!="rocketState_data.timestamp"and key!="flap_data.timeStamp_flaps"and key!="voltage_data.timestamp"and key!="has_gas_data"and key!="orientation_data.timeStamp_orientation"and key!="magnetometer_data.timestamp"and key!="gas_data.timestamp":
-            count = count + 1
+        if key not in excluded_strings:
+            count += 1
             if (count2 <= 7):
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,7],dict_sensor[key],t1,t2)
             if (8 <= count2 <= 12):
