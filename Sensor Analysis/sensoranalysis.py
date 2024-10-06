@@ -39,6 +39,7 @@ from plotly.subplots import make_subplots
 """
     
 def main():
+    sensorData = pd.read_csv("Sensor Analysis/csvfinal.csv")
     arr = pd.read_csv("Sensor Analysis/csvfinal.csv")
     arr_df = np.asarray(arr.values) #changes to an array
     dict_sensor = {
@@ -55,37 +56,13 @@ def main():
         "highG_data.hg_ay": arr_df[:,10],
         "highG_data.hg_az": arr_df[:,11],
         "highG_data.timeStamp_highG": arr_df[:,12],
-        # "has_gps_data": arr_df[:,13],                          ### GPS HAS NO DATA FOR THIS SO WILL THROW ERRORS ###
-        # "gps_data.latitude": arr_df[:,14],
-        # "gps_data.longitude": arr_df[:,15],
-        # "gps_data.altitude": arr_df[:,16],
-        # "gps_data.siv_count": arr_df[:,17],
-        # "gps_data.fix_type": arr_df[:,18],
-        # "gps_data.posLock": arr_df[:,19],
-        # "gps_data.timeStamp_GPS": arr_df[:,20],
+
         "has_barometer_data": arr_df[:,21],
         "barometer_data.temperature": arr_df[:,22],
         "barometer_data.pressure": arr_df[:,23],
         "barometer_data.altitude": arr_df[:,24],
         "barometer_data.timeStamp_barometer": arr_df[:,25],
-        # "has_kalman_data": arr_df[:,26],
-        # "kalman_data.kalman_pos_x": arr_df[:,27],
-        # "kalman_data.kalman_vel_x": arr_df[:,28],
-        # "kalman_data.kalman_acc_x": arr_df[:,29],
-        # "kalman_data.kalman_pos_y": arr_df[:,30],
-        # "kalman_data.kalman_vel_y": arr_df[:,31],
-        # "kalman_data.kalman_acc_y": arr_df[:,32],
-        # "kalman_data.kalman_pos_z": arr_df[:,33],
-        # "kalman_data.kalman_vel_z": arr_df[:,34],
-        # "kalman_data.kalman_acc_z": arr_df[:,35],
-        # "kalman_data.kalman_apo": arr_df[:,36], 
-        # "kalman_data.timeStamp_state": arr_df[:,37],
-        # "has_rocketState_data": arr_df[:,38],
-        # "rocketState_data.rocketStates": arr_df[:,39],
-        # "rocketState_data.timestamp": arr_df[:,40],
-        # "has_flap_data": arr_df[:,41], 
-        # "flap_data.extension": arr_df[:,42],
-        # "flap_data.timeStamp_flaps": arr_df[:,45],
+
         "has_voltage_data": arr_df[:,44],
         "voltage_data.v_battery": arr_df[:,45],
         "voltage_data.timestamp": arr_df[:,46],
@@ -116,7 +93,8 @@ def main():
         "gas_data.timestamp": arr_df[:,71],
 
     }
-
+    # stuff at the bottom isnt't used anywhere in this file. dont want to delete until i double check
+    '''
     items_to_find = ['False']
     data_i = dict_sensor.get("has_lowG_data")
     data_i2 = dict_sensor.get("has_highG_data")
@@ -129,6 +107,7 @@ def main():
     data_i9 = dict_sensor.get("has_orientation_data")
     data_i10 = dict_sensor.get("has_magnetometer_data")
     data_i11 = dict_sensor.get("has_gas_data")
+    '''
     counter = 0
     for key2 in dict_sensor.keys():
         new_array = []
@@ -152,14 +131,14 @@ def main():
     print("Average run-time (3000000 interval)  = 15 seconds")
     print("Average run-time (10000000 interval) = 75 seconds")
     print("*************************************************")
-    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (min(arr_df[:,7]) > t1)): #checking if time values are out of bounds or not of int type
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (min(sensorData["lowG_data.timeStamp_lowG"]) > t1)): #checking if time values are out of bounds or not of int type
         try:
-            t1 = int(input(f'What time do you want to start({min(arr_df[:,7])} to {max(arr_df[:,7])})?: '))
+            t1 = int(input(f'What time do you want to start({min(arr["lowG_data.timeStamp_lowG"])} to {max(sensorData["lowG_data.timeStamp_lowG"])})?: '))
         except Exception: # having the while loop run again if an integer is not entered
             pass
-    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999  or (max(arr_df[:,7]) < t2)): #checking if time values are out of bounds or not of int type
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999  or (max(sensorData["lowG_data.timeStamp_lowG"]) < t2)): #checking if time values are out of bounds or not of int type
         try:
-            t2 = int(input(f'What time do you want to stop({min(arr_df[:,7])} to {max(arr_df[:,7])})?: '))
+            t2 = int(input(f'What time do you want to stop({min(sensorData["lowG_data.timeStamp_lowG"])} to {max(sensorData["lowG_data.timeStamp_lowG"])})?: '))
         except Exception: # having the while loop run again if an integer is not entered
             pass
 
@@ -170,7 +149,7 @@ def main():
     # (2) Plot the data via a LRQ / Plot statistcal model
     titles = []
     count1 = 0
-    excluded_strings = [
+    notGraphedData = [
     "has_lowG_data", "lowG_data.timeStamp_lowG", "has_highG_data", "has_gps_data", 
     "has_barometer_data", "has_kalman_data", "has_rocketState_data", "has_flap_data", 
     "has_voltage_data", "has_orientation_data", "has_magnetometer_data", 
@@ -181,39 +160,33 @@ def main():
     ]
     for j in dict_sensor:
         # appending only titles of things to be graphed (no time or has data columns)
-        if j not in excluded_strings:
+        if j not in notGraphedData:
             titles.append(j)
             count1 += count1
     fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles)
     count = 0
     count2 = 0
     for key in dict_sensor:
-        count2 = count2 + 1
+        count2 += 1
         # plotting only columns that contain important data
-        if key not in excluded_strings:
+        if key not in notGraphedData:
             count += 1
             if (count2 <= 7):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,7],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["lowG_data.timeStamp_lowG"],dict_sensor[key],t1,t2)
             if (8 <= count2 <= 12):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,12],dict_sensor[key],t1,t2)
-            # if (13 <= count2 <= 20):
-            #     std_plot, time_plot, data_plot = stddev_plot(arr_df[:,20],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["highG_data.timeStamp_highG"],dict_sensor[key],t1,t2)
+
             if (13 <= count2 <= 17):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,25],dict_sensor[key],t1,t2)
-            # if (26 <= count2 <= 33):
-            #     std_plot, time_plot, data_plot = stddev_plot(arr_df[:,37],dict_sensor[key],t1,t2)
-            # if (34 <= count2 <= 36):
-            #     std_plot, time_plot, data_plot = stddev_plot(arr_df[:,40],dict_sensor[key],t1,t2)
-            # if (37 <= count2 <= 39):
-            #     std_plot, time_plot, data_plot = stddev_plot(arr_df[:,43],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["barometer_data.timeStamp_barometer"],dict_sensor[key],t1,t2)
+
             if (18 <= count2 <= 20):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,46],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["voltage_data.timestamp"],dict_sensor[key],t1,t2)
             if (21 <= count2 <= 34):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,60],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["orientation_data.timeStamp_orientation"],dict_sensor[key],t1,t2)
             if (35 <= count2 <= 39):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,65],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["magnetometer_data.timestamp"],dict_sensor[key],t1,t2)
             if (40 <= count2 <= 45):
-                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,71],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["gas_data.timestamp"],dict_sensor[key],t1,t2)
             # fig = go.Figure()
             ## Plotting of each dictionary entry
             # Printing key to see how close to done the graphing operation is 
