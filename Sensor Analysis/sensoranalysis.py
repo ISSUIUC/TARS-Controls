@@ -93,31 +93,15 @@ def main():
         "gas_data.timestamp": arr_df[:,71],
 
     }
-    # stuff at the bottom isnt't used anywhere in this file. dont want to delete until i double check
-    '''
-    items_to_find = ['False']
-    data_i = dict_sensor.get("has_lowG_data")
-    data_i2 = dict_sensor.get("has_highG_data")
-    data_i3 = dict_sensor.get("has_gps_data")
-    data_i4 = dict_sensor.get("has_barometer_data")
-    data_i5 = dict_sensor.get("has_kalman_data")
-    data_i6 = dict_sensor.get("has_rocketState_data")
-    data_i7 = dict_sensor.get("has_flap_data")
-    data_i8 = dict_sensor.get("has_voltage_data")
-    data_i9 = dict_sensor.get("has_orientation_data")
-    data_i10 = dict_sensor.get("has_magnetometer_data")
-    data_i11 = dict_sensor.get("has_gas_data")
-    '''
+    # stuff at the bottom isnt't used anywhere in this file. dont want to delete until i double check. update: made a separate commit taking this out
+    
     counter = 0
     for key2 in dict_sensor.keys():
         new_array = []
         new_array = dict_sensor[key2][np.logical_and(dict_sensor[key2]!=0.0, dict_sensor[key2] != 0)]
         dict_sensor[key2] = new_array
         counter = counter + 1
-    #    dict_sensor[key2]==new_array
-
-    # dict_sensor = {k: [dict_sensor[k].remove[removed_index] for removed_index in indices_to_remove]
-    #                     for k in dict_sensor}
+    
 
     # preliminary time values to start the while loops
     t1 = -999
