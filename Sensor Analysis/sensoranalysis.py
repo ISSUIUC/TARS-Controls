@@ -97,10 +97,9 @@ def main():
     
     counter = 0
     for key2 in dict_sensor.keys():
-        new_array = []
-        new_array = dict_sensor[key2][np.logical_and(dict_sensor[key2]!=0.0, dict_sensor[key2] != 0)]
+        new_array = dict_sensor[key2][dict_sensor[key2]!=0.0]
         dict_sensor[key2] = new_array
-        counter = counter + 1
+        counter += 1
     
 
     # preliminary time values to start the while loops
