@@ -133,43 +133,43 @@ def main():
     titles = []
     count1 = 0
     notGraphedData = [
-    "has_lowG_data", "lowG_data.timeStamp_lowG", "has_highG_data", "has_gps_data", 
-    "has_barometer_data", "has_kalman_data", "has_rocketState_data", "has_flap_data", 
-    "has_voltage_data", "has_orientation_data", "has_magnetometer_data", 
-    "highG_data.timeStamp_highG", "gps_data.timeStamp_GPS", "barometer_data.timeStamp_barometer", 
-    "kalman_data.timeStamp_state", "rocketState_data.timestamp", "flap_data.timeStamp_flaps", 
-    "voltage_data.timestamp", "has_gas_data", "orientation_data.timeStamp_orientation", 
-    "magnetometer_data.timestamp", "gas_data.timestamp"
+        "has_lowG_data", "lowG_data.timeStamp_lowG", "has_highG_data", "has_gps_data", 
+        "has_barometer_data", "has_kalman_data", "has_rocketState_data", "has_flap_data", 
+        "has_voltage_data", "has_orientation_data", "has_magnetometer_data", 
+        "highG_data.timeStamp_highG", "gps_data.timeStamp_GPS", "barometer_data.timeStamp_barometer", 
+        "kalman_data.timeStamp_state", "rocketState_data.timestamp", "flap_data.timeStamp_flaps", 
+        "voltage_data.timestamp", "has_gas_data", "orientation_data.timeStamp_orientation", 
+        "magnetometer_data.timestamp", "gas_data.timestamp"
     ]
-    for j in dict_sensor:
+    for header in sensorData.columns:
         # appending only titles of things to be graphed (no time or has data columns)
-        if j not in notGraphedData:
-            titles.append(j)
+        if header not in notGraphedData:
+            titles.append(header)
             count1 += count1
     fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles)
     count = 0
     count2 = 0
-    for key in dict_sensor:
+    for key in dict_sensor.keys():
         count2 += 1
         # plotting only columns that contain important data
         if key not in notGraphedData:
             count += 1
             if (count2 <= 7):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["lowG_data.timeStamp_lowG"],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["lowG_data.timeStamp_lowG"],sensorData[key],t1,t2)
             if (8 <= count2 <= 12):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["highG_data.timeStamp_highG"],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["highG_data.timeStamp_highG"],sensorData[key],t1,t2)
 
             if (13 <= count2 <= 17):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["barometer_data.timeStamp_barometer"],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["barometer_data.timeStamp_barometer"],sensorData[key],t1,t2)
 
             if (18 <= count2 <= 20):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["voltage_data.timestamp"],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["voltage_data.timestamp"],sensorData[key],t1,t2)
             if (21 <= count2 <= 34):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["orientation_data.timeStamp_orientation"],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["orientation_data.timeStamp_orientation"],sensorData[key],t1,t2)
             if (35 <= count2 <= 39):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["magnetometer_data.timestamp"],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["magnetometer_data.timestamp"],sensorData[key],t1,t2)
             if (40 <= count2 <= 45):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["gas_data.timestamp"],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(sensorData["gas_data.timestamp"],sensorData[key],t1,t2)
             # fig = go.Figure()
             ## Plotting of each dictionary entry
             # Printing key to see how close to done the graphing operation is 
