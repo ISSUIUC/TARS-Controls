@@ -141,7 +141,7 @@ def main():
         "voltage_data.timestamp", "has_gas_data", "orientation_data.timeStamp_orientation", 
         "magnetometer_data.timestamp", "gas_data.timestamp"
     ]
-    for header in sensorData.columns:
+    for header in dict_sensor:
         # appending only titles of things to be graphed (no time or has data columns)
         if header not in notGraphedData:
             titles.append(header)
@@ -149,27 +149,27 @@ def main():
     fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles)
     count = 0
     count2 = 0
-    for key in dict_sensor.keys():
+    for key in dict_sensor:
         count2 += 1
         # plotting only columns that contain important data
         if key not in notGraphedData:
             count += 1
             if (count2 <= 7):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["lowG_data.timeStamp_lowG"],sensorData[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,7],dict_sensor[key],t1,t2)
             if (8 <= count2 <= 12):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["highG_data.timeStamp_highG"],sensorData[key],t1,t2)
-
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,12],dict_sensor[key],t1,t2)
+           
             if (13 <= count2 <= 17):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["barometer_data.timeStamp_barometer"],sensorData[key],t1,t2)
-
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,25],dict_sensor[key],t1,t2)
+           
             if (18 <= count2 <= 20):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["voltage_data.timestamp"],sensorData[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,46],dict_sensor[key],t1,t2)
             if (21 <= count2 <= 34):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["orientation_data.timeStamp_orientation"],sensorData[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,60],dict_sensor[key],t1,t2)
             if (35 <= count2 <= 39):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["magnetometer_data.timestamp"],sensorData[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,65],dict_sensor[key],t1,t2)
             if (40 <= count2 <= 45):
-                std_plot, time_plot, data_plot = stddev_plot(sensorData["gas_data.timestamp"],sensorData[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,71],dict_sensor[key],t1,t2)
             # fig = go.Figure()
             ## Plotting of each dictionary entry
             # Printing key to see how close to done the graphing operation is 
