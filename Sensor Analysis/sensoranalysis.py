@@ -93,7 +93,6 @@ def main():
         "gas_data.timestamp": arr_df[:,71],
 
     }
-    # stuff at the bottom isnt't used anywhere in this file. dont want to delete until i double check. update: made a separate commit taking this out
     
     counter = 0
     for key2 in dict_sensor.keys():
@@ -132,7 +131,7 @@ def main():
     # (2) Plot the data via a LRQ / Plot statistcal model
 
     print("Aye, the beat go off?")
-    
+
     titles = []
     count1 = 0
     notGraphedData = [
