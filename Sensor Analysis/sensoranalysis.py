@@ -130,6 +130,9 @@ def main():
     ## add all std dev to an array
     ## plot array on graph
     # (2) Plot the data via a LRQ / Plot statistcal model
+
+    print("Aye, the beat go off?")
+    
     titles = []
     count1 = 0
     notGraphedData = [
