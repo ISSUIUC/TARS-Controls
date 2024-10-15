@@ -30,16 +30,9 @@ from plotly.subplots import make_subplots
 
 #also trim the flight data
 
-""" 
-    Aditya Srikanth 9-28-2024
-    - Removed commented code that wasn't used with sensors or unnecessarily caused errors
-    - Changed certain arr.values used in functions to dict_sensor value
-        +++ arr_df[:,7] to dict_sensor["lowG_data.timeStamp_lowG"]
-    - When figuring graph titles, isntead of keeping a long list of != statements, i made a list of excluded tags and checked to make sure element was not in the list
-"""
-    
+
 def main():
-    sensorData = pd.read_csv("Sensor Analysis/csvfinal.csv")
+    
     arr = pd.read_csv("Sensor Analysis/csvfinal.csv")
     arr_df = np.asarray(arr.values) #changes to an array
     dict_sensor = {
@@ -113,14 +106,14 @@ def main():
     print("Average run-time (3000000 interval)  = 15 seconds")
     print("Average run-time (10000000 interval) = 75 seconds")
     print("*************************************************")
-    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (min(sensorData["lowG_data.timeStamp_lowG"]) > t1)): #checking if time values are out of bounds or not of int type
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (min(arr["lowG_data.timeStamp_lowG"]) > t1)): #checking if time values are out of bounds or not of int type
         try:
-            t1 = int(input(f'What time do you want to start({min(arr["lowG_data.timeStamp_lowG"])} to {max(sensorData["lowG_data.timeStamp_lowG"])})?: '))
+            t1 = int(input(f'What time do you want to start({min(arr["lowG_data.timeStamp_lowG"])} to {max(arr["lowG_data.timeStamp_lowG"])})?: '))
         except Exception: # having the while loop run again if an integer is not entered
             pass
-    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999  or (max(sensorData["lowG_data.timeStamp_lowG"]) < t2)): #checking if time values are out of bounds or not of int type
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999  or (max(arr["lowG_data.timeStamp_lowG"]) < t2)): #checking if time values are out of bounds or not of int type
         try:
-            t2 = int(input(f'What time do you want to stop({min(sensorData["lowG_data.timeStamp_lowG"])} to {max(sensorData["lowG_data.timeStamp_lowG"])})?: '))
+            t2 = int(input(f'What time do you want to stop({min(arr["lowG_data.timeStamp_lowG"])} to {max(arr["lowG_data.timeStamp_lowG"])})?: '))
         except Exception: # having the while loop run again if an integer is not entered
             pass
 
@@ -143,13 +136,13 @@ def main():
         "voltage_data.timestamp", "has_gas_data", "orientation_data.timeStamp_orientation", 
         "magnetometer_data.timestamp", "gas_data.timestamp"
     ]
-    #  
+
     for header in dict_sensor:
         # appending only titles of things to be graphed (no time or has data columns)
         if header not in notGraphedData:
             titles.append(header)
             count1 += count1
-    # fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles)
+    
     count = 0
     count2 = 0
     for key in dict_sensor:
@@ -179,7 +172,7 @@ def main():
             if (40 <= count2 <= 45):
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,71],dict_sensor[key],t1,t2)
                 
-            # fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles, vertical_spacing=0.0222) 
+            
             ## Plotting of each dictionary entry
             # Printing key to see how close to done the graphing operation is 
             print(key)
@@ -213,8 +206,6 @@ def main():
             corr = corr_matrix[0,1]
             R_sq = corr**2
 
-            # def sensorlist():
-                # take input based on the sensors that the user wants graphs of , and then work from there
         
             
             ### Standard Deviation Function- for a certain time range 
@@ -253,9 +244,7 @@ def main():
 
             fig.show()
             # use formula for sample standard deviation, create function to find standard deviation for the vars, subtract std dev factor times time from the data and see what there is
-    ## change size here if you want
-    # fig['layout'].update(height= 5000, width=1500,
-    #                 title='Sensor Data')
+    
     fig.show()   
 
 ## assuming syntax for the line of best fit is identical to numpy
@@ -267,8 +256,6 @@ def main():
 ## plt.plot(x, a*x +  b, and then customizations based on how you want the line to look)
 
 def stddev(t1, t2,time_a2,sensorkey2):
-    # for t in range(t1,t2):
-    #    tarray = tarray.append(time_a2)   
     keyarray = sensorkey2
     slicedkey = keyarray[0:t2]
     return (statistics.stdev(slicedkey))
@@ -287,11 +274,9 @@ def stddev_plot(time_a,sensorkey,t_1,t_2):
         index2 = max(time_a)
     timearray = time_a[index1:index2]
     timearray = timearray[timearray != 0.0]
-    # print(len(timearray))
     keyarray = sensorkey[index1:index2]
     std_plot = np.zeros(len(timearray)-50)
     time_plot = np.zeros(len(timearray)-50)
-    # print(timearray)
     for i in range(0,len(timearray)-50):
         # choose t1 and t2 to move across the data set and find a std dev for each interval that will then be
         # plotted as a continuous function
