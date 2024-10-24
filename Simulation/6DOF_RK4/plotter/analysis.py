@@ -117,37 +117,37 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     fig_error.suptitle("Kalman Filter Position, Velocity, and Acceleration Error", fontsize = 16)
     plt.xlabel("Time (s)", fontsize = 10)
     pos_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,0] - sim_dict["pos"][:,0], label="X", color="tab:red", linestyle = "solid",linewidth = 2);
-    pos_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["pos_cov"][:,0]), label="$\pm3\sigma$", color="tab:red", linestyle = "dashed",linewidth = 1);
+    pos_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["pos_cov"][:,0]), label="$\\pm3\\sigma$", color="tab:red", linestyle = "dashed",linewidth = 1);
     pos_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["pos_cov"][:,0]), color="tab:red", linestyle = "dashed",linewidth = 1);
     pos_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1] - sim_dict["pos"][:,1], label="Y", color="tab:green", linestyle = "solid",linewidth = 2);
-    pos_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["pos_cov"][:,1]), label="$\pm3\sigma$", color="tab:green", linestyle = "dashed",linewidth = 1);
+    pos_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["pos_cov"][:,1]), label="$\\pm3\\sigma$", color="tab:green", linestyle = "dashed",linewidth = 1);
     pos_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["pos_cov"][:,1]), color="tab:green", linestyle = "dashed",linewidth = 1);
     pos_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2] - sim_dict["pos"][:,2], label="Z", color="tab:blue", linestyle = "solid",linewidth = 2);
-    pos_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["pos_cov"][:,2]), label="$\pm3\sigma$", color="tab:blue", linestyle = "dashed",linewidth = 1);
+    pos_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["pos_cov"][:,2]), label="$\\pm3\\sigma$", color="tab:blue", linestyle = "dashed",linewidth = 1);
     pos_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["pos_cov"][:,2]), color="tab:blue", linestyle = "dashed",linewidth = 1);
     pos_error_nc.set_ylabel("Position Error (m)", fontsize = 10)
     pos_error_nc.legend(fontsize=10, loc='upper left',ncol=3)
 
     vel_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,0] - sim_dict["vel"][:,0], label="X", color="tab:red", linestyle = "solid",linewidth = 2);
-    vel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["vel_cov"][:,0]), label="$\pm3\sigma$", color="tab:red", linestyle = "dashed",linewidth = 1);
+    vel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["vel_cov"][:,0]), label="$\\pm3\\sigma$", color="tab:red", linestyle = "dashed",linewidth = 1);
     vel_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["vel_cov"][:,0]), color="tab:red", linestyle = "dashed",linewidth = 1);
     vel_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,1] - sim_dict["vel"][:,1], label="Y", color="tab:green", linestyle = "solid",linewidth = 2);
-    vel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["vel_cov"][:,1]), label="$\pm3\sigma$", color="tab:green", linestyle = "dashed",linewidth = 1);
+    vel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["vel_cov"][:,1]), label="$\\pm3\\sigma$", color="tab:green", linestyle = "dashed",linewidth = 1);
     vel_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["vel_cov"][:,1]), color="tab:green", linestyle = "dashed",linewidth = 1);
     vel_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,2] - sim_dict["vel"][:,2], label="Z", color="tab:blue", linestyle = "solid",linewidth = 2);
-    vel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["vel_cov"][:,2]), label="$\pm3\sigma$", color="tab:blue", linestyle = "dashed",linewidth = 1);
+    vel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["vel_cov"][:,2]), label="$\\pm3\\sigma$", color="tab:blue", linestyle = "dashed",linewidth = 1);
     vel_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["vel_cov"][:,2]), color="tab:blue", linestyle = "dashed",linewidth = 1);
     vel_error_nc.set_ylabel("Velocity Error (m/s)", fontsize = 10)
     vel_error_nc.legend(fontsize=10, loc='upper left',ncol=3)
 
     accel_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_accel"][:,0] - sim_dict["accel"][:,0], label="X", color="tab:red", linestyle = "solid",linewidth = 2);
-    accel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["accel_cov"][:,0]), label="$\pm3\sigma$", color="tab:red", linestyle = "dashed",linewidth = 1);
+    accel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["accel_cov"][:,0]), label="$\\pm3\\sigma$", color="tab:red", linestyle = "dashed",linewidth = 1);
     accel_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["accel_cov"][:,0]), color="tab:red", linestyle = "dashed",linewidth = 1);
     accel_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_accel"][:,1] - sim_dict["accel"][:,1], label="Y", color="tab:green", linestyle = "solid",linewidth = 2);
-    accel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["accel_cov"][:,1]), label="$\pm3\sigma$", color="tab:green", linestyle = "dashed",linewidth = 1);
+    accel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["accel_cov"][:,1]), label="$\\pm3\\sigma$", color="tab:green", linestyle = "dashed",linewidth = 1);
     accel_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["accel_cov"][:,1]), color="tab:green", linestyle = "dashed",linewidth = 1);
     accel_error_nc.plot(kalman_dict["time"], kalman_dict["kalman_accel"][:,2] - sim_dict["accel"][:,2], label="Z", color="tab:blue", linestyle = "solid",linewidth = 2);
-    accel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["accel_cov"][:,2]), label="$\pm3\sigma$", color="tab:blue", linestyle = "dashed",linewidth = 1);
+    accel_error_nc.plot(kalman_dict["time"], 3*np.sqrt(kalman_dict["accel_cov"][:,2]), label="$\\pm3\\sigma$", color="tab:blue", linestyle = "dashed",linewidth = 1);
     accel_error_nc.plot(kalman_dict["time"], -3*np.sqrt(kalman_dict["accel_cov"][:,2]), color="tab:blue", linestyle = "dashed",linewidth = 1);
     accel_error_nc.set_ylabel("Acceleration Error (m/s$^2$)", fontsize = 10)
     accel_error_nc.legend(fontsize=10, loc='upper left',ncol=3)
