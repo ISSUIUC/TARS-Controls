@@ -10,11 +10,11 @@ import dynamics.sensors as sensors
 ## Pysim and other files should not directly interact with Navigation or the ekf/r_ekf files but should instead utilize this class through a rocket object
 class Navigation:
     def __init__(self, dt, sensor_config,x0):
-        # TODO: Init with previous rocket data
+        
         self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self.sensor_config = sensor_config
         self.x = x0
-        # TODO: init this data with the previous rocket becuase of staging 
+        
         x_data = np.empty(10)
         y_data = np.empty(10)
         z_data = np.empty(10)
