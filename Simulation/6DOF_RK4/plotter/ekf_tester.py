@@ -31,10 +31,12 @@ def readData () :
 
 
 
-predicted_altitude = []
+predicted_altitude = [] #pos_x
+predicted_velocity_x= [] #velocity_x
+predicted_velocity_y= [] #velocity_x
 
 def implementKF (measuredDict):
-    global kalman_filter, predicted_altitude, barometer_data
+    global kalman_filter, predicted_altitude, barometer_data, predicted_velocity_x
     print(4)
     # convert dict_values objects to lists so they're easier to work with
     barometer_data = list(measuredDict["barometer.altitude"].values())
@@ -81,23 +83,23 @@ def implementKF (measuredDict):
         kalman_filter.update((last_valid_roll,last_valid_pitch,last_valid_yaw),last_valid_altitude, last_valid_accel_x, last_valid_accel_y*-9.8, last_valid_accel_z*-9.8)
         state = kalman_filter.get_state()
         predicted_altitude.append(state[0]) 
+        predicted_velocity_x.append(state[1])
+        predicted_velocity_y.append(state[4])
 
         
 
-
-def plotGraph (measuredDict):
+def plotAltitude(measuredDict):
     global barometer_data,predicted_altitude
     fig, axes = plt.subplots(1, 2, sharex=True, figsize=(12,5))
-    fig.suptitle("Dgarg")
+    fig.suptitle("Altitude Data")
     axes[0].set_title("Predicting altitude")
     axes[1].set_title("Barometer data")
     df_pred_altitude = pd.DataFrame(predicted_altitude, columns =['altitude'])
     df_pred_barometer_data = pd.DataFrame(barometer_data, columns =['altitude'])
+    
 
     sns.lineplot(ax = axes[0], x=df_pred_altitude.index, y='altitude', data=df_pred_altitude, label='Predicted Altitude (Kalman)')
     sns.lineplot(ax = axes[1], x=df_pred_barometer_data.index, y='altitude', data=df_pred_barometer_data, label='Barometer Data (Kalman)')
-    # plt.plot(df_lowG_timestamp, df_flight_state_est, label = "flight state estimate")
-    print(df_pred_altitude.shape)
 
     plt.title('State estimate vs Measurement')
     plt.xlabel('timestamp (ms)')
@@ -105,6 +107,49 @@ def plotGraph (measuredDict):
     plt.legend()
     plt.show()
 
+def plotVelocityX(measuredDict):
+    global barometer_data,predicted_velocity_x
+    # fig, axes = plt.subplots(1, 2, sharex=True, figsize=(12,5))
+    # fig.suptitle("Altitude Data")
+    # axes[0].set_title("Predicting altitude")
+    # axes[1].set_title("Barometer data")
+    df_pred_velocity_x= pd.DataFrame(predicted_velocity_x, columns =['velocity x'])
+    # df_pred_barometer_data = pd.DataFrame(barometer_data, columns =['altitude'])
+    
+
+    sns.lineplot( x=df_pred_velocity_x.index, y='velocity x', data=df_pred_velocity_x, label='Predicted Velocity X (Kalman)')
+    # sns.lineplot(ax = axes[1], x=df_pred_barometer_data.index, y='altitude', data=df_pred_barometer_data, label='Barometer Data (Kalman)')
+
+    plt.title('State estimate vs Measurement')
+    plt.xlabel('timestamp (ms)')
+    plt.ylabel('velocity x (m)')
+    plt.legend()
+    plt.show()
+
+def plotVelocityY(measuredDict):
+    global barometer_data,predicted_velocity_y
+    # fig, axes = plt.subplots(1, 2, sharex=True, figsize=(12,5))
+    # fig.suptitle("Altitude Data")
+    # axes[0].set_title("Predicting altitude")
+    # axes[1].set_title("Barometer data")
+    df_pred_velocity_x= pd.DataFrame(predicted_velocity_y, columns =['velocity y'])
+    # df_pred_barometer_data = pd.DataFrame(barometer_data, columns =['altitude'])
+    
+
+    sns.lineplot( x=df_pred_velocity_y.index, y='velocity y', data=predicted_velocity_y, label='Predicted Velocity Y (Kalman)')
+    # sns.lineplot(ax = axes[1], x=df_pred_barometer_data.index, y='altitude', data=df_pred_barometer_data, label='Barometer Data (Kalman)')
+
+    plt.title('State estimate vs Measurement')
+    plt.xlabel('timestamp (ms)')
+    plt.ylabel('velocity y (m)')
+    plt.legend()
+    plt.show()
+
+
+def plotGraph (measuredDict):
+    # plotAltitude(measuredDict)
+    plotVelocityX(measuredDict)
+    # plotVelocityY(measuredDict)
 
 
 ##### CALLING THE METHODS ##########
