@@ -44,10 +44,13 @@ def implementKF (measuredDict):
     kalman_filter = kf.KalmanFilter(0.01, barometer_data[0], 0, accel_x[0]*9.8, 0, 0, accel_y[0]*9.8, 0, 0, accel_z[0]*9.8)
     # for x in range(len(barometer_data)):
     # print(len(barometer_data))
-    for x in range(0,10000):
+    for x in range(0,200000):
         if x%1000 == 0: print(x)
         kalman_filter.priori()
-        kalman_filter.update([bno_attitude_roll[x],bno_attitude_pitch[x],bno_attitude_yaw[x]],barometer_data[x], accel_x[x]*9.8, accel_y[x]*9.8, accel_z[x]*9.8)
+
+
+        
+        kalman_filter.update([bno_attitude_roll[x],bno_attitude_pitch[x],bno_attitude_yaw[x]],barometer_data[x], accel_x[x], accel_y[x]*-9.8, accel_z[x]*-9.8)
         kalman_dict['x'].append(kalman_filter.get_state()[0])
 
 
