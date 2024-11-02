@@ -62,10 +62,23 @@ class ErrorStateKalmanFilter:
         Args:
         u (float): control input
         """
-        # TODO: figure out if self.F has to be jacobian(f w/ respect to x) for ekf: f(x_{k-1})
         self.x_k = self.x_k + self.err_k
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
+    
+    
+    # TODO: Figure out if error ekf should follow similar update step to r_ekf
+    #       Once implemented, add to navigation
+    def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
+        
+        K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
+        acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
+        y_k = np.array([x_pos, *acc]).T
+        
+        self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
+        self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori
+
+        self.current_time += self.s_dt
         
         
     def get_state(self):
