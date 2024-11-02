@@ -22,10 +22,9 @@ class ErrorStateKalmanFilter:
 
     """
     
-    def _init_(self, dt, pos_x_err, pos_y_err, pos_z_err, vel_x_err, vel_y_err, vel_z_err, accel_x_err, accel_y_err, accel_z_err): 
-        
+    def _init_(self, dt, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, accel_x, accel_y, accel_z, 
+               pos_x_err, pos_y_err, pos_z_err, vel_x_err, vel_y_err, vel_z_err, accel_x_err, accel_y_err, accel_z_err): 
         self.dt = dt
-        
         self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
         self.R = np.diag([2., 1.9, 1.9, 1.9])
@@ -38,7 +37,8 @@ class ErrorStateKalmanFilter:
         self.current_time = 0 
         self.s_dt = dt
         
-        self.x_k = np.array([pos_x_err, pos_y_err, pos_z_err, vel_x_err, vel_y_err, vel_z_err, accel_x_err, accel_y_err, accel_z_err]).T
+        self.x_k = np.array([pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, accel_x, accel_y, accel_z]).T
+        self.err_k = np.array([pos_x_err, pos_y_err, pos_z_err, vel_x_err, vel_y_err, vel_z_err, accel_x_err, accel_y_err, accel_z_err]).T
         
         # Initialize F
         for i in range(3):
@@ -54,17 +54,18 @@ class ErrorStateKalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
         
         
-        def priori():
-            """ 
-            Sets priori state and covariance
-            Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
-            But basically predicts step
-            Args:
-            u (float): control input
-            """
-            # TODO: figure out if self.F has to be jacobian(f w/ respect to x) for ekf: f(x_{k-1})
-            self.x_priori = self.F @ self.x_k
-            self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
+    def priori(self):
+        """ 
+        Sets priori state and covariance
+        Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
+        But basically predicts step
+        Args:
+        u (float): control input
+        """
+        # TODO: figure out if self.F has to be jacobian(f w/ respect to x) for ekf: f(x_{k-1})
+        self.x_k = self.x_k + self.err_k
+        self.x_priori = self.F @ self.x_k
+        self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
         
         
     def get_state(self):
