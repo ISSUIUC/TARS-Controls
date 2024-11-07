@@ -1,8 +1,10 @@
-# error state kalman fiter
+
+
+# Error State Kalman Filter
 from filterpy.common import Q_continuous_white_noise
 import numpy as np
 import util.vectors as vct
-
+from numpy import sin, cos, tan, pi
 
 # TODO: Figure out how to correctly implement 
 class ErrorStateKalmanFilter:
@@ -10,6 +12,17 @@ class ErrorStateKalmanFilter:
     
     Args:
         dt (float): time step
+        
+        pos_x (float): initial x position
+        vel_x (float): initial x velocity
+        accel (float): initial x acceleration
+        pos_y (float): initial y position
+        vel_y (float): initial y velocity
+        accel (float): initial y acceleration 
+        pos_z (float): initial z position
+        vel_z (float): initial z velocity    
+        accel_z (float): initial z acceleration 
+
         pos_x_err (float): initial x position error
         vel_x_err (float): initial x velocity error
         accel_x_err (float): initial x acceleration error
@@ -24,6 +37,7 @@ class ErrorStateKalmanFilter:
     
     def _init_(self, dt, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, accel_x, accel_y, accel_z, 
                pos_x_err, pos_y_err, pos_z_err, vel_x_err, vel_y_err, vel_z_err, accel_x_err, accel_y_err, accel_z_err): 
+        
         self.dt = dt
         self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
@@ -101,3 +115,5 @@ class ErrorStateKalmanFilter:
         """Resets lateral position to 0
         """
         self.x_k[1:3] = [0,0]
+        
+
