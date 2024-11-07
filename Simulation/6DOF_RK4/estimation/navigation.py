@@ -13,7 +13,7 @@ class Navigation:
     def __init__(self, dt, sensor_config,x0):
         
         self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-        self.err_state_kalman_filter = err_ekf(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        #self.err_state_kalman_filter = err_ekf(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self.sensor_config = sensor_config
         self.x = x0
         
@@ -38,9 +38,9 @@ class Navigation:
     def update_state(self,baro_alt, accel, gyro, bno_ang_pos):
         self.kalman_filter.priori()
         self.r_kalman_filter.priori()
-        self.err_state_kalman_filter.priori()
+        #self.err_state_kalman_filter.priori()
         self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         self.r_kalman_filter.update(*gyro, *accel)
-        self.err_state_kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
+        #self.err_state_kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         
         
