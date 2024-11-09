@@ -68,10 +68,21 @@ class KalmanFilter:
         acc_x, acc_y, acc_z = accel
         w_acc = vct.world_to_body(*bno_attitude, np.array([acc_x, acc_y, acc_z])) + np.array([-9.81, 0, 0])
 
+<<<<<<< HEAD
         # approximate angular velocity
         w_x, w_y, w_z = w_acc * self.s_dt
         J_x = 1/2 * m * r**2
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
+=======
+        vel_x, vel_y, vel_z = self.x_priori[2:5]
+        
+
+        # xdot = np.array([[vel_x], [vel_y], [vel_z], 
+        #                     [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)],
+        #                     [w_x], [w_y], [w_z],
+        #                     [La + Lp - w_y*w_z*(J_z - J_y) / J_x], [Ma + Mp - w_z*w_x*(J_x - J_z) / J_y], [Na + Np - w_x*w_y*(J_y - J_x) / J_z]
+        #                     ])
+>>>>>>> b9cced2 (Began refactoring r_ekf.py)
 
         J_z = J_y
 
