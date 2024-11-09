@@ -20,7 +20,7 @@ class KalmanFilter:
     """
     def __init__(self, dt, pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z):
         self.dt = dt
-        self.x_k = np.zeros((9,1))
+        self.x_k = np.zeros((12,1))
         self.Q = np.zeros((9,9))
         self.R = np.diag([2., 1.9, 1.9, 1.9])
         self.P_k = np.zeros((9,9))
@@ -32,12 +32,14 @@ class KalmanFilter:
         self.current_time = 0
         self.s_dt = dt
 
-        self.x_k = np.array([pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z]).T
+        # self.x_k = np.array([pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z]).T
+        # assuming the angular position and vels are 0
+        self.x_k = np.array([pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, 0, 0, 0, 0, 0, 0]).T
 
         for i in range(3):
-            self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
-                                            [0.0, 1.0, dt],
-                                            [0.0, 0.0, 1.0]]
+            # self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
+            #                                 [0.0, 1.0, dt],
+            #                                 [0.0, 0.0, 1.0]]
             # Q = np.array([[(dt**5)/20., ((dt**4)/8.)*80., (dt**3)/6.],
             #               [((dt**4)/8.)*80., ((dt**3)/8.), (dt**2)/2.],
             #               [(dt**3)/6., (dt**2)/2., dt]])
@@ -52,38 +54,59 @@ class KalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-    def priori(self):
+    def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho: float):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
             But basically predicts step
         Args:
             u (float): control input
         """
-        self.x_priori = self.F @ self.x_k
-        self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
+        pos_x, pos_y, pos_z = self.x_k[0:3]
+        phi, theta, psi = self.x_k[3:6] # phi = roll, theta = pitch, psi = yaw
+        vel_x, vel_y, vel_z = self.x_k[6:9]
+        vel_mag = np.linalg.norm(self.x_k[6:9])
+        w_x, w_y, w_z = self.x_k[9:12]
 
-        # xdot = np.array([[vel_x], [vel_y], [vel_z], 
-        #                     [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)],
-        #                     [w_x], [w_y], [w_z],
-        #                     [La + Lp - w_y*w_z*(J_z - J_y) / J_x], [Ma + Mp - w_z*w_x*(J_x - J_z) / J_y], [Na + Np - w_x*w_y*(J_y - J_x) / J_z]
-        #                     ])
+        J_z = 1/2 * m * r**2
+        J_y = 1/3 * m * h**2 + 1/4 * m * r**2
+        J_x = J_y
 
-        # self.x_priori = self.x_k + xdot*self.dt
-        # print((Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y))
-        # print((Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y))
-        # print((Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x))
-        # A = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 
-        #                 [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], 
-        #                 [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
-        #                 [0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0, 0, 0], 
-        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)], 
-        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), 0],
-        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -w_z * (J_z - J_y) / J_x, -w_y * (J_z - J_y) / J_x],
-        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, -w_z * (J_x - J_z) / J_y, 0, -w_x * (J_x - J_z) / J_y],
-        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, -w_y * (J_y - J_x) / J_z, -w_x * (J_y - J_x) / J_z, 0]])
+        Fax, Fay, Faz = 0,0,0 # aerodynamic forces expressed on the body in each direction
+        Fax = -0.5*rho*(vel_mag**2)*Ca*(np.pi*r**2) # drag force
+            # get Cn cp
+        g = 9.81
+        Fg = np.array([0,0,-g])
+        Fg_body = np.linalg.inv(R) @ Fg
+        Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2] # gravitational forces expressed on the body in each direction
+        Ftx, Fty, Ftz = T,0,0 # thrust forces in each direciton ( we assume that is in one direction)
+        # we can do some trig to figure this out (it's in the textbook)
+        # states tracked: x, y, z, vx, vy, vz, ax, ay, az, phi, theta, psi, phidot, thetadot, psidot, phiddot, thetaddot, psiddot,
+        # aero_coeff = forces.get_Ca_Cn_Cp(self, self.x_k, )
+        La, Ma, Na = 0,0,0
+        Lp, Mp, Np = 0,0,0
+        La  = 0.5*rho*(vel_mag) * (Cp) * np.pi*r**2 * (h) # pitch moment
+        xdot = np.array([[vel_x], [vel_y], [vel_z],
+                [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)],
+                [1], [1], [1],
+                [1], [1], [1]
+                ])
+        self.x_priori = self.x_k + xdot * self.dt
+
+        # linearized dynamics are F
+        self.F = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, w_z, -w_y, 0, 0, 0, 0, -vel_z, vel_y], 
+                [0, 0, 0, -w_z, w_x, 0, 0, 0, 0, vel_y, 0, -vel_x], 
+                [0, 0, 0, w_y, -w_x, 0, 0, 0, 0, -vel_y, vel_x, 0], 
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+        
+        self.P_priori = self.F @ self.P_k @ self.F.T + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         """Updates state and covariance
