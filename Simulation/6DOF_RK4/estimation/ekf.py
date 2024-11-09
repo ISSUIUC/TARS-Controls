@@ -62,6 +62,9 @@ class KalmanFilter:
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
+        vel_x, vel_y, vel_z = self.x_priori[2:5]
+        
+
         # xdot = np.array([[vel_x], [vel_y], [vel_z], 
         #                     [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)],
         #                     [w_x], [w_y], [w_z],
