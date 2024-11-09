@@ -62,6 +62,29 @@ class KalmanFilter:
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
+        # xdot = np.array([[vel_x], [vel_y], [vel_z], 
+        #                     [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)],
+        #                     [w_x], [w_y], [w_z],
+        #                     [La + Lp - w_y*w_z*(J_z - J_y) / J_x], [Ma + Mp - w_z*w_x*(J_x - J_z) / J_y], [Na + Np - w_x*w_y*(J_y - J_x) / J_z]
+        #                     ])
+
+        # self.x_priori = self.x_k + xdot*self.dt
+        # print((Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y))
+        # print((Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y))
+        # print((Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x))
+        # A = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 
+        #                 [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], 
+        #                 [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+        #                 [0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0, 0, 0], 
+        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)], 
+        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), 0],
+        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -w_z * (J_z - J_y) / J_x, -w_y * (J_z - J_y) / J_x],
+        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, -w_z * (J_x - J_z) / J_y, 0, -w_x * (J_x - J_z) / J_y],
+        #                 [0, 0, 0, 0, 0, 0, 0, 0, 0, -w_y * (J_y - J_x) / J_z, -w_x * (J_y - J_x) / J_z, 0]])
+
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         """Updates state and covariance
         
@@ -72,6 +95,7 @@ class KalmanFilter:
             y_accel (float): y acceleration
             z_accel (float): z acceleration
         """
+
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
         acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
         y_k = np.array([x_pos, *acc]).T
