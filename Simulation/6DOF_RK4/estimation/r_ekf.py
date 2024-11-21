@@ -55,6 +55,8 @@ class KalmanFilter_R:
 
     # TODO: Fix priori and update step, make sure that names make sense, and add comments.
     def priori(self):
+        xdot = np.array([[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1],
+                        [0, 0, 0, 0, -w_z*(-J_y + J_z)/J_x, -w_y*(-J_y + J_z)/J_x], [0, 0, 0, -w_z*(J_x - J_z)/J_y, 0, -w_x*(J_x - J_z)/J_y], [0, 0, 0, -w_y*(-J_x + J_y)/J_z, -w_x*(-J_x + J_y)/J_z, 0]])
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
