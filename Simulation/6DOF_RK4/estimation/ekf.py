@@ -18,7 +18,7 @@ class KalmanFilter:
         vel_z (float): initial z velocity
         accel_z (float): initial z acceleration
     """
-    def __init__(self, dt, pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z):
+    def __init__(self, dt, pos_x, vel_x, pos_y, vel_y, pos_z, vel_z):
         self.dt = dt
         self.x_k = np.zeros((12,1))
         self.Q = np.zeros((9,9))
@@ -74,8 +74,13 @@ class KalmanFilter:
         Fax, Fay, Faz = 0,0,0 # aerodynamic forces expressed on the body in each direction
         Fax = -0.5*rho*(vel_mag**2)*Ca*(np.pi*r**2) # drag force
             # get Cn cp
+            
+        Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
+
+        Faz = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2) 
+                
         g = 9.81
-        Fg = np.array([0,0,-g])
+        Fg = np.array([-g,0,0])
         Fg_body = np.linalg.inv(R) @ Fg
         Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2] # gravitational forces expressed on the body in each direction
         Ftx, Fty, Ftz = T,0,0 # thrust forces in each direciton ( we assume that is in one direction)
@@ -112,7 +117,7 @@ class KalmanFilter:
         """Updates state and covariance
         
         Args:
-            bno_attitude (tuple): (roll, pitch, yaw) in radians
+            bno_attitude (tuple): (roll, pitch, yaw) in radians 
             x_pos (float): x position
             x_accel (float): x acceleration
             y_accel (float): y acceleration
