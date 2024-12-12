@@ -33,7 +33,7 @@ class Rocket:
             "flap_ext": [],
             "rocket_total_mass": [],
             "motor_mass": [],
-            "time": [],
+            "time": []
         }
 
         self.kalman_dict = {
@@ -59,7 +59,16 @@ class Rocket:
             "imu_ang_pos_z": [],
             "imu_gyro_x": [],
             "imu_gyro_y": [],
-            "imu_gyro_z": [],
+            "imu_gyro_z": []
+        }
+        
+        self.coeffs_dict = {
+            "CN": [],
+            "CA Power-On": [],
+            "CA Power-Off": [],
+            "CD Power-Off": [],
+            "CD Power-Off": [],
+            "CL": []
         }
 
     def __init__(self, dt, x0, stage_config, atm:atmosphere.Atmosphere=None, stages:list=[]):
