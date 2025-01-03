@@ -16,7 +16,7 @@
 # 2022-2023 Guidance, Navigation, and Control Main Contributors #
 # Sub-Team Lead: Parth Shrotri (2024)
 # Colin Kinsey (2024)
-# Evan Yu (2025)
+# Evan Yu (2025) 
 # Rithvik Bhogavilli (2025)
 # Kabir Cheema (2025)
 # Freya Bansal (2025)
@@ -69,6 +69,7 @@ class Simulation:
     def idle_stage(self):
         while self.time_stamp < self.rocket.delay:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            
             self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
             self.rocket.Navigation.kalman_filter.reset_lateral_pos()
             current_state, current_covariance, current_state_r = self.get_kalman_state()
@@ -89,6 +90,7 @@ class Simulation:
         while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
             # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            
             self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 

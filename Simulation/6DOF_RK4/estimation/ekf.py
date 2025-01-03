@@ -85,7 +85,6 @@ class KalmanFilter:
         Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]      # gravitational forces expressed on the body in each direction
         Ftx, Fty, Ftz = T,0,0                                   # thrust forces in each direciton ( we assume that is in one direction)
         
-        
         #TODO: This is for rotational ekf lowkey
         # # we can do some trig to figure this out (it's in the textbook)
         # # states tracked: x, y, z, vx, vy, vz, ax, ay, az, phi, theta, psi, phidot, thetadot, psidot, phiddot, thetaddot, psiddot,
@@ -101,7 +100,7 @@ class KalmanFilter:
                 [1], [1], [1],
                 [1], [1], [1]
                 ])
-        self.x_priori = self.x_k + xdot * self.dt
+        self.x_priori = self.x_k + xdot * self.dt 
 
         # linearized dynamics are F
         self.F = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
