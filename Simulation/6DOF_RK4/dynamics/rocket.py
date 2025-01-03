@@ -2,6 +2,7 @@ import math
 import numpy as np
 import os
 import sys
+import pandas as pd
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import environment.atmosphere as atmosphere
@@ -21,6 +22,7 @@ class Rocket:
     stage_config = None
 
     def init_dicts(self):
+
         self.sim_dict = {
             "pos": [],
             "vel": [],
@@ -61,11 +63,14 @@ class Rocket:
             "imu_gyro_z": []
         }
         
+        #Import dataframe from CSV so it doesn't have to call it every time
+        self.coeffs_df = pd.read_csv("ekf_cd_test.CSV")
+
         self.coeffs_dict = {
             "CN": [],
             "CA Power-On": [],
             "CA Power-Off": [],
-            "CD Power-Off": [],
+            "CD Power-On": [],
             "CD Power-Off": [],
             "CL": []
         }
@@ -87,8 +92,8 @@ class Rocket:
         self.rocket_total_mass = self.rocket_dry_mass + self.motor_mass
         self.r_r = stage_config["rocket_body"]["radius"]
         self.l = stage_config["rocket_body"]["length"]
-        self.A = math.pi * self.r_r ** 2
-        self.A_s = 2 * self.r_r * self.l
+        self.A = math.pi * self.r_r ** 2 
+        self.A_s = 2 * self.r_r * self.l # surface area
         self.max_ext_length = stage_config["flaps"]["max_ext_length"]
         self.atm = atm
 
@@ -129,6 +134,7 @@ class Rocket:
                                     self.motor,
                                     stage_config["rocket_body"]["rasaero_lookup_file"],
                                     self.atm)
+        #Do we need to pass self.coeffs_df into Forces?
 
 
     def get_total_motor_mass(self, timestamp) -> float:
@@ -345,6 +351,36 @@ class Rocket:
         self.sim_dict["alpha"].append(alpha)
         self.sim_dict["rocket_total_mass"].append(rocket_total_mass)
         self.sim_dict["motor_mass"].append(motor_mass)
+
+        #Update coefficients (how to find angle of attack???)
+        self.update_coeffs(np.ligalg.norm(x[1]), self.sim_dict["alpha"][0])
+
+
+    def update_coeffs(self, velocity, angle_of_attack):
+        df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == angle_of_attack) & (self.coeffs_df["Mach"] == (velocity / 340.29))]
+        # Mach = velocity / 340.29
+        self.coeffs_dict["CN"].append(df_specific["CN"].values[0])
+        self.coeffs_dict["CA Power-On"].append(df_specific["CA Power-On"].values[0])
+        self.coeffs_dict["CA Power-Off"].append(df_specific["CA Power-Off"].values[0])
+        self.coeffs_dict["CD Power-On"].append(df_specific["CD Power-On"].values[0])
+        self.coeffs_dict["CD Power-Off"].append(df_specific["CD Power-Off"].values[0])
+        self.coeffs_dict["CL"].append(df_specific["CL"].values[0])
+
+
+    def get_cn(self):
+        return self.coeffs_dict["CN"][-1]
+    
+    def get_cd_on(self):
+        return self.coeffs_dict["CA Power-On"][-1]
+    
+    def get_cd_off(self):
+        return self.coeffs_dict["CA Power-Off"][-1]
+    
+    def get_cd_on(self):
+        return self.coeffs_dict["CD Power-On"][-1]
+    
+    def get_cd_off(self):
+        return self.coeffs_dict["CD Power-On"][-1]
 
     # Converts the data saved in this sim into csv
     def to_csv(self):
