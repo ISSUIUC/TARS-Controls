@@ -57,7 +57,9 @@ class Simulation:
         self.baro = 0
         self.time_stamp = time_stamp
         self.sensor_config = self.rocket.stage_config['sensors']
-    
+
+    # Call on Navigation class?
+
     def time_step(self):
         self.time_stamp += self.dt
 
@@ -83,6 +85,7 @@ class Simulation:
         while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
             # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
+            
             
             self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
