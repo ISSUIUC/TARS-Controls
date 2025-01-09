@@ -7,15 +7,19 @@ import estimation.ekf as ekf
 import estimation.r_ekf as r_ekf
 import estimation.error_state_ekf as err_ekf
 import dynamics.sensors as sensors
+import environment.atmosphere as Atmosphere
+import util.vectors as vct
 ## Class for the Rocket class and object to interact with the Kalman filter (and eventually staging optimization)
 ## Pysim and other files should not directly interact with Navigation or the ekf/r_ekf files but should instead utilize this class through a rocket object
 class Navigation:
-    def __init__(self, dt, sensor_config,x0):
+    def __init__(self, dt, sensor_config, x0, rocket):
         
         self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         #self.err_state_kalman_filter = err_ekf(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self.sensor_config = sensor_config
         self.x = x0
+        self.rocket = rocket
+        self.atm = Atmosphere()
         
         x_data = np.empty(10)
         y_data = np.empty(10)
@@ -36,7 +40,19 @@ class Navigation:
         ## self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
         
     def update_state(self,baro_alt, accel, gyro, bno_ang_pos):
-        self.kalman_filter.priori()
+        
+        roll, pitch, yaw = bno_ang_pos
+        Rotational_matrix = vct.body_to_world(roll, pitch, yaw, np.eye(3))
+        rho = self.atm.get_density(baro_alt)
+        Cn = self.rocket.get_cn()
+        Ca = self.rocket.get_ca_on()
+        Cp = self.rocket.get_cp()
+        Thrust = self.rocket.get_motor().get_thrust(self.rocket.time_stamp)
+        m = self.rocket.get_rocket_total_mass(self.rocket.time_stamp)
+        r = self.rocket.r_r()
+        h = self.rocket.l()
+
+        self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, h, Cn, Ca, Cp, rho)
         self.r_kalman_filter.priori()
         #self.err_state_kalman_filter.priori()
         self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])

@@ -73,7 +73,8 @@ class Rocket:
             "CA Power-Off": [],
             "CD Power-On": [],
             "CD Power-Off": [],
-            "CL": []
+            "CL": [],
+            "CP": []
         }
 
     def __init__(self, dt, x0, stage_config, atm:atmosphere.Atmosphere=None, stages:list=[]):
@@ -354,7 +355,7 @@ class Rocket:
         self.sim_dict["motor_mass"].append(motor_mass)
 
         #Update coefficients (how to find angle of attack???)
-        self.update_coeffs(np.ligalg.norm(x[1]), self.sim_dict["alpha"][0])
+        self.update_coeffs(np.linalg.norm(x[1]), self.sim_dict["alpha"][0])
 
 
     def update_coeffs(self, velocity, angle_of_attack):
@@ -366,15 +367,16 @@ class Rocket:
         self.coeffs_dict["CD Power-On"].append(df_specific["CD Power-On"].values[0])
         self.coeffs_dict["CD Power-Off"].append(df_specific["CD Power-Off"].values[0])
         self.coeffs_dict["CL"].append(df_specific["CL"].values[0])
+        self.coeffs_dict["CP"].append(df_specific["CP"].values[0])
 
 
     def get_cn(self):
         return self.coeffs_dict["CN"][-1]
     
-    def get_cd_on(self):
+    def get_ca_on(self):
         return self.coeffs_dict["CA Power-On"][-1]
     
-    def get_cd_off(self):
+    def get_ca_off(self):
         return self.coeffs_dict["CA Power-Off"][-1]
     
     def get_cd_on(self):
@@ -382,6 +384,9 @@ class Rocket:
     
     def get_cd_off(self):
         return self.coeffs_dict["CD Power-On"][-1]
+    
+    def get_cp(self):
+        return self.coeffs_dict["CP"][-1]
 
     # Converts the data saved in this sim into csv
     def to_csv(self):
