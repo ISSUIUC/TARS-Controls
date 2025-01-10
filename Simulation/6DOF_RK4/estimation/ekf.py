@@ -67,9 +67,9 @@ class KalmanFilter:
         vel_mag = np.linalg.norm(self.x_k[6:9])
         w_x, w_y, w_z = self.x_k[9:12]
 
-        J_z = 1/2 * m * r**2
+        J_x = 1/2 * m * r**2
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
-        J_x = J_y
+        J_z = J_y
 
         Fax, Fay, Faz = 0,0,0                                   # aerodynamic forces expressed on the body in each direction
         Fax = -0.5*rho*(vel_mag**2)*Ca*(np.pi*r**2)             # drag force

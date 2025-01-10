@@ -14,12 +14,12 @@ import util.vectors as vct
 class Navigation:
     def __init__(self, dt, sensor_config, x0, rocket):
         
-        self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        self.kalman_filter = ekf.KalmanFilter(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         #self.err_state_kalman_filter = err_ekf(dt, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self.sensor_config = sensor_config
         self.x = x0
         self.rocket = rocket
-        self.atm = Atmosphere()
+        self.atm = Atmosphere.Atmosphere()
         
         x_data = np.empty(10)
         y_data = np.empty(10)
