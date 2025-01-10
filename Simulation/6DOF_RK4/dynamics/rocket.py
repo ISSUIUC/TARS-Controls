@@ -65,7 +65,10 @@ class Rocket:
         }
         
         #Import dataframe from CSV so it doesn't have to call it every time
-        self.coeffs_df = pd.read_csv("ekf_cd_test.CSV")
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(current_dir, "LookUp", "ekf_cd_test.CSV")
+        self.coeffs_df = pd.read_csv(csv_path)
 
         self.coeffs_dict = {
             "CN": [],
