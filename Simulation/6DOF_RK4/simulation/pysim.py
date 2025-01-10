@@ -16,12 +16,17 @@
 # 2022-2023 Guidance, Navigation, and Control Main Contributors #
 # Sub-Team Lead: Parth Shrotri (2024)
 # Colin Kinsey (2024)
-# Evan Yu (2025) 
+# Evan Yu (2025)
 # Rithvik Bhogavilli (2025)
 # Kabir Cheema (2025)
 # Freya Bansal (2025)
 # Ishaan Bansal (2025)
 # Ethan Pereira (2026)
+
+# 2024-2025 Guidance, Navigation, and Control Main Contributors #
+# Sub-Team Lead: Shishir Bhatta (2026)
+# Ishaan Kandamuri (2026)
+# Aneesh Ganti (2028)
 
 import numpy as np
 import matplotlib.pyplot as plt
