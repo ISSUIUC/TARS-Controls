@@ -65,19 +65,20 @@ class Rocket:
         
         #Import dataframe from CSV so it doesn't have to call it every time
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        csv_path = os.path.join(current_dir, "LookUp", "ekf_cd_test.CSV")
+        dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        csv_path = os.path.join(dir, "LookUp", "ekf_cd_test.csv")
         self.coeffs_df = pd.read_csv(csv_path)
 
         self.coeffs_dict = {
-            "CN": [],
-            "CA Power-On": [],
-            "CA Power-Off": [],
-            "CD Power-On": [],
-            "CD Power-Off": [],
-            "CL": [],
-            "CP": []
+            "CN": [0],
+            "CA Power-On": [0],
+            "CA Power-Off": [0],
+            "CD Power-On": [0],
+            "CD Power-Off": [0],
+            "CL": [0],
+            "CP": [0]
         }
+
 
     def __init__(self, dt, x0, stage_config, atm:atmosphere.Atmosphere=None, stages:list=[]):
         self.stage_config = stage_config
@@ -103,6 +104,9 @@ class Rocket:
 
         self.init_dicts()
         
+        # Initializing the coefficients
+        # self.update_coeffs(0, 0)
+
         # Add stages to rocket via this list. Only the base rocket object should have stages, each stage should be its own rocket object with no stages
         self.stages = stages
         
@@ -224,6 +228,24 @@ class Rocket:
     
     def get_Rasaero(self):
         return self.rasaero if self.current_stage == -1 else self.stages[self.current_stage].get_Rasaero()
+    
+    def get_cn(self):
+        return self.coeffs_dict["CN"][-1]
+    
+    def get_ca_on(self):
+        return 0 if self.current_stage == -1 else self.coeffs_dict["CA Power-On"][-1]
+    
+    def get_ca_off(self):
+        return 0 if self.current_stage == -1 else self.coeffs_dict["CA Power-Off"][-1]
+    
+    def get_cd_on(self):
+        return 0 if self.current_stage == -1 else self.coeffs_dict["CD Power-On"][-1]
+    
+    def get_cd_off(self):
+        return 0 if self.current_stage == -1 else self.coeffs_dict["CD Power-Off"][-1]
+    
+    def get_cp(self):
+        return 0 if self.current_stage == -1 else self.coeffs_dict["CP"][-1]
     
     def I(self, total_mass): 
         """Returns the inertia matrix of the rocket
@@ -361,8 +383,8 @@ class Rocket:
 
 
     def update_coeffs(self, velocity, angle_of_attack):
-        df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == angle_of_attack) & (self.coeffs_df["Mach"] == (velocity / 340.29))]
-        # Mach = velocity / 340.29
+        a = velocity / 340.29
+        df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == angle_of_attack) & (self.coeffs_df["Mach"] == (a / 340.29))]
         self.coeffs_dict["CN"].append(df_specific["CN"].values[0])
         self.coeffs_dict["CA Power-On"].append(df_specific["CA Power-On"].values[0])
         self.coeffs_dict["CA Power-Off"].append(df_specific["CA Power-Off"].values[0])
@@ -370,25 +392,6 @@ class Rocket:
         self.coeffs_dict["CD Power-Off"].append(df_specific["CD Power-Off"].values[0])
         self.coeffs_dict["CL"].append(df_specific["CL"].values[0])
         self.coeffs_dict["CP"].append(df_specific["CP"].values[0])
-
-
-    def get_cn(self):
-        return self.coeffs_dict["CN"][-1]
-    
-    def get_ca_on(self):
-        return self.coeffs_dict["CA Power-On"][-1]
-    
-    def get_ca_off(self):
-        return self.coeffs_dict["CA Power-Off"][-1]
-    
-    def get_cd_on(self):
-        return self.coeffs_dict["CD Power-On"][-1]
-    
-    def get_cd_off(self):
-        return self.coeffs_dict["CD Power-On"][-1]
-    
-    def get_cp(self):
-        return self.coeffs_dict["CP"][-1]
 
     # Converts the data saved in this sim into csv
     def to_csv(self):
