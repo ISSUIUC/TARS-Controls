@@ -246,7 +246,7 @@ class Rocket:
     
     def get_cp(self):
         return 0 if self.current_stage == -1 else self.coeffs_dict["CP"][-1]
-    
+
     def I(self, total_mass): 
         """Returns the inertia matrix of the rocket
         
