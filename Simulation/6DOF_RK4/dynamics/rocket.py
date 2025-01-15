@@ -381,17 +381,16 @@ class Rocket:
         #Update coefficients (how to find angle of attack???)
         self.update_coeffs(np.linalg.norm(x[1]), self.sim_dict["alpha"][0])
 
-
     def update_coeffs(self, velocity, angle_of_attack):
         a = velocity / 340.29
         df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == angle_of_attack) & (self.coeffs_df["Mach"] == (a / 340.29))]
-        self.coeffs_dict["CN"].append(df_specific["CN"].values[0])
-        self.coeffs_dict["CA Power-On"].append(df_specific["CA Power-On"].values[0])
-        self.coeffs_dict["CA Power-Off"].append(df_specific["CA Power-Off"].values[0])
-        self.coeffs_dict["CD Power-On"].append(df_specific["CD Power-On"].values[0])
-        self.coeffs_dict["CD Power-Off"].append(df_specific["CD Power-Off"].values[0])
-        self.coeffs_dict["CL"].append(df_specific["CL"].values[0])
-        self.coeffs_dict["CP"].append(df_specific["CP"].values[0])
+        self.coeffs_dict["CN"].append(df_specific["CN"])
+        self.coeffs_dict["CA Power-On"].append(df_specific["CA Power-On"])
+        self.coeffs_dict["CA Power-Off"].append(df_specific["CA Power-Off"])
+        self.coeffs_dict["CD Power-On"].append(df_specific["CD Power-On"])
+        self.coeffs_dict["CD Power-Off"].append(df_specific["CD Power-Off"])
+        self.coeffs_dict["CL"].append(df_specific["CL"])
+        self.coeffs_dict["CP"].append(df_specific["CP"])
 
     # Converts the data saved in this sim into csv
     def to_csv(self):
