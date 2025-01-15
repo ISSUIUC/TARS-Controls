@@ -76,48 +76,35 @@ class KalmanFilter:
 
         #TODO: Verify Cn is being pulled from Aneesh's lookup table
         Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
-
-        Faz = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2) 
+        Faz = Fay
                 
-        g = 9.81
-        Fg = np.array([-g,0,0])
+        g = 9.81 # Earth gravity
+        Fg = np.array([-g, 0, 0])
         Fg_body = np.linalg.inv(R) @ Fg
         Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]      # gravitational forces expressed on the body in each direction
         Ftx, Fty, Ftz = T,0,0                                   # thrust forces in each direciton ( we assume that is in one direction)
         
         #TODO: This is for rotational ekf lowkey
         # # we can do some trig to figure this out (it's in the textbook)
-        # # states tracked: x, y, z, vx, vy, vz, ax, ay, az, phi, theta, psi, phidot, thetadot, psidot, phiddot, thetaddot, psiddot,
-        # # aero_coeff = forces.get_Ca_Cn_Cp(self, self.x_k, )
+        # # states tracked: x, vx, ax, y, vy, ay, z, vz, az
         
-        # La, Ma, Na = 0,0,0 # components of aerodynamic moment vector Ma expressed in body coordinate system (roll, pitch, and yaw, respectively), Nm.
-        # Lp, Mp, Np = 0,0,0 # components of propulsion moment vector Mp expressed in body coordinate system (roll, pitch, and yaw, respectively), Nm.
-        # La  = 0.5*rho*(vel_mag) * (Cp) * np.pi*r**2 * (h) # roll moment
-        
-        
-        xdot = np.array([[vel_x], [vel_y], [vel_z],
-                [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)],
-                [1], [1], [1],
-                [1], [1], [1]
+        xdot = np.array([[vel_x], [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [1],
+                 [vel_y], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [1],
+                 [vel_z], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)], [1]
                 ])
         self.x_priori = self.x_k + xdot * self.dt 
-
-        # linearized dynamics are F
-        self.F = np.array([
-                [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], 
-                [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
-                [0, 0, 0, 0, w_z, -w_y, 0, 0, 0, 0, -vel_z, vel_y], 
-                [0, 0, 0, -w_z, w_x, 0, 0, 0, 0, vel_y, 0, -vel_x], 
-                [0, 0, 0, w_y, -w_x, 0, 0, 0, 0, -vel_y, vel_x, 0], 
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            ])
         
+        # linearized dynamics are F
+        self.F = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0], 
+                           [0, 0, 0, 0, w_z, -w_y, 0, 0, 0], 
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                           [0, 0, 0, 0, 1, 0, 0, 0, 0], 
+                           [0, 0, 0, -w_z, w_x, 0, 0, 0, 0], 
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                           [0, 0, 0, 0, 0, 1, 0, 0, 0], 
+                           [0, 0, 0, w_y, -w_x, 0, 0, 0, 0], 
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
         self.P_priori = self.F @ self.P_k @ self.F.T + self.Q
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
