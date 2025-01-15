@@ -77,7 +77,7 @@ class Simulation:
         while self.time_stamp < self.rocket.delay:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             
-            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos, self.time_stamp)
+            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
             self.rocket.Navigation.kalman_filter.reset_lateral_pos()
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
