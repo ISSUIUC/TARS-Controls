@@ -65,7 +65,7 @@ class Rocket:
         
         #Import dataframe from CSV so it doesn't have to call it every time
 
-        dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        dir = os.path.dirname(os.path.dirname(os. path.abspath(__file__)))
         csv_path = os.path.join(dir, "LookUp", "ekf_cd_test.csv")
         self.coeffs_df = pd.read_csv(csv_path)
 
@@ -86,6 +86,8 @@ class Rocket:
         self.cm_motor = stage_config["motor"]["cm"]
         self.cm = stage_config['rocket_body']['combined_cm']
         self.cp = stage_config['rocket_body']['combined_cp']
+        
+        self.dt = dt
 
         self.impulse = stage_config["motor"]["impulse"]
         self.motor_mass = stage_config["motor"]["motor_mass"]
@@ -101,7 +103,6 @@ class Rocket:
         self.A_s = 2 * self.r_r * self.l # surface area
         self.max_ext_length = stage_config["flaps"]["max_ext_length"]
         self.atm = atm
-
         self.init_dicts()
         
         # Initializing the coefficients

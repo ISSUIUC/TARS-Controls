@@ -54,23 +54,27 @@ class KalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-    def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho: float):
+    def priori(self, R: np.ndarray, T:float, m:float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho:float, roll:float, pitch:float, yaw:float):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
             But basically predicts step
         Args:
             u (float): control input
         """
+        #calculate rotational velocity
         pos_x, pos_y, pos_z = self.x_k[0:3]
         phi, theta, psi = self.x_k[9:12]                         # phi = roll, theta = pitch, psi = yaw
         vel_x, vel_y, vel_z = self.x_k[3:6]
         vel_mag = np.linalg.norm(self.x_k[6:9])
-        w_x, w_y, w_z = self.x_k[9:12]
-
+        w_x = (roll - self.x_k[9]) / self.dt  
+        w_y = (pitch - self.x_k[10]) / self.dt  
+        w_z = (yaw - self.x_k[11]) / self.dt  
+        #angular_accel_x = (w_x - self.x_k[9]) / self.dt  
+        #angular_accel_y = (w_y - self.x_k[10]) / self.dt  
+        #angular_accel_z = (w_z - self.x_k[11]) / self.dt          
         J_x = 1/2 * m * r**2
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
-        J_z = J_y
-
+        J_z = J_y     
         Fax, Fay, Faz = 0,0,0                                   # aerodynamic forces expressed on the body in each direction
         Fax = -0.5*rho*(vel_mag**2)*Ca*(np.pi*r**2)             # drag force
 
@@ -120,6 +124,8 @@ class KalmanFilter:
 
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
         acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
+        w_acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
+        
         y_k = np.array([x_pos, *acc]).reshape(-1,1)
 
         self.x_k = self.x_priori + K @ (y_k - (self.H @ self.x_priori))
