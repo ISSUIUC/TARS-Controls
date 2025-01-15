@@ -62,8 +62,8 @@ class KalmanFilter:
             u (float): control input
         """
         pos_x, pos_y, pos_z = self.x_k[0:3]
-        phi, theta, psi = self.x_k[3:6]                         # phi = roll, theta = pitch, psi = yaw
-        vel_x, vel_y, vel_z = self.x_k[6:9]
+        phi, theta, psi = self.x_k[9:12]                         # phi = roll, theta = pitch, psi = yaw
+        vel_x, vel_y, vel_z = self.x_k[3:6]
         vel_mag = np.linalg.norm(self.x_k[6:9])
         w_x, w_y, w_z = self.x_k[9:12]
 
@@ -92,7 +92,7 @@ class KalmanFilter:
                  [vel_y], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [1],
                  [vel_z], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)], [1]
                 ])
-        self.x_priori = self.x_k + xdot * self.dt 
+        self.x_priori = self.x_k + xdot * self.dt #12x1 
         
         # linearized dynamics are F
         self.F = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0], 
@@ -120,9 +120,9 @@ class KalmanFilter:
 
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
         acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
-        y_k = np.array([x_pos, *acc]).T
+        y_k = np.array([x_pos, *acc]).reshape(-1,1)
 
-        self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
+        self.x_k = self.x_priori + K @ (y_k - (self.H @ self.x_priori))
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori
 
         self.current_time += self.s_dt
@@ -146,7 +146,8 @@ class KalmanFilter:
     def reset_lateral_pos(self):
         """Resets lateral position to 0
         """
-        self.x_k[1:3] = [0,0]
+        self.x_k[0, 1:3] = 0
+        # np.array([[0], [0]])
         
 
 
