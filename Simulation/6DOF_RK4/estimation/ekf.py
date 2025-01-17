@@ -20,7 +20,7 @@ class KalmanFilter:
     """
     def __init__(self, dt, pos_x, vel_x, pos_y, vel_y, pos_z, vel_z):
         self.dt = dt
-        self.x_k = np.zeros((12,1))
+        self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
         self.R = np.diag([2., 1.9, 1.9, 1.9])
         self.P_k = np.zeros((9,9))
@@ -63,15 +63,11 @@ class KalmanFilter:
         """
         #calculate rotational velocity
         pos_x, pos_y, pos_z = self.x_k[0:3]
-        phi, theta, psi = self.x_k[9:12]                         # phi = roll, theta = pitch, psi = yaw
         vel_x, vel_y, vel_z = self.x_k[3:6]
         vel_mag = np.linalg.norm(self.x_k[6:9])
         w_x = (roll - self.x_k[9]) / self.dt  
         w_y = (pitch - self.x_k[10]) / self.dt  
-        w_z = (yaw - self.x_k[11]) / self.dt  
-        #angular_accel_x = (w_x - self.x_k[9]) / self.dt  
-        #angular_accel_y = (w_y - self.x_k[10]) / self.dt  
-        #angular_accel_z = (w_z - self.x_k[11]) / self.dt          
+        w_z = (yaw - self.x_k[11]) / self.dt          
         J_x = 1/2 * m * r**2
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
         J_z = J_y     
@@ -86,17 +82,16 @@ class KalmanFilter:
         Fg = np.array([-g, 0, 0])
         Fg_body = np.linalg.inv(R) @ Fg
         Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]      # gravitational forces expressed on the body in each direction
-        Ftx, Fty, Ftz = T,0,0                                   # thrust forces in each direciton ( we assume that is in one direction)
+        Ftx, Fty, Ftz = T[0],T[1],T[2]                                # thrust forces in each direciton ( we assume that is in one direction)
         
         #TODO: This is for rotational ekf lowkey
         # # we can do some trig to figure this out (it's in the textbook)
         # # states tracked: x, vx, ax, y, vy, ay, z, vz, az
-        
-        xdot = np.array([[vel_x], [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [1],
-                 [vel_y], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [1],
-                 [vel_z], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)], [1]
+        xdot = np.array([[vel_x], [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [1.0],
+                 [vel_y], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [1.0],
+                 [vel_z], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)], [1.0]
                 ])
-        self.x_priori = self.x_k + xdot * self.dt #12x1 
+        self.x_priori = self.x_k + xdot * self.dt
         
         # linearized dynamics are F
         self.F = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0], 
