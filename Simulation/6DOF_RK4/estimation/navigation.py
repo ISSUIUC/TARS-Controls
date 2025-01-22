@@ -39,7 +39,7 @@ class Navigation:
         self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
         ## self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
         
-    def update_state(self,baro_alt, accel, gyro, bno_ang_pos, time_stamp):
+    def update_state(self, baro_alt, accel, gyro, bno_ang_pos, time_stamp):
         
         roll, pitch, yaw = bno_ang_pos
         Rotational_matrix = vct.body_to_world(roll, pitch, yaw, np.eye(3))
@@ -52,7 +52,7 @@ class Navigation:
         r = self.rocket.r_r
         h = self.rocket.l
 
-        self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, h, Cn, Ca, Cp, rho)
+        self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, h, Cn, Ca, Cp, rho, roll, pitch, yaw)
         self.r_kalman_filter.priori()
         #self.err_state_kalman_filter.priori()
         self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])

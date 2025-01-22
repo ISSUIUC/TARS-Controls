@@ -20,7 +20,7 @@ class KalmanFilter:
     """
     def __init__(self, dt, pos_x, vel_x, pos_y, vel_y, pos_z, vel_z):
         self.dt = dt
-        self.x_k = np.zeros((12,1))
+        self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
         self.R = np.diag([2., 1.9, 1.9, 1.9])
         self.P_k = np.zeros((9,9))
@@ -32,9 +32,13 @@ class KalmanFilter:
         self.current_time = 0
         self.s_dt = dt
 
+        self.temp_roll = 0
+        self.temp_pitch = 0
+        self.temp_yaw = 0
+
         # self.x_k = np.array([pos_x, vel_x, accel_x, pos_y, vel_y, accel_y, pos_z, vel_z, accel_z]).T
         # assuming the angular position and vels are 0
-        self.x_k = np.array([pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, 0, 0, 0, 0, 0, 0]).T
+        self.x_k = np.array([pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, 0, 0, 0]).T
 
         for i in range(3):
             # self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
@@ -54,28 +58,35 @@ class KalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-    def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho: float):
+    def priori(self, R: np.ndarray, T: float, m: float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho: float, roll:float, pitch:float, yaw:float):
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
             But basically predicts step
         Args:
             u (float): control input
         """
+
         pos_x, pos_y, pos_z = self.x_k[0:3]
-        phi, theta, psi = self.x_k[9:12]                         # phi = roll, theta = pitch, psi = yaw
+        #phi, theta, psi = self.x_k[6:9]                         # phi = roll, theta = pitch, psi = yaw
         vel_x, vel_y, vel_z = self.x_k[3:6]
-        vel_mag = np.linalg.norm(self.x_k[6:9])
-        w_x, w_y, w_z = self.x_k[9:12]
+        vel_mag = np.linalg.norm(self.x_k[3:6])
+        w_x = (roll - self.temp_roll) / self.dt
+        w_y = (pitch - self.temp_pitch) / self.dt  
+        w_z = (yaw - self.temp_yaw) / self.dt
+        self.temp_roll = roll
+        self.temp_pitch = pitch
+        self.temp_yaw = yaw
 
         J_x = 1/2 * m * r**2
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
-
+        
         Fax, Fay, Faz = 0,0,0                                   # aerodynamic forces expressed on the body in each direction
-        Fax = -0.5*rho*(vel_mag**2)*Ca*(np.pi*r**2)             # drag force
+        Fax = -0.5*rho*(vel_mag**2)*float(Ca)*(np.pi*r**2)             # drag force
 
         #TODO: Verify Cn is being pulled from Aneesh's lookup table
         Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
+        print(Cn.dtype)
         Faz = Fay
                 
         g = 9.81 # Earth gravity
