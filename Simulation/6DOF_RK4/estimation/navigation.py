@@ -37,7 +37,7 @@ class Navigation:
         #self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
         ## self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
         
-    def update_state(self, baro_alt, accel, gyro, bno_ang_pos):
+    def update_state(self, baro_alt, accel, gyro, bno_ang_pos, timestep):
         
         roll, pitch, yaw = bno_ang_pos
         Rotational_matrix = vct.body_to_world(roll, pitch, yaw, np.eye(3))
@@ -45,14 +45,14 @@ class Navigation:
         Cn = self.rocket.get_cn()
         Ca = self.rocket.get_ca_on()
         Cp = self.rocket.get_cp()
-        Thrust = self.rocket.get_motor().get_thrust(self.rocket.dt) #used to be self.rocket.time_stamp
-        m = self.rocket.get_rocket_total_mass(self.rocket.dt)
+        Thrust = self.rocket.get_motor().get_thrust(timestep)
+        m = self.rocket.get_rocket_total_mass(timestep)
         r = self.rocket.r_r
         h = self.rocket.l
 
         self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, h, Cn, Ca, Cp, rho, bno_ang_pos, accel)
         self.r_kalman_filter.priori()
-        self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
+        # self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         self.r_kalman_filter.update(*gyro, *accel)
         
         
