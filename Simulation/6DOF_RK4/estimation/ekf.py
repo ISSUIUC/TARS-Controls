@@ -91,7 +91,8 @@ class KalmanFilter:
                  vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 1.0
                 ])
         self.x_priori = self.x_k + xdot * self.s_dt
-        
+        if Ftx != 0:
+            print("xdot: ", xdot)
         # linearized dynamics are F
         self.F = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0], 
                            [0, 0, 0, 0, w_z, -w_y, 0, 0, 0], 

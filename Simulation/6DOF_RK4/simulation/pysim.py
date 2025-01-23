@@ -71,8 +71,7 @@ class Simulation:
     def idle_stage(self):
         while self.time_stamp < self.rocket.delay:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
-            
-            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
+            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos, self.time_stamp)
             self.rocket.Navigation.kalman_filter.reset_lateral_pos()
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
@@ -92,7 +91,7 @@ class Simulation:
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
             
             
-            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
+            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos, self.time_stamp)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
             self.rocket.set_motor_mass(self.time_stamp)
@@ -128,7 +127,7 @@ class Simulation:
         while self.x[1, 0] >= 0:
         # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
-            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos)
+            self.rocket.Navigation.update_state(baro_alt, accel, gyro, bno_ang_pos, self.time_stamp)
             current_state, current_covariance, current_state_r = self.get_kalman_state()
 
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, 0)
