@@ -30,14 +30,9 @@ from plotly.subplots import make_subplots
 
 #also trim the flight data
 
-""" 
-    Aditya Srikanth 9-28-2024
-    - Removed commented code that wasn't used with sensors or unnecessarily caused errors
-    - Changed certain arr.values used in functions to dict_sensor value
-        +++ arr_df[:,7] to dict_sensor["lowG_data.timeStamp_lowG"]
-"""
-    
+
 def main():
+    
     arr = pd.read_csv("Sensor Analysis/csvfinal.csv")
     arr_df = np.asarray(arr.values) #changes to an array
     dict_sensor = {
@@ -54,13 +49,13 @@ def main():
         "highG_data.hg_ay": arr_df[:,10],
         "highG_data.hg_az": arr_df[:,11],
         "highG_data.timeStamp_highG": arr_df[:,12],
-       
+
         "has_barometer_data": arr_df[:,21],
         "barometer_data.temperature": arr_df[:,22],
         "barometer_data.pressure": arr_df[:,23],
         "barometer_data.altitude": arr_df[:,24],
         "barometer_data.timeStamp_barometer": arr_df[:,25],
-    
+
         "has_voltage_data": arr_df[:,44],
         "voltage_data.v_battery": arr_df[:,45],
         "voltage_data.timestamp": arr_df[:,46],
@@ -91,29 +86,13 @@ def main():
         "gas_data.timestamp": arr_df[:,71],
 
     }
-
-    items_to_find = ['False']
-    data_i1 = dict_sensor.get("has_lowG_data")
-    data_i2 = dict_sensor.get("has_highG_data")
-    data_i3 = dict_sensor.get("has_gps_data")
-    data_i4 = dict_sensor.get("has_barometer_data")
-    data_i5 = dict_sensor.get("has_kalman_data")
-    data_i6 = dict_sensor.get("has_rocketState_data")
-    data_i7 = dict_sensor.get("has_flap_data")
-    data_i8 = dict_sensor.get("has_voltage_data")
-    data_i9 = dict_sensor.get("has_orientation_data")
-    data_i10 = dict_sensor.get("has_magnetometer_data")
-    data_i11 = dict_sensor.get("has_gas_data")
+    
     counter = 0
     for key2 in dict_sensor.keys():
-        new_array = []
-        new_array = dict_sensor[key2][np.logical_and(dict_sensor[key2]!=0.0, dict_sensor[key2]!=0)]
+        new_array = dict_sensor[key2][dict_sensor[key2]!=0.0]
         dict_sensor[key2] = new_array
         counter += 1
-    #    dict_sensor[key2]==new_array
-
-    # dict_sensor = {k: [dict_sensor[k].remove[removed_index] for removed_index in indices_to_remove]
-    #                     for k in dict_sensor}
+    
 
     # preliminary time values to start the while loops
     t1 = -999
@@ -127,14 +106,14 @@ def main():
     print("Average run-time (3000000 interval)  = 15 seconds")
     print("Average run-time (10000000 interval) = 75 seconds")
     print("*************************************************")
-    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (min(arr_df[:,7]) > t1)): #checking if time values are out of bounds or not of int type
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t1==-999 or (min(arr["lowG_data.timeStamp_lowG"]) > t1)): #checking if time values are out of bounds or not of int type
         try:
-            t1 = int(input(f"What time do you want to start({min(arr_df[:,7])} to {max(arr_df[:,7])})?: "))
+            t1 = int(input(f'What time do you want to start({min(arr["lowG_data.timeStamp_lowG"])} to {max(arr["lowG_data.timeStamp_lowG"])})?: '))
         except Exception: # having the while loop run again if an integer is not entered
             pass
-    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999  or (max(arr_df[:,7]) < t2)): #checking if time values are out of bounds or not of int type
+    while (isinstance(t1,int)==False or isinstance(t2,int)==False or t2== -999  or (max(arr["lowG_data.timeStamp_lowG"]) < t2)): #checking if time values are out of bounds or not of int type
         try:
-            t2 = int(input(f"What time do you want to stop({min(arr_df[:,7])} to {max(arr_df[:,7])})?: "))
+            t2 = int(input(f'What time do you want to stop({min(arr["lowG_data.timeStamp_lowG"])} to {max(arr["lowG_data.timeStamp_lowG"])})?: '))
         except Exception: # having the while loop run again if an integer is not entered
             pass
 
@@ -143,52 +122,83 @@ def main():
     ## add all std dev to an array
     ## plot array on graph
     # (2) Plot the data via a LRQ / Plot statistcal model
+
+    print("Aye, the beat go off?")
+
     titles = []
     count1 = 0
-    for j in dict_sensor:
+    notGraphedData = [
+        "has_lowG_data", "lowG_data.timeStamp_lowG", "has_highG_data", "has_gps_data", 
+        "has_barometer_data", "has_kalman_data", "has_rocketState_data", "has_flap_data", 
+        "has_voltage_data", "has_orientation_data", "has_magnetometer_data", 
+        "highG_data.timeStamp_highG", "gps_data.timeStamp_GPS", "barometer_data.timeStamp_barometer", 
+        "kalman_data.timeStamp_state", "rocketState_data.timestamp", "flap_data.timeStamp_flaps", 
+        "voltage_data.timestamp", "has_gas_data", "orientation_data.timeStamp_orientation", 
+        "magnetometer_data.timestamp", "gas_data.timestamp"
+    ]
+
+    for header in dict_sensor:
         # appending only titles of things to be graphed (no time or has data columns)
-        if j !="has_lowG_data" and j !="lowG_data.timeStamp_lowG" and j !="has_highG_data" and j!="has_gps_data" and j !="has_barometer_data"and j !="has_kalman_data"and j !="has_rocketState_data"and j!="has_flap_data"and j!="has_voltage_data"and j!="has_orientation_data"and j!="has_magnetometer_data"and j!="highG_data.timeStamp_highG"and j!="gps_data.timeStamp_GPS"and j!="barometer_data.timeStamp_barometer"and j!="kalman_data.timeStamp_state"and j!="rocketState_data.timestamp"and j!="flap_data.timeStamp_flaps"and j!="voltage_data.timestamp"and j!="has_gas_data"and j!="orientation_data.timeStamp_orientation"and j!="magnetometer_data.timestamp"and j!="gas_data.timestamp":
-            titles.append(j)
+        if header not in notGraphedData:
+            titles.append(header)
             count1 += count1
-    fig = make_subplots(rows = len(dict_sensor), cols = 1, subplot_titles=titles)
+    
     count = 0
     count2 = 0
     for key in dict_sensor:
         count2 += 1
         # plotting only columns that contain important data
-        if key !="has_lowG_data" and key !="lowG_data.timeStamp_lowG" and key !="has_highG_data" and key!="has_gps_data" and key!="has_barometer_data"and key!="has_kalman_data"and key!="has_rocketState_data"and key!="has_flap_data"and key!="has_voltage_data"and key!="has_orientation_data"and key!="has_magnetometer_data"and key!="highG_data.timeStamp_highG"and key!="gps_data.timeStamp_GPS"and key!="barometer_data.timeStamp_barometer"and key!="kalman_data.timeStamp_state"and key!="rocketState_data.timestamp"and key!="flap_data.timeStamp_flaps"and key!="voltage_data.timestamp"and key!="has_gas_data"and key!="orientation_data.timeStamp_orientation"and key!="magnetometer_data.timestamp"and key!="gas_data.timestamp":
+        if key not in notGraphedData:
+            fig = go.Figure()
             count += 1
             if (count2 <= 7):
-                std_plot, time_plot, data_plot = stddev_plot(dict_sensor["lowG_data.timeStamp_lowG"],dict_sensor[key],t1,t2)
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,7],dict_sensor[key],t1,t2)
+                
             if (8 <= count2 <= 12):
-                std_plot, time_plot, data_plot = stddev_plot(dict_sensor["highG_data.timeStamp_highG"],dict_sensor[key],t1,t2)
-            
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,12],dict_sensor[key],t1,t2)
+                
             if (13 <= count2 <= 17):
-                std_plot, time_plot, data_plot = stddev_plot(dict_sensor["barometer_data.timeStamp_barometer"],dict_sensor[key],t1,t2)
-            
+                std_plot, time_plot, data_plot = stddev_plot(arr_df[:,25],dict_sensor[key],t1,t2)
+                
             if (18 <= count2 <= 20):
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,46],dict_sensor[key],t1,t2)
+                
             if (21 <= count2 <= 34):
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,60],dict_sensor[key],t1,t2)
+                
             if (35 <= count2 <= 39):
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,65],dict_sensor[key],t1,t2)
+                
             if (40 <= count2 <= 45):
                 std_plot, time_plot, data_plot = stddev_plot(arr_df[:,71],dict_sensor[key],t1,t2)
-            # fig = go.Figure()
+                
+            
             ## Plotting of each dictionary entry
             # Printing key to see how close to done the graphing operation is 
             print(key)
-            fig.add_trace(go.Scatter(x=time_plot.astype(np.float64),y=data_plot.astype(np.float64), name='raw data: ' + key),row=count,col=1)
+            fig.add_trace(go.Scatter(x=time_plot.astype(np.float64),y=data_plot.astype(np.float64), name='raw data: ' + key))
 
             ## Plotting Standard deviation
-            fig.add_trace(go.Scatter(x=time_plot,y=std_plot,name = 'std_dev: ' + key),row=count,col=1)
+            fig.add_trace(go.Scatter(x=time_plot,y=std_plot,name = 'std_dev: ' + key))
+
+            
+
+            fig.update_layout(
+                title="Sensor Data Analysis",
+                xaxis_title="Time",
+                yaxis_title="Sensor Values",
+                height=1000,  # Increase height of the figure
+                width=1000,   # Increase width of the figure
+                showlegend=True
+
+            )
             
             # changing to float because dictionary values are in object datatype
             m,b = np.polyfit((time_plot).astype(float), (data_plot[0:len(time_plot)]).astype(float), 1)
             
             ## Line of best fit
             polyfit1 = [m * x + b for x in time_plot]
-            fig.add_trace(go.Scatter(x=time_plot, y=polyfit1, mode = 'lines', name = 'best fit: ' + key),row=count,col=1)
+            fig.add_trace(go.Scatter(x=time_plot, y=polyfit1, mode = 'lines', name = 'best fit: ' + key))
             
             #red line in the center 
             # Finding r^2
@@ -196,8 +206,6 @@ def main():
             corr = corr_matrix[0,1]
             R_sq = corr**2
 
-            # def sensorlist():
-                # take input based on the sensors that the user wants graphs of , and then work from there
         
             
             ### Standard Deviation Function- for a certain time range 
@@ -216,11 +224,10 @@ def main():
             fig.add_annotation(
                 text=f'<b> σ = {std_sample:.5f}</b>',
                 x = (time_plot[0]+time_plot[-1])/2,
-                y = y_val,
+                y = max(data_plot)*0.5,
                 showarrow=False,
                 font=dict(size=16,color="black"),
-                row=count,
-                col=1,
+                
             )
             # r^2 of best fit line over whole sample
             fig.add_annotation(
@@ -229,14 +236,15 @@ def main():
                 y=0,
                 showarrow=False,
                 font=dict(size=16,color="black"),
-                row=count,
-                col=1,
+                
             )
-            # fig.show()
+
+            fig.update_yaxes(autorange=True)
+            fig.update_xaxes(autorange=True)
+
+            fig.show()
             # use formula for sample standard deviation, create function to find standard deviation for the vars, subtract std dev factor times time from the data and see what there is
-    ## change size here if you want
-    fig['layout'].update(height= 5000, width=1500,
-                     title='Sensor Data')
+    
     fig.show()   
 
 ## assuming syntax for the line of best fit is identical to numpy
@@ -248,8 +256,6 @@ def main():
 ## plt.plot(x, a*x +  b, and then customizations based on how you want the line to look)
 
 def stddev(t1, t2,time_a2,sensorkey2):
-    # for t in range(t1,t2):
-    #    tarray = tarray.append(time_a2)   
     keyarray = sensorkey2
     slicedkey = keyarray[0:t2]
     return (statistics.stdev(slicedkey))
@@ -268,11 +274,9 @@ def stddev_plot(time_a,sensorkey,t_1,t_2):
         index2 = max(time_a)
     timearray = time_a[index1:index2]
     timearray = timearray[timearray != 0.0]
-    # print(len(timearray))
     keyarray = sensorkey[index1:index2]
     std_plot = np.zeros(len(timearray)-50)
     time_plot = np.zeros(len(timearray)-50)
-    # print(timearray)
     for i in range(0,len(timearray)-50):
         # choose t1 and t2 to move across the data set and find a std dev for each interval that will then be
         # plotted as a continuous function
