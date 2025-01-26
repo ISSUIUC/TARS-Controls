@@ -16,6 +16,10 @@ import random
 
 # Define Objects
 
+question = input("Nominal or Tilt?   ")
+answer = question
+tiltCheck = "Tilt"
+
 class Forces:
     """Forces on rocket:
     
@@ -199,10 +203,13 @@ class Forces:
         return aerodynamic_moment
         
     def get_alpha(self, x_state, wind_vector) -> float:
+
         incident_velocity = vct.world_to_body(*x_state[2], vct.norm(x_state[1] + wind_vector))
         orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))
         alpha = np.arccos(np.dot(incident_velocity, orientation))
         if(np.linalg.norm(incident_velocity) == 0):
             alpha = 0
+        if answer == tiltCheck:
+            alpha *= 30
         return alpha
     
