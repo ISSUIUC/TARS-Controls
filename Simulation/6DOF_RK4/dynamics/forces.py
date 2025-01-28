@@ -16,9 +16,8 @@ import random
 
 # Define Objects
 
-question = input("Nominal or Tilt?   ")
-answer = question
-tiltCheck = "Tilt"
+angleCheck = input("Nominal or Tilted Angle of Attack?   ").lower()
+tiltCommand = "Tilt".lower()
 
 class Forces:
     """Forces on rocket:
@@ -40,7 +39,7 @@ class Forces:
     rasaero_file_location = "" # Will be set in constructor
     rasaero = None
 
-    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm):
+    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm, multiplier):
         self.max_ext_length = max_ext_length
         self.cm = cm
         self.cp = cp
@@ -49,6 +48,7 @@ class Forces:
         self.rocket_dry_mass = rocket_dry_mass
         self.motor = motor
         self.atm = atm
+        self.multiplier = multiplier
         self.rasaero_file_location = os.path.join(os.path.dirname(__file__), rasaero_lookup_file)
         self.rasaero = pd.read_csv(self.rasaero_file_location)
 
@@ -71,6 +71,13 @@ class Forces:
         density = self.atm.get_density(alt, noise=density_noise, position=x_state[0])
         thrust = self.motor.get_thrust(time_stamp)
         wind_vector = self.atm.get_wind_vector(time_stamp)
+
+        """
+        if 
+
+
+        """
+
         alpha = self.get_alpha(x_state, wind_vector)
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
@@ -202,14 +209,13 @@ class Forces:
         aerodynamic_moment = np.cross(self.cp - self.motor.cm, aerodynamic_force)
         return aerodynamic_moment
         
-    def get_alpha(self, x_state, wind_vector) -> float:
+    def get_alpha(self, x_state, wind_vector, multiplier) -> float:
 
         incident_velocity = vct.world_to_body(*x_state[2], vct.norm(x_state[1] + wind_vector))
         orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))
         alpha = np.arccos(np.dot(incident_velocity, orientation))
         if(np.linalg.norm(incident_velocity) == 0):
             alpha = 0
-        if answer == tiltCheck:
-            alpha *= 30
-        return alpha
+        return alpha * multiplier
+    
     

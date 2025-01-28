@@ -46,7 +46,8 @@ import environment.atmosphere as atmosphere
 
 # Load desired config file
 config = dataloader.config
-
+angleCheck = input("Nominal or Tilted Angle of Attack?   ").lower()
+tiltCommand = "Tilt".lower()
 # Runs simulation for the specific component of the rocket
 class Simulation:
     # dt can be dynamic in the future, so we need to 
@@ -58,6 +59,9 @@ class Simulation:
         self.x = x0.copy()
         self.baro = 0
         self.time_stamp = time_stamp
+        self.nominal = angleCheck
+        if (self.nominal  == tiltCommand):
+            self.rocket
         self.sensor_config = self.rocket.stage_config['sensors']
     
     def time_step(self):
@@ -147,8 +151,15 @@ def simulator(x0, rocket, motor, dt) -> None:
     t_start = time.time()
     simulator.run_stages()
     simulator.coast()
+    
+    def tiltlockoutcheck(rocket, angleCheck):
+        
+
+
     t_end = time.time() - t_start
     print(f"Runtime: {t_end:.2f} seconds")
+
+
 
 
 if __name__ == '__main__':
