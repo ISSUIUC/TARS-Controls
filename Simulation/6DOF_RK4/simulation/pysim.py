@@ -61,7 +61,7 @@ class Simulation:
         self.time_stamp = time_stamp
         self.nominal = angleCheck
         if (self.nominal  == tiltCommand):
-            self.rocket
+            self.rocket.multiplier = 30
         self.sensor_config = self.rocket.stage_config['sensors']
     
     def time_step(self):
@@ -152,7 +152,7 @@ def simulator(x0, rocket, motor, dt) -> None:
     simulator.run_stages()
     simulator.coast()
     
-    def tiltlockoutcheck(rocket, angleCheck):
+    
         
 
 

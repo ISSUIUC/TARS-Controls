@@ -39,7 +39,7 @@ class Forces:
     rasaero_file_location = "" # Will be set in constructor
     rasaero = None
 
-    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm, multiplier):
+    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm, multiplier=1):
         self.max_ext_length = max_ext_length
         self.cm = cm
         self.cp = cp
@@ -216,6 +216,6 @@ class Forces:
         alpha = np.arccos(np.dot(incident_velocity, orientation))
         if(np.linalg.norm(incident_velocity) == 0):
             alpha = 0
-        return alpha * multiplier
+        return alpha * self.multiplier
     
     
