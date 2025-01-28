@@ -23,7 +23,7 @@ class KalmanFilter:
         self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
         self.R = np.diag([2., 1.9, 1.9, 1.9])
-        self.P_k = np.zeros((9,9))
+        self.P_k = np.eye(9)
         self.x_priori = np.zeros((9,1))
         self.P_priori = np.zeros((9,9))
         self.F = np.zeros((9,9))
@@ -91,18 +91,20 @@ class KalmanFilter:
                  vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 1.0
                 ])
         self.x_priori = self.x_k + xdot * self.s_dt
-        if Ftx != 0:
-            print("xdot: ", xdot)
+        #if Ftx != 0:
+        #    print("xdot: ", xdot)
+
+        #self.x_k = self.x_priori
         # linearized dynamics are F
-        self.F = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, w_z, -w_y, 0, 0, 0], 
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, 1, 0, 0, 0, 0], 
-                           [0, 0, 0, -w_z, w_x, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, 0, 1, 0, 0, 0], 
-                           [0, 0, 0, w_y, -w_x, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0]])
+        self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, -np.pi*Ca*r**2*rho*vel_x/m, 0, 0, -np.pi*Ca*r**2*rho*vel_y/m + w_z, 0, 0, -np.pi*Ca*r**2*rho*vel_z/m - w_y, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, np.pi*Cn*r**2*rho*vel_x/m - w_z, 0, 0, np.pi*Cn*r**2*rho*vel_y/m + w_x, 0, 0, np.pi*Cn*r**2*rho*vel_z/m, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, np.pi*Cn*r**2*rho*vel_x/m + w_y, 0, 0, np.pi*Cn*r**2*rho*vel_y/m - w_x, 0, 0, np.pi*Cn*r**2*rho*vel_z/m, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
         self.P_priori = self.F @ self.P_k @ self.F.T + self.Q
 
@@ -116,7 +118,7 @@ class KalmanFilter:
             y_accel (float): y acceleration
             z_accel (float): z acceleration
         """
-
+        
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
         acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
         w_acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])

@@ -386,7 +386,7 @@ class Rocket:
         a = velocity / 340.29
         if (a < 0.01):
             a = 0.01
-        df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == 0) & (self.coeffs_df["Mach"] == round(a, 2))]
+        df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == 2) & (self.coeffs_df["Mach"] == round(a, 2))]
         self.coeffs_dict["CN"].append(df_specific["CN"].values[0])
         self.coeffs_dict["CA Power-On"].append(df_specific["CA Power-On"].values[0])
         self.coeffs_dict["CA Power-Off"].append(df_specific["CA Power-Off"])
