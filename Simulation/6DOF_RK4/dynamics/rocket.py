@@ -120,7 +120,7 @@ class Rocket:
                                     self.rocket_dry_mass,
                                     self.motor,
                                     stage_config["rocket_body"]["rasaero_lookup_file"],
-                                    self.atm, multiplier)
+                                    self.atm)
 
 
     def get_total_motor_mass(self, timestamp) -> float:

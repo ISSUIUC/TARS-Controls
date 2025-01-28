@@ -16,8 +16,7 @@ import random
 
 # Define Objects
 
-angleCheck = input("Nominal or Tilted Angle of Attack?   ").lower()
-tiltCommand = "Tilt".lower()
+
 
 class Forces:
     """Forces on rocket:
@@ -54,7 +53,7 @@ class Forces:
 
     
 
-    def get_force(self, x_state, flap_ext, time_stamp, ejection_force, theta, phi, density_noise=False) -> np.ndarray:
+    def get_force(self, x_state, flap_ext, time_stamp, ejection_force, theta, phi, multiplier, density_noise=False) -> np.ndarray:
         '''Calculates net force felt by rocket while accounting for thrust, drag, gravity, wind
 
         Args:
@@ -78,7 +77,7 @@ class Forces:
 
         """
 
-        alpha = self.get_alpha(x_state, wind_vector)
+        alpha = self.get_alpha(x_state, wind_vector) * multiplier
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
@@ -209,7 +208,7 @@ class Forces:
         aerodynamic_moment = np.cross(self.cp - self.motor.cm, aerodynamic_force)
         return aerodynamic_moment
         
-    def get_alpha(self, x_state, wind_vector, multiplier) -> float:
+    def get_alpha(self, x_state, wind_vector) -> float:
 
         incident_velocity = vct.world_to_body(*x_state[2], vct.norm(x_state[1] + wind_vector))
         orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))

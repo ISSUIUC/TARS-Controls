@@ -11,6 +11,7 @@ class Simulator():
     atm = None
     rocket = None
     forces = None
+    Vmultiplier = 1
     
     def __init__(self, atm: atm_model.Atmosphere, rocket: rocket_model.Rocket):
         self.atm = atm
@@ -18,7 +19,7 @@ class Simulator():
         
     ### TEST PURPOSES ###
     def newtonProp(self, y0, dt, time_stamp, flap_ext=0) -> np.ndarray:
-        temp = (self.rocket.forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp))
+        temp = (self.rocket.forces.get_force(np.array([y0[0], y0[1], y0[3], y0[4]]), flap_ext, time_stamp, multiplier = self.Vmultiplier))
         a = temp[0]/self.rocket.rocket_total_mass
 
         moment = temp[1]
@@ -89,7 +90,7 @@ class Simulator():
 
         ang_p = (y0[3] + (1/6)*(k1_ap+(2*k2_ap)+(2*k3_ap)+k4_ap)*dt)
 
-        temp,alpha = (self.rocket.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi, density_noise=density_noise))
+        temp,alpha = (self.rocket.forces.get_force(np.array([p, v, y0[3], y0[4]]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi, density_noise=density_noise, multiplier = self.Vmultiplier))
         a = temp[0]/rocket_total_mass
 
         return np.array([p, v, a, ang_p, ang_v, I_inv @ temp[1]]), alpha
@@ -121,4 +122,4 @@ class Simulator():
         Returns:
             (np.array): rate of change of velocity (acceleration) in form of state vector
         '''
-        return self.rocket.forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi)[0] # return slope times mass/inertia 
+        return self.rocket.forces.get_force(np.array([pos, vel, ang_pos, ang_vel]), flap_ext, time_stamp, ejection_force, ejection_theta, ejection_phi, multiplier = self.Vmultiplier)[0] # return slope times mass/inertia 
