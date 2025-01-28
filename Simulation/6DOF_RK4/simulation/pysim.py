@@ -95,6 +95,9 @@ class Simulation:
 
             is_staging = start and self.rocket.current_stage != -1
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, is_staging, 0)
+            # what are the exact parameters being passed through and for what?
+            # the function for RK4 is defined as:
+            # def RK4(self, y0, dt, time_stamp, flap_ext=0, staging=False, staging_noise= False, density_noise=False) -> np.ndarray:
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
@@ -151,8 +154,6 @@ def simulator(x0, rocket, motor, dt) -> None:
     t_start = time.time()
     simulator.run_stages()
     simulator.coast()
-    
-    def tiltlockoutcheck(rocket, angleCheck):
         
 
 
