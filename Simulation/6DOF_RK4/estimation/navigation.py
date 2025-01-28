@@ -46,13 +46,15 @@ class Navigation:
         Ca = self.rocket.get_ca_on()
         Cp = self.rocket.get_cp()
         Thrust = self.rocket.get_motor().get_thrust(timestep)
+        print("Time: ", timestep)
+        print("Thrust: ", Thrust)
         m = self.rocket.get_rocket_total_mass(timestep)
         r = self.rocket.r_r
         h = self.rocket.l
 
         self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, h, Cn, Ca, Cp, rho, bno_ang_pos, accel)
         self.r_kalman_filter.priori()
-        # self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
+        self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         self.r_kalman_filter.update(*gyro, *accel)
         
         
