@@ -72,12 +72,15 @@ class KalmanFilter:
         w_x, w_y, w_z = w_acc * self.s_dt
         J_x = 1/2 * m * r**2
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
-        J_z = J_y     
+
+        J_z = J_y
+
         Fax, Fay, Faz = 0,0,0                                   # aerodynamic forces expressed on the body in each direction
-        Fax = -0.5*rho*(vel_mag**2)*Ca*(np.pi*r**2)             # drag force
+        Fax = -0.5*rho*(vel_mag**2)*float(Ca)*(np.pi*r**2)             # drag force
 
         #TODO: Verify Cn is being pulled from Aneesh's lookup table
         Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
+        print(Cn.dtype)
         Faz = Fay
 
         g = 9.81 # Earth gravity
