@@ -22,7 +22,7 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     Args:
         sim_dict (dict): Dictionary containing simulation data
         sensor_dict (dict, optional): Dictionary containing sensor data. Defaults to 0.
-        kalmann_dict (dict, optional): Dictionary containing kalman filter data. Defaults to 0.
+        kalman_dict (dict, optional): Dictionary containing kalman filter data. Defaults to 0.
     """
     fig_linear,(pos_nc,vel_nc,accel_nc,flap_nc) = plt.subplots(4,1,figsize=(15,10), sharex=True);   
     fig_linear.suptitle("PYSIM 6DOF LINEAR PLOT", color='#F5B14C', fontsize = 20);  
@@ -33,7 +33,8 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     # pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,1], label="Y", color="tab:green", linewidth = 2);   
     # pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,2], label="Z", color="tab:blue", linewidth = 2);    
     # pos_nc.plot(sensor_dict["time"], sensor_dict["baro_alt"], label="Baro Alt", color="darkred", linestyle = ":",linewidth = 2);    
-    pos_nc.plot(kalman_dict["time"][:9000], kalman_dict["kalman_pos"][:9000,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);   
+    pos_nc.plot(kalman_dict["time"][:9000], kalman_dict["kalman_pos"][:9000,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);
+    pos_nc.plot(kalman_dict["time"][7500], kalman_dict["kalman_pos"][7500,0], marker='o', markersize=5, color="purple");   
     # pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
     # pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
     # pos_nc.plot(sensor_dict["time"], sensor_dict["apogee_estimate"], label="Apogee Estimate",color="brown", linewidth = 2); 

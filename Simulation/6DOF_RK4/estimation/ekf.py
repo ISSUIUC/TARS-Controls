@@ -84,7 +84,9 @@ class KalmanFilter:
         Fg = np.array([-g, 0, 0])
         Fg_body = np.linalg.inv(R) @ Fg
         Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]      # gravitational forces expressed on the body in each direction
-        Ftx, Fty, Ftz = T[0],T[1],T[2]                                # thrust forces in each direciton ( we assume that is in one direction)
+        Ftx, Fty, Ftz = T[0],T[1],T[2]
+
+                                        # thrust forces in each direciton ( we assume that is in one direction)
         # states tracked: x, vx, ax, y, vy, ay, z, vz, az
         xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 1.0,
                  vel_y, (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), 1.0,
