@@ -29,13 +29,13 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
     plt.xlabel("Time (s)", fontsize = 14);  
-    pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,0], label="X", color="tab:red", linewidth = 2); 
-    pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,1], label="Y", color="tab:green", linewidth = 2);   
-    pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,2], label="Z", color="tab:blue", linewidth = 2);    
+    pos_nc.plot(sim_dict["time"][:9000], sim_dict["pos"][:9000,0], label="X", color="tab:red", linewidth = 2); 
+    # pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,1], label="Y", color="tab:green", linewidth = 2);   
+    # pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,2], label="Z", color="tab:blue", linewidth = 2);    
     # pos_nc.plot(sensor_dict["time"], sensor_dict["baro_alt"], label="Baro Alt", color="darkred", linestyle = ":",linewidth = 2);    
-    pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);   
-    pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
-    pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
+    pos_nc.plot(kalman_dict["time"][:9000], kalman_dict["kalman_pos"][:9000,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);   
+    # pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
+    # pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
     # pos_nc.plot(sensor_dict["time"], sensor_dict["apogee_estimate"], label="Apogee Estimate",color="brown", linewidth = 2); 
     pos_nc.axhline(y=sim_dict["pos"][-1,0], label="Sim Apogee", linestyle = "dashed", color="gray", linewidth = 2); 
     pos_nc.axhline(y=config["desired_apogee"], label="Desired Apogee", linestyle = "dashed", color="orange", linewidth = 2); 

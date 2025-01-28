@@ -65,7 +65,7 @@ class Rocket:
         
         #Import dataframe from CSV so it doesn't have to call it every time
 
-        dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        dir = os.path.dirname(os.path.dirname(os. path.abspath(__file__)))
         csv_path = os.path.join(dir, "LookUp", "ekf_cd_test.csv")
         self.coeffs_df = pd.read_csv(csv_path)
 
@@ -86,6 +86,8 @@ class Rocket:
         self.cm_motor = stage_config["motor"]["cm"]
         self.cm = stage_config['rocket_body']['combined_cm']
         self.cp = stage_config['rocket_body']['combined_cp']
+        
+        self.dt = dt
 
         self.impulse = stage_config["motor"]["impulse"]
         self.motor_mass = stage_config["motor"]["motor_mass"]
@@ -101,7 +103,6 @@ class Rocket:
         self.A_s = 2 * self.r_r * self.l # surface area
         self.max_ext_length = stage_config["flaps"]["max_ext_length"]
         self.atm = atm
-
         self.init_dicts()
         
         # Initializing the coefficients
@@ -233,19 +234,19 @@ class Rocket:
         return self.coeffs_dict["CN"][-1]
     
     def get_ca_on(self):
-        return 0 if self.current_stage == -1 else self.coeffs_dict["CA Power-On"][-1]
+        return self.coeffs_dict["CA Power-On"][-1]
     
     def get_ca_off(self):
-        return 0 if self.current_stage == -1 else self.coeffs_dict["CA Power-Off"][-1]
+        return self.coeffs_dict["CA Power-Off"][-1]
     
     def get_cd_on(self):
-        return 0 if self.current_stage == -1 else self.coeffs_dict["CD Power-On"][-1]
+        return self.coeffs_dict["CD Power-On"][-1]
     
     def get_cd_off(self):
-        return 0 if self.current_stage == -1 else self.coeffs_dict["CD Power-Off"][-1]
+        return self.coeffs_dict["CD Power-Off"][-1]
     
     def get_cp(self):
-        return 0 if self.current_stage == -1 else self.coeffs_dict["CP"][-1]
+        return self.coeffs_dict["CP"][-1]
 
     def I(self, total_mass): 
         """Returns the inertia matrix of the rocket
@@ -379,13 +380,15 @@ class Rocket:
         self.sim_dict["motor_mass"].append(motor_mass)
 
         #Update coefficients (how to find angle of attack???)
-        self.update_coeffs(np.linalg.norm(x[1]), self.sim_dict["alpha"][0])
+        self.update_coeffs(np.linalg.norm(x[1]))
 
-    def update_coeffs(self, velocity, angle_of_attack):
+    def update_coeffs(self, velocity):
         a = velocity / 340.29
-        df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == angle_of_attack) & (self.coeffs_df["Mach"] == (a / 340.29))]
-        self.coeffs_dict["CN"].append(df_specific["CN"])
-        self.coeffs_dict["CA Power-On"].append(df_specific["CA Power-On"])
+        if (a < 0.01):
+            a = 0.01
+        df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == 2) & (self.coeffs_df["Mach"] == round(a, 2))]
+        self.coeffs_dict["CN"].append(df_specific["CN"].values[0])
+        self.coeffs_dict["CA Power-On"].append(df_specific["CA Power-On"].values[0])
         self.coeffs_dict["CA Power-Off"].append(df_specific["CA Power-Off"])
         self.coeffs_dict["CD Power-On"].append(df_specific["CD Power-On"])
         self.coeffs_dict["CD Power-Off"].append(df_specific["CD Power-Off"])
