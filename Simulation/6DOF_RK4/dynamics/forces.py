@@ -77,7 +77,7 @@ class Forces:
 
         """
 
-        alpha = self.get_alpha(x_state, wind_vector) * multiplier
+        alpha = self.get_alpha(x_state, wind_vector) 
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav

@@ -46,6 +46,7 @@ class Simulator():
         Returns:
             (np.array): state vector of rocket in x-axis [6x3]
         '''
+        Rk4Multiplier = self.Vmultiplier
         if staging:
             ejection_force = (random.gauss(0, 1) if staging_noise else 0)+12
             ejection_theta = random.gauss(0, .05) if staging_noise else 0
