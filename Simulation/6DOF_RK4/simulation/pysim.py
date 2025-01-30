@@ -109,9 +109,11 @@ class Simulation:
  
     def run_stages(self):
         has_more_stages = True
-        while has_more_stages:
+        while has_more_stages: 
+            if(self.motor.burnout(self.time_stamp)):
+                print(f"Motor burnout at {self.time_stamp}")
             self.execute_stage()
-            has_more_stages = self.rocket.separate_stage(self.time_stamp)
+            has_more_stages = self.rocket.separate_stage(self.time_stamp) 
 
     # Function to retrive all sensor data
     def get_sensor_data(self):
@@ -127,6 +129,8 @@ class Simulation:
         return (current_state, current_cov, current_state_r)
 
     def coast(self):
+        if(self.motor.burnout(self.time_stamp)): 
+            print(f"Motor burnout at {self.time_stamp}")
         while self.x[1, 0] >= 0:
         # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
@@ -189,16 +193,15 @@ if __name__ == '__main__':
     
     record = rocket.to_csv()
    
-    if(angleCheck == tiltCommand):
-        motorCutoffCount = True
-        while motorCutoffCount:
-            for point in range(len(rocket.sim_dict["time"])):
-                if (rocket.sim_dict["alpha"][point] > 23):
-                    print("Motor cutoff should happen at time: ", rocket.sim_dict["time"][point])
-                    motorCutoffCount = False
-                    break
-
-
+    
+    motorCutoffCount = True
+    while motorCutoffCount:
+         for point in range(len(rocket.sim_dict["time"])):
+            if (rocket.sim_dict["alpha"][point] > 23):
+                print("Motor cutoff should happen at time: ", rocket.sim_dict["time"][point])
+                motorCutoffCount = False
+                break
+         motorCutoffCount = False
 
     output_dir = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     if not os.path.exists(output_dir):
