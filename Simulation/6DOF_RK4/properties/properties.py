@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 # Config file
-sim_config = "../properties/configs/staging_rocket.yaml"
+sim_config = "../properties/configs/stargazer14_flightlike.yaml"
 
 ### Calculated constants
 # Gravitational const

@@ -69,6 +69,15 @@ class Forces:
         wind_vector = self.atm.get_wind_vector(time_stamp)
         alpha = self.get_alpha(x_state, wind_vector)
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
+
+
+        
+        # This is super hacky but i think there is some floating point bs going on
+        drag_magnitude = np.linalg.norm(drag)
+        max_drag = 70
+        if(drag_magnitude > max_drag):
+            drag = (drag/drag_magnitude) * max_drag
+
         grav = self.gravitational_force(alt, time_stamp)
         force = vct.body_to_world(*x_state[2],thrust + drag) + grav
         moment = vct.body_to_world(*x_state[2], np.cross(-self.cm, thrust) + self.aerodynamic_moment(drag))
