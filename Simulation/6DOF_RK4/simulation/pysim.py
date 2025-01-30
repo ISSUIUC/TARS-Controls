@@ -191,8 +191,7 @@ if __name__ == '__main__':
 
     simulator(x0, rocket, motor, dt)
 
-    apogee_index = max(range(len(rocket.sim_dict["pos"])), key=lambda i: rocket.sim_dict["pos"][i][0])
-    print(f"Apogee at: {rocket.sim_dict["time"][apogee_index]}")
+    print(f"Apogee at: {rocket.sim_dict["time"][max(range(len(rocket.sim_dict["pos"])), key=lambda i: rocket.sim_dict["pos"][i][0])]}")
     
     motorCutoffCount = True
     while motorCutoffCount:
