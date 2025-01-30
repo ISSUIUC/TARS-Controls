@@ -48,6 +48,7 @@ import environment.atmosphere as atmosphere
 config = dataloader.config
 angleCheck = input("Nominal or Tilted Angle of Attack?   ").lower()
 tiltCommand = "Tilt".lower()
+
 # Runs simulation for the specific component of the rocket
 class Simulation:
     # dt can be dynamic in the future, so we need to 
@@ -79,9 +80,11 @@ class Simulation:
 
     def execute_stage(self):
         # Run the stages
+        
         stage_separation_delay = 1
         self.rocket.get_motor().ignite(self.time_stamp)
-
+        if(rocket.current_stage == -1):
+            print(f"Take off at {self.time_stamp}")
         ignition_time = self.time_stamp
         start = True
         print(f"Staged at {self.time_stamp}")
@@ -183,8 +186,9 @@ if __name__ == '__main__':
     simulator(x0, rocket, motor, dt)
 
     print("Writing to file...")
-
+    
     record = rocket.to_csv()
+   
     if(angleCheck == tiltCommand):
         motorCutoffCount = True
         while motorCutoffCount:
@@ -193,6 +197,8 @@ if __name__ == '__main__':
                     print("Motor cutoff should happen at time: ", rocket.sim_dict["time"][point])
                     motorCutoffCount = False
                     break
+
+
 
     output_dir = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     if not os.path.exists(output_dir):
