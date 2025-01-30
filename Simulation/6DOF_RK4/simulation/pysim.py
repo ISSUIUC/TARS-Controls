@@ -191,10 +191,8 @@ if __name__ == '__main__':
 
     simulator(x0, rocket, motor, dt)
 
-    print("Writing to file...")
-    
-    record = rocket.to_csv()
-   
+    apogee_index = max(range(len(rocket.sim_dict["pos"])), key=lambda i: rocket.sim_dict["pos"][i][0])
+    print(f"Apogee at: {rocket.sim_dict["time"][apogee_index]}")
     
     motorCutoffCount = True
     while motorCutoffCount:
@@ -204,7 +202,11 @@ if __name__ == '__main__':
                 motorCutoffCount = False
                 break
          motorCutoffCount = False
-
+    
+    print("Writing to file...")
+    
+    record = rocket.to_csv()
+   
     output_dir = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     if not os.path.exists(output_dir):
         os.makedirs(output_dir) 
