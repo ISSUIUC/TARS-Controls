@@ -198,7 +198,7 @@ if __name__ == '__main__':
     while motorCutoffCount:
          for point in range(len(rocket.sim_dict["time"])):
             if (rocket.sim_dict["alpha"][point] > 23):
-                print("Motor cutoff should happen at time: ", rocket.sim_dict["time"][point])
+                print("Angle of attack exceeds 23 degrees: ", rocket.sim_dict["time"][point])
                 motorCutoffCount = False
                 break
          motorCutoffCount = False
