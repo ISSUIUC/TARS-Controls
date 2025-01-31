@@ -3,6 +3,9 @@ import numpy as np
 
 # Config file
 sim_config = "../properties/configs/stargazer14_flightlike.yaml"
+tiltlock_startkey = "    - sustainer:"
+tiltlock_endkey = "desired_apogee: 1824"
+
 
 ### Calculated constants
 # Gravitational const

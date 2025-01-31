@@ -49,6 +49,9 @@ config = dataloader.config
 angleCheck = input("Nominal or Tilted Angle of Attack?   ").lower()
 tiltCommand = "Tilt".lower()
 
+if angleCheck == tiltCommand:
+    config = dataloader.config_tilt
+
 # Runs simulation for the specific component of the rocket
 class Simulation:
     # dt can be dynamic in the future, so we need to 
@@ -191,7 +194,11 @@ if __name__ == '__main__':
 
     simulator(x0, rocket, motor, dt)
 
-    print(f"Apogee at: {rocket.sim_dict["time"][max(range(len(rocket.sim_dict["pos"])), key=lambda i: rocket.sim_dict["pos"][i][0])]}")
+    apogee_index = max(range(len(rocket.sim_dict["pos"])), key=lambda i: rocket.sim_dict["pos"][i][0])
+    apogee_time = rocket.sim_dict["time"][apogee_index]
+    apogee_pos = rocket.sim_dict["pos"][apogee_index][0]
+    print(f"Apogee at: {apogee_time}, reaches to {apogee_pos}")
+
     
     motorCutoffCount = True
     while motorCutoffCount:
@@ -205,6 +212,14 @@ if __name__ == '__main__':
     print("Writing to file...")
     
     record = rocket.to_csv()
+
+
+    output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
+    with open(output_file, 'w') as f:
+        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
+        for point in record:
+            f.write(f"{','.join(point)}\n")
+"""
    
     output_dir = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     if not os.path.exists(output_dir):
@@ -214,12 +229,6 @@ if __name__ == '__main__':
          f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
          for point in record:
              f.write(f"{','.join(point)}\n")
+    """
 
-"""
-    output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
-    with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
-        for point in record:
-            f.write(f"{','.join(point)}\n")
-"""
     

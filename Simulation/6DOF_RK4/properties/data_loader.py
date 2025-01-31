@@ -72,4 +72,55 @@ def load_config(config_path):
   print("PySim Configuration loaded with no fatal errors.")
   return yaml_content
 
+def load_config_skip_section(config_path, start_key, end_key):
+    """Loads and validates a config, but skips content between start_key and end_key."""
+    
+    if config is not None:
+        print("PySim Configuration WARN: data_loader.load_config_skip_section() has been called more than once.")
+
+    raw_yaml = ""
+
+    with open(os.path.join(os.path.dirname(__file__), "../properties/typedef.yaml")) as typedef:
+        raw_yaml += typedef.read()
+
+    template_directory = os.path.join(os.path.dirname(__file__), "../properties/templates")
+    for template_filename in os.listdir(template_directory):
+        template = os.path.join(template_directory, template_filename)
+        if os.path.isfile(template) and template.endswith(".yaml"):
+            with open(template) as template_raw:
+                raw_yaml += "\n" + template_raw.read()
+        else:
+            print(f"PySim Configuration WARN: Non-YAML file {template} found in /templates.")
+
+    with open(os.path.join(os.path.dirname(__file__), config_path)) as cfg_raw:
+        raw_yaml += "\n" + cfg_raw.read()
+
+    filtered_yaml = skip_section(raw_yaml, start_key, end_key)
+
+    yaml_content = list(yaml.load_all(filtered_yaml, Loader=get_loader()))[0]  
+    validate_config(yaml_content)
+    del yaml_content['define']  # Remove header data
+
+    print("PySim Configuration loaded with sustainer motor cut.")
+    return yaml_content
+
+def skip_section(yaml_text, start_key, end_key):
+    """Removes lines from start_key to end_key in a YAML string."""
+    lines = yaml_text.splitlines()
+    result = []
+    skip = False
+
+    for line in lines:
+        if start_key in line:
+            skip = True  
+        if end_key in line:
+            skip = False  
+            continue  
+
+        if not skip:
+            result.append(line)
+
+    return "\n".join(result)
+
 config = load_config(prop.sim_config)
+config_tilt = load_config_skip_section(prop.sim_config, prop.tiltlock_startkey, prop.tiltlock_endkey)
