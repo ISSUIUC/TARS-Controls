@@ -71,11 +71,10 @@ class Forces:
         thrust = self.motor.get_thrust(time_stamp)
         wind_vector = self.atm.get_wind_vector(time_stamp)
 
-        """
-        if 
-
-
-        """
+        drag_magnitude = np.linalg.norm(drag)
+        max_drag = 70
+        if(drag_magnitude > max_drag):
+            drag = (drag/drag_magnitude) * max_drag
 
         alpha = self.get_alpha(x_state, wind_vector) 
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
