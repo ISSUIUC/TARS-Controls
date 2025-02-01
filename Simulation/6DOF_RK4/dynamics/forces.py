@@ -38,7 +38,7 @@ class Forces:
     rasaero_file_location = "" # Will be set in constructor
     rasaero = None
 
-    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm, multiplier=1):
+    def __init__(self, max_ext_length, cm, cp, A, A_s, rocket_dry_mass, motor, rasaero_lookup_file, atm, given_multiplier=1):
         self.max_ext_length = max_ext_length
         self.cm = cm
         self.cp = cp
@@ -47,7 +47,7 @@ class Forces:
         self.rocket_dry_mass = rocket_dry_mass
         self.motor = motor
         self.atm = atm
-        self.multiplier = multiplier
+        self.Alpha_Tilt_Multiplier = given_multiplier
         self.rasaero_file_location = os.path.join(os.path.dirname(__file__), rasaero_lookup_file)
         self.rasaero = pd.read_csv(self.rasaero_file_location)
 
@@ -75,6 +75,8 @@ class Forces:
         alpha = self.get_alpha(x_state, wind_vector) 
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
 
+        # no clue why drag is not working as intended orignally, this is like a bandaid over the problem
+        # needs to be looked at down the road but works for now. DO NOT DELETE!!!!
         drag_magnitude = np.linalg.norm(drag)
         max_drag = 70
         if(drag_magnitude > max_drag):
@@ -217,6 +219,8 @@ class Forces:
         alpha = np.arccos(np.dot(incident_velocity, orientation))
         if(np.linalg.norm(incident_velocity) == 0):
             alpha = 0
-        return alpha * self.multiplier
+        # Takes alpha value generated mathematically and multiplies it by the Alpha_Tilt_Multiplier
+        #   Multiplier = 1 if Nominal, else if tilt_lockout: Multiplier = 30 
+        return alpha * self.Alpha_Tilt_Multiplier
     
     

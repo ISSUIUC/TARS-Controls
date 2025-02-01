@@ -29,8 +29,6 @@ import os
 import sys
 import shutil
 
-# hello is this working
-
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
@@ -44,10 +42,22 @@ import time
 import dynamics.rocket as rocket_model
 import environment.atmosphere as atmosphere
 
+""""
+This branch of TARS-Controls purpose is to modify Pysim to allow for non-nominal flight data.
+
+
+
+""""
+
 # Load desired config file
 config = dataloader.config
+#Asks if user would like a nominal flight or one with Tilt Lockout. 
 angleCheck = input("Nominal or Tilted Angle of Attack?   ").lower()
 tiltCommand = "Tilt".lower()
+
+# zero at first, it waits for program to load and then when first rocket ignites, it tracks that value for calc used later
+# for some reason when the rocket is staged, it gets a random alpha value. just ignore it, its not a big deal 
+firstIgnitTime = 0
 
 if angleCheck == tiltCommand:
     config = dataloader.config_tilt
@@ -86,12 +96,16 @@ class Simulation:
         
         stage_separation_delay = 1
         self.rocket.get_motor().ignite(self.time_stamp)
+        # Print take off time stamp
         if(rocket.current_stage == -1):
             print(f"Take off at {self.time_stamp}")
         ignition_time = self.time_stamp
+        # Print sustainer ignition time stamp
+            # Checks current stage >= 0 to make sure current stage != first stage
         if(rocket.current_stage >= 0):
             print(f"Sustainer Ignition at {ignition_time}")
         start = True
+        # Print staging time stamp
         print(f"Staged at {self.time_stamp}")
         while self.time_stamp < ignition_time + self.rocket.get_motor().get_burn_time() + stage_separation_delay:
             # Get sensor data
@@ -103,7 +117,6 @@ class Simulation:
 
             is_staging = start and self.rocket.current_stage != -1
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, is_staging, 0)
-            # what are the exact parameters being passed through and for what?
             # the function for RK4 is defined as:
             # def RK4(self, y0, dt, time_stamp, flap_ext=0, staging=False, staging_noise= False, density_noise=False) -> np.ndarray:
 
@@ -116,7 +129,9 @@ class Simulation:
         has_more_stages = True
         while has_more_stages: 
             if(self.motor.burnout(self.time_stamp)):
-                print(f"Motor burnout at {self.time_stamp}")
+                # Prints motor burn out time
+                print(f"First Motor burnout at {self.time_stamp}")
+                firstIgnitTime = self.time_stamp
             self.execute_stage()
             has_more_stages = self.rocket.separate_stage(self.time_stamp) 
 
@@ -135,7 +150,7 @@ class Simulation:
 
     def coast(self):
         if(self.motor.burnout(self.time_stamp)): 
-            print(f"Motor burnout at {self.time_stamp}")
+            print(f"Sustainer Motor burnout at {self.time_stamp}")
         while self.x[1, 0] >= 0:
         # Get sensor data
             baro_alt, accel, gyro, bno_ang_pos = self.get_sensor_data()
@@ -192,24 +207,47 @@ if __name__ == '__main__':
     motor = rocket.motor
     sim = sim_class.Simulator(atm=atm, rocket=rocket)
 
+    print("Aye, the beat go off?")
+
     simulator(x0, rocket, motor, dt)
 
     apogee_index = max(range(len(rocket.sim_dict["pos"])), key=lambda i: rocket.sim_dict["pos"][i][0])
     apogee_time = rocket.sim_dict["time"][apogee_index]
     apogee_pos = rocket.sim_dict["pos"][apogee_index][0]
+    # Prints apogee time stamp and height
     print(f"Apogee at: {apogee_time}, reaches to {apogee_pos}")
 
-    
-    motorCutoffCount = True
-    while motorCutoffCount:
+    # this checks for when angle is past our threshhold, currently 23 for SG1.4
+    angle_exceeded = True
+    while angle_exceeded:
          for point in range(len(rocket.sim_dict["time"])):
-            if (rocket.sim_dict["alpha"][point] > 23):
+            # checks if our angle of attack is past 23 AND is past staging point
+            if (rocket.sim_dict["alpha"][point] > 23) and (rocket.sim_dict["time"][point] > firstIgnitTime):
                 print("Angle of attack exceeds 23 degrees: ", rocket.sim_dict["time"][point])
-                motorCutoffCount = False
+                angle_exceeded = False
                 break
-         motorCutoffCount = False
+         angle_exceeded = False
     
     print("Writing to file...")
+
+    """ Alot of data is written to the console. when running it under nominal conditions, you should see something like 
+PySim Configuration loaded with no fatal errors.
+PySim Configuration WARN: data_loader.load_config_skip_section() has been called more than once.
+PySim Configuration WARN: desired_apogee is inherited from a structure but has an unset value.
+PySim Configuration loaded with sustainer motor cut.
+Nominal or Tilted Angle of Attack?   nom
+Take off at 60.00999999999663
+Staged at 60.00999999999663
+Motor burnout at 62.97999999999604
+Sustainer Ignition at 62.97999999999604
+Staged at 62.97999999999604
+Motor burnout at 66.51999999999713
+Runtime: 11.59 seconds
+Apogee at: 76.36000000000216, reaches to 1362.6535973142961
+Writing to file...
+
+however, when running tilt, you should not see sustainer ignition and burnout. double check to make sure thats happening
+    """
     
     record = rocket.to_csv()
 
@@ -219,6 +257,10 @@ if __name__ == '__main__':
         f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
+
+# probably safe to delete, had issues creating csv on some machines, so sometimes we alternated between the two
+# or keep it here in case u need it ¯\_(ツ)_/¯
+
 """
    
     output_dir = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
@@ -230,5 +272,6 @@ if __name__ == '__main__':
          for point in record:
              f.write(f"{','.join(point)}\n")
     """
+
 
     

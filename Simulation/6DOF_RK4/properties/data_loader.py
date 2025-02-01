@@ -73,7 +73,10 @@ def load_config(config_path):
   return yaml_content
 
 def load_config_skip_section(config_path, start_key, end_key):
-    """Loads and validates a config, but skips content between start_key and end_key."""
+    """Loads and validates a config, but skips content between start_key and end_key.
+    this is for tilt lockout scenarios, where we skip through the yaml file and cut out the second motor to test
+    drogue deployment. its literally a copy-paste of the load_config function except after raw yaml += and filteredyaml shows up
+    """
     
     if config is not None:
         print("PySim Configuration WARN: data_loader.load_config_skip_section() has been called more than once.")
@@ -105,7 +108,12 @@ def load_config_skip_section(config_path, start_key, end_key):
     return yaml_content
 
 def skip_section(yaml_text, start_key, end_key):
-    """Removes lines from start_key to end_key in a YAML string."""
+    """Removes lines from start_key to end_key in a YAML string.
+    startkey will typically be "        sustainer:"
+    endkey will be like "desired apogee:", 
+    and it skips over everything starting at sustainer and right before desired apogee
+    works perfect for our two stage rockets if we follow naming convention, might need some tweaking once we go to three-stage 
+    """
     lines = yaml_text.splitlines()
     result = []
     skip = False
@@ -122,5 +130,6 @@ def skip_section(yaml_text, start_key, end_key):
 
     return "\n".join(result)
 
-config = load_config(prop.sim_config)
+config = load_config(prop.sim_config) # nominal config load, has all the gears and gadgets
 config_tilt = load_config_skip_section(prop.sim_config, prop.tiltlock_startkey, prop.tiltlock_endkey)
+# config for tilt, which shouldnt have sustainer motor data, check console when running pysim.py
