@@ -80,7 +80,6 @@ class KalmanFilter:
 
         #TODO: Verify Cn is being pulled from Aneesh's lookup table
         Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
-        print(Cn.dtype)
         Faz = Fay
 
         g = 9.81 # Earth gravity
@@ -94,10 +93,7 @@ class KalmanFilter:
                  vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 1.0
                 ])
         self.x_priori = self.x_k + xdot * self.s_dt
-        #if Ftx != 0:
-        #    print("xdot: ", xdot)
-
-        #self.x_k = self.x_priori
+        
         # linearized dynamics are F
         self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0],
                         [0, -np.pi*Ca*r**2*rho*vel_x/m, 0, 0, -np.pi*Ca*r**2*rho*vel_y/m + w_z, 0, 0, -np.pi*Ca*r**2*rho*vel_z/m - w_y, 0],

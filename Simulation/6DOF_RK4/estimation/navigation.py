@@ -46,8 +46,6 @@ class Navigation:
         Ca = self.rocket.get_ca_on()
         Cp = self.rocket.get_cp()
         Thrust = self.rocket.get_motor().get_thrust(timestep)
-        print("Time: ", timestep)
-        print("Thrust: ", Thrust)
         m = self.rocket.get_rocket_total_mass(timestep)
         r = self.rocket.r_r
         h = self.rocket.l
