@@ -19,6 +19,8 @@ class Rocket:
     motor = None
     forces = None
     stage_config = None
+    #Multiplier passed through to Rocket to be used for over exaggerating alpha values
+    Alpha_multiplier = 1
 
     def init_dicts(self):
         self.sim_dict = {
@@ -338,6 +340,7 @@ class Rocket:
         self.sim_dict["motor_mass"].append(motor_mass)
 
     # Converts the data saved in this sim into csv
+    
     def to_csv(self):
         #Output
         record = []

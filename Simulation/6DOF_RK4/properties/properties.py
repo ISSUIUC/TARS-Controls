@@ -2,7 +2,10 @@ import math
 import numpy as np
 
 # Config file
-sim_config = "../properties/configs/staging_rocket.yaml"
+sim_config = "../properties/configs/stargazer14_flightlike.yaml"
+tiltlock_startkey = "    - sustainer:"
+tiltlock_endkey = "desired_apogee:"
+
 
 ### Calculated constants
 # Gravitational const
