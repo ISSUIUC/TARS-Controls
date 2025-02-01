@@ -77,8 +77,7 @@ class KalmanFilter:
         Fax = -0.5*rho*(vel_mag**2)*float(Ca)*(np.pi*r**2)             # drag force
 
         #TODO: Verify Cn is being pulled from Aneesh's lookup table
-        Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2) # take a look at only the Cn and see what happens
-        # print(Cn.dtype)
+        Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
         Faz = Fay
 
         g = 9.81 # Earth gravity
@@ -94,12 +93,7 @@ class KalmanFilter:
                  vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0.0
                 ])
         self.x_priori = self.x_k + xdot * self.s_dt
-        if Ftx == 0:
-           print("timestep: ", timestep)
-           print("Fax: ", Fax)
-           print("Fay: ", Fay)
         
-        #self.x_k = self.x_priori
         # linearized dynamics are F
         self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0], 
                            [0, 0, 0, 0, w_z, 0, 0, -w_y, 0], 
