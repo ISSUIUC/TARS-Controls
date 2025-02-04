@@ -66,7 +66,7 @@ def implementKF(measuredDict):
    thrust = [7224.49, 0, 0] # N #incorrect 
    mass = 27.216 #incorrect 
    Cn = 0.3390199698975432132655550164 #incorrect 
-   Ca = 0.206077604507223 #incorrect 
+   Ca = 1.206077604507223 #incorrect 
    Cp = 106.21885107011164421915261998 #incorrect 
    
   
