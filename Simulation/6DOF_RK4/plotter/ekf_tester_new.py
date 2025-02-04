@@ -1,7 +1,6 @@
 import os
 import sys
 
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
@@ -9,33 +8,35 @@ import estimation.ekf as kf
 import pandas as pandas
 import matplotlib.pyplot as plt
 import properties.properties as prop
+import properties.data_loader as dataloader
 import dynamics.sensors as sensors
 import environment.atmosphere as Atmosphere
 import util.vectors as vct
 import numpy as np
+import dynamics.rocket as rocket_model
+
+
+#### PLEASE READ BELOW COMMENTS #####
+
+# ekf_tester_data.csv is too big for github to handle it seems (can't push), so when running this program
+# you have to manually upload the file when running. Change the file name in readData() accordingly.
 
 
 df_lowG_timestamp = 0
 df_highG_data = 0
 df_barometer_data = 0
 
-
-# measurementDataDict = {
-#     "ax": [],
-#     "barometer_altitude": [],
-#     "timestamp": []
-# }
 kalman_filter = None
 kalman_dict = {"x": []}
 
 
 def readData() :
    global df_lowG_timestamp, df_highG_data, df_barometer_data
-
-
+   
    df = pandas.read_csv("Simulation/6DOF_RK4/LookUp/ekf_tester_data.csv" ,
        usecols= ['timestamp', 'highg.ax', 'highg.ay', 'highg.az', 'barometer.altitude', 'kalman.position.px', 'orientation.yaw', 'orientation.pitch', 'orientation.roll'])
-   print(df[df["orientation.roll"] != None ])
+   #print(df[df["orientation.roll"] != None ])
+   
    return df.to_dict()
 
 
@@ -59,8 +60,8 @@ def implementKF(measuredDict):
   
    # unchanging constants
    rho = 1.292 # air density
-   r = 0.0508
-   h = 6.68
+   r = 0.0508 # radius
+   h = 6.68 # rocket height
    
    # constants for testing purposes, will be updated appropriately with lookup tables
    thrust = [7224.49, 0, 0] # N #incorrect 
@@ -76,9 +77,7 @@ def implementKF(measuredDict):
    for x in range(len(barometer_data)):
       R = vct.body_to_world(bno_ang_pos_yaw[x], bno_ang_pos_pitch[x], bno_ang_pos_roll[x], np.eye(3))
       
-      #kalman_filter.priori(R, thrust, mass, r, h, Cn, Ca, Cp, rho, bno_ang_pos[x], (accel_x[x], accel_y[x], accel_z[x]))
       kalman_filter.priori(R, thrust, mass, r, h, Cn, Ca, Cp, rho, (bno_ang_pos_yaw[x], bno_ang_pos_pitch[x], bno_ang_pos_roll[x]), (accel_x[x], accel_y[x], accel_z[x]))
-
       kalman_filter.update((bno_ang_pos_yaw[x], bno_ang_pos_pitch[x], bno_ang_pos_roll[x]), barometer_data[x], accel_x[x], accel_y[x], accel_z[x])
       kalman_dict['x'].append(kalman_filter.get_state()[0])
 
@@ -103,9 +102,10 @@ def plotGraph(measuredDict):
    plt.show()
 
 
-##### CALLING THE METHODS ##########
 # Only call read data once to save some computational time
-data = readData()
-implementKF(data)
-plotGraph(data)
+
+if __name__ == '__main__':
+   data = readData()
+   implementKF(data)
+   plotGraph(data)
 
