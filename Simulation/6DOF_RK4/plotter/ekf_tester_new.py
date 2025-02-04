@@ -40,6 +40,7 @@ def readData() :
 
 
 
+# TODO: Instantiate rocket object to pull thrust and mass (currently constant in implementKF()), worry about Ca, Cp, Cn later
 
 def implementKF(measuredDict):
    global kalman_filter
@@ -49,35 +50,37 @@ def implementKF(measuredDict):
    accel_y = list(measuredDict['highg.ay'].values())
    accel_z = list(measuredDict['highg.az'].values())
 
-
-   bno_ang_pos_yaw = list(measuredDict['orientation.yaw'].values)
-   bno_ang_pos_pitch = list(measuredDict['orientation.pitch'].values)
-   bno_ang_pos_roll = list(measuredDict['orientation.roll'].values)
+   bno_ang_pos_yaw = list(measuredDict['orientation.yaw'].values())
+   bno_ang_pos_pitch = list(measuredDict['orientation.pitch'].values())
+   bno_ang_pos_roll = list(measuredDict['orientation.roll'].values())
   
-   accel = [accel_x, accel_y, accel_z]
-   bno_ang_pos = [bno_ang_pos_yaw, bno_ang_pos_pitch, bno_ang_pos_roll]
+   #accel = [accel_x, accel_y, accel_z]
+   #bno_ang_pos = [bno_ang_pos_yaw, bno_ang_pos_pitch, bno_ang_pos_roll]
   
-   # constants for testing purposes, will be updated appropriately with lookup tables
+   # unchanging constants
    rho = 1.292 # air density
-   thrust = 7224.49 # N
-   mass = 27.216
    r = 0.0508
-   Cn = 0.3390199698975432132655550164
-   Ca = 0.206077604507223
-   Cp = 106.21885107011164421915261998
    h = 6.68
+   
+   # constants for testing purposes, will be updated appropriately with lookup tables
+   thrust = [7224.49, 0, 0] # N #incorrect 
+   mass = 27.216 #incorrect 
+   Cn = 0.3390199698975432132655550164 #incorrect 
+   Ca = 0.206077604507223 #incorrect 
+   Cp = 106.21885107011164421915261998 #incorrect 
+   
   
    kalman_filter = kf.KalmanFilter(0.01, barometer_data[0], 0, accel_x[0], 0, 0, accel_y[0], 0, 0, accel_z[0])
   
   
    for x in range(len(barometer_data)):
-       R = vct.body_to_world(bno_ang_pos[x][0], bno_ang_pos[x][1], bno_ang_pos[x][2], np.eye(3))
+      R = vct.body_to_world(bno_ang_pos_yaw[x], bno_ang_pos_pitch[x], bno_ang_pos_roll[x], np.eye(3))
       
-       kalman_filter.priori(R, thrust, mass, r, h, Cn, Ca, Cp, rho, bno_ang_pos[x], accel[x])
-       kalman_filter.update(bno_ang_pos[x], barometer_data[x], accel_x[x], accel_y[x], accel_z[x])
-       kalman_dict['x'].append(kalman_filter.get_state()[0])
+      #kalman_filter.priori(R, thrust, mass, r, h, Cn, Ca, Cp, rho, bno_ang_pos[x], (accel_x[x], accel_y[x], accel_z[x]))
+      kalman_filter.priori(R, thrust, mass, r, h, Cn, Ca, Cp, rho, (bno_ang_pos_yaw[x], bno_ang_pos_pitch[x], bno_ang_pos_roll[x]), (accel_x[x], accel_y[x], accel_z[x]))
 
-
+      kalman_filter.update((bno_ang_pos_yaw[x], bno_ang_pos_pitch[x], bno_ang_pos_roll[x]), barometer_data[x], accel_x[x], accel_y[x], accel_z[x])
+      kalman_dict['x'].append(kalman_filter.get_state()[0])
 
 
 def plotGraph(measuredDict):
@@ -93,9 +96,6 @@ def plotGraph(measuredDict):
    plt.plot(df_lowG_timestamp, kalman_dict['x'], label = "state estimate")
    plt.plot(df_lowG_timestamp, df_flight_state_est, label = "flight state estimate")
 
-
-
-
    plt.title('State estimate vs Measurement')
    plt.xlabel('timestamp (ms)')
    plt.ylabel('altitude (m)')
@@ -103,17 +103,9 @@ def plotGraph(measuredDict):
    plt.show()
 
 
-
-
-
-
 ##### CALLING THE METHODS ##########
 # Only call read data once to save some computational time
 data = readData()
 implementKF(data)
 plotGraph(data)
-
-
-
-
 
