@@ -80,7 +80,7 @@ class KalmanFilter:
 
         #TODO: Verify Cn is being pulled from Aneesh's lookup table
         Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
-        print(Cn.dtype)
+        print(Cn)
         Faz = Fay
 
         g = 9.81 # Earth gravity
