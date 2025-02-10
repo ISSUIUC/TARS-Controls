@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
-import estimation.ekf as kf
+import estimation.ekf as ekf
 import pandas as pandas
 import matplotlib.pyplot as plt
 import properties.properties as prop
@@ -71,7 +71,7 @@ def implementKF(measuredDict):
    Cp = 106.21885107011164421915261998 #incorrect 
    
   
-   kalman_filter = kf.KalmanFilter(0.01, barometer_data[0], 0, accel_x[0], 0, 0, accel_y[0], 0, 0, accel_z[0])
+   kalman_filter = ekf.KalmanFilter(0.01, barometer_data[0], 0, accel_x[0], 0, 0, accel_y[0], 0, 0, accel_z[0])
   
   
    for x in range(len(barometer_data)):
