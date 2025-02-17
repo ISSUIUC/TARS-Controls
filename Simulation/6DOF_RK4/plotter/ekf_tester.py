@@ -27,7 +27,7 @@ df_lowG_timestamp = 0
 df_highG_data = 0
 df_barometer_data = 0
 
-kalman_filter = None
+kf = None
 kalman_dict = {"x": []}
 
 dir = os.path.dirname(os.path.dirname(os. path.abspath(__file__)))
@@ -41,24 +41,25 @@ def readData() :
        usecols= ['timestamp', 'highg.ax', 'highg.ay', 'highg.az', 'barometer.altitude', 'kalman.position.px', 'orientation.yaw', 'orientation.pitch', 'orientation.roll'])
    #print(df[df["orientation.roll"] != None ])
    
-   return df.to_dict()
+   return df
 
 
 
 # TODO: Instantiate rocket object to pull thrust and mass (currently constant in implementKF()), worry about Ca, Cp, Cn later
 
-def implementKF(measuredDict, ):
-   global kalman_filter
+def implementKF(measuredDict):
+   global kf
    
    # convert dict_values objects to lists so they're easier to work with
-   barometer_data = list(measuredDict["barometer.altitude"].values())
-   accel_x = list(measuredDict['highg.ax'].values())
-   accel_y = list(measuredDict['highg.ay'].values())
-   accel_z = list(measuredDict['highg.az'].values())
+   barometer_data = list(measuredDict["barometer.altitude"].dropna())
+   # print("Printing baro data: ", barometer_data[:100])
+   accel_x = list(measuredDict['highg.ax'].dropna())
+   accel_y = list(measuredDict['highg.ay'].dropna())
+   accel_z = list(measuredDict['highg.az'].dropna())
 
-   bno_ang_pos_yaw = list(measuredDict['orientation.yaw'].values())
-   bno_ang_pos_pitch = list(measuredDict['orientation.pitch'].values())
-   bno_ang_pos_roll = list(measuredDict['orientation.roll'].values())
+   bno_ang_pos_yaw = list(measuredDict['orientation.yaw'].dropna())
+   bno_ang_pos_pitch = list(measuredDict['orientation.pitch'].dropna())
+   bno_ang_pos_roll = list(measuredDict['orientation.roll'].dropna())
   
    # unchanging constants
    rho = 1.225 # air density
@@ -94,7 +95,7 @@ def implementKF(measuredDict, ):
             "CP": [0]
         }
 
-   kalman_filter = ekf.KalmanFilter(0.01, barometer_data[0], 0, accel_x[0], 0, 0, accel_y[0], 0, 0, accel_z[0])
+   kf = ekf.KalmanFilter(0.01, barometer_data[0], 0, accel_x[0], 0, 0, accel_y[0], 0, 0, accel_z[0])
   
    for x in range(len(barometer_data)):
       timestamp = x * dt
@@ -102,7 +103,7 @@ def implementKF(measuredDict, ):
       thrust = rocket.get_motor().get_thrust(timestamp)
       mass = rocket.get_motor_mass(timestamp)
       
-      state = kalman_filter.get_state()
+      state = kf.get_state()
       
       velocity_arr = [state[1], state[4], state[7]] 
         
@@ -128,9 +129,9 @@ def implementKF(measuredDict, ):
       bno_ang_pos = (bno_ang_pos_yaw[x], bno_ang_pos_pitch[x], bno_ang_pos_roll[x])
       accel = (accel_x[x], accel_y[x], accel_z[x])
       
-      kalman_filter.priori(R, thrust, mass, r, h, Cn, Ca, Cp, rho, bno_ang_pos, accel)
-      kalman_filter.update(bno_ang_pos, barometer_data[x], accel_x[x], accel_y[x], accel_z[x])
-      kalman_dict['x'].append(kalman_filter.get_state()[0])
+      kf.priori(R, thrust, mass, r, h, Cn, Ca, Cp, rho, bno_ang_pos, accel)
+      kf.update(bno_ang_pos, barometer_data[x], accel_x[x], accel_y[x], accel_z[x])
+      kalman_dict['x'].append(kf.get_state()[0])
 
 
 def plotGraph(measuredDict):
