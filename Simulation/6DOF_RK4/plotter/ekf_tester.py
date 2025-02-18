@@ -44,7 +44,6 @@ def readData() :
    return df
 
 
-
 # TODO: Instantiate rocket object to pull thrust and mass (currently constant in implementKF()), worry about Ca, Cp, Cn later
 
 def implementKF(measuredDict):
@@ -131,6 +130,7 @@ def implementKF(measuredDict):
       
       kf.priori(R, thrust, mass, r, h, Cn, Ca, Cp, rho, bno_ang_pos, accel)
       kf.update(bno_ang_pos, barometer_data[x], accel_x[x], accel_y[x], accel_z[x])
+
       kalman_dict['x'].append(kf.get_state()[0])
 
 
@@ -138,20 +138,31 @@ def plotGraph(measuredDict):
    global df_lowG_timestamp, df_highG_data, df_barometer_data
   
    # convert the dict to a list of the values in each column so the data can be plotted
-   df_lowG_timestamp = measuredDict['timestamp'].values()
-   df_barometer_data = measuredDict['barometer.altitude'].values()
-   df_flight_state_est = measuredDict['kalman.position.px'].values()
+   df_lowG_timestamp = list(measuredDict['timestamp'].dropna())
+   df_barometer_data = list(measuredDict['barometer.altitude'].dropna())
+   df_flight_state_est = list(measuredDict['kalman.position.px'].dropna())
+   df_accel_x = list(measuredDict['highg.ax'].dropna())
+   df_accel_y = list(measuredDict['highg.ay'].dropna())
+   df_accel_z = list(measuredDict['highg.az'].dropna())
 
 
-   plt.plot(df_lowG_timestamp, df_barometer_data, label = "Barometer Data")
-   plt.plot(df_lowG_timestamp, kalman_dict['x'], label = "State Estimate")
-   plt.plot(df_lowG_timestamp, df_flight_state_est, label = "Flight State Estimate")
+
+   # plt.plot(df_lowG_timestamp[:10000], df_barometer_data[:10000], label = "Barometer Data")
+   plt.plot(df_lowG_timestamp[:1179038], kalman_dict['x'][:1179038], label = "State Estimate")
+   # plt.plot(df_lowG_timestamp[:1179038], df_accel_x[:1179038], label = "Acceleration (x)")
+   #plt.plot(df_lowG_timestamp, df_flight_state_est, label = "Flight State Estimate")
 
    plt.title('State estimate vs Measurement')
    plt.xlabel('Timestamp (ms)')
    plt.ylabel('Altitude (m)')
    plt.legend()
    plt.show()
+   
+   # plt.title('Accel vs Time')
+   # plt.xlabel('Timestamp (ms)')
+   # plt.ylabel('Accel (m/s)')
+   # plt.legend()
+   # plt.show()
 
 
 # Only call read data once to save some computational time
