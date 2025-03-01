@@ -51,11 +51,102 @@ class KalmanFilter_R:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
+        
+        """ for writing change in rotation and shi
+        Aroll, Apitch, Ayaw : Aerodynamic moment vector for roll, pitch, yaw
+        Proll, Ppitch, Pyaw : Propulsion moment vector for roll, pitch, yaw 
+        Ix , Iy, Iz         : Compon. of inertia (diagonal elements of inertia matrix when inertia products are zero)
+        0roll, 0pitch, 0yaw : angular rate of change for roll, pitch, yaw
+
+
+        roll_ddot = Aroll + Proll - (pitch*yaw)*(Iz - Iy)
+                    -------------------------------------
+                                    Ix
+        
+        pitch_ddot = Apitch + Ppitch - (roll*yaw)*(Ix - Iz)
+                    -------------------------------------
+                                    Iy
+
+        yaw_ddot = Ayaw + Pyaw - (roll*pitch)*(Iy - Ix)
+                    -------------------------------------
+                                    Iz
+
+        Aroll = 0.5*rho*V^2*Cl*A
+        Apitch = 0.5*rho*V^2*Cm*A
+        Ayaw = 0.5*rho*V^2*Cn*A
+
+        Cl = roll moment coefficient
+        Cm = pitch moment coefficient
+        Cn = yaw moment coefficient
+
+        Cl = C_ls S_r + d/2V_m (C_lp P)
+        Cm = C_mref - C_Nz (x_cm - x_ref)/d + d/2V_m(C_mq + C_malpha)q dimensionless
+        Cn = C_nref + C_Ny (x_cm - x_ref)/d + d/2V_m(C_nr + C_nbeta)r
+
+        C_lp = roll damping derivative relative to roll rate p, rad^-1 (deg^-1)
+        C_ls = slope of curve formed by roll moment coefficient C1 versus control surface deflection, rad^-1 (deg^-1)
+        C_mref = pitching moment coefficient about reference moment station, dimensionless.
+        C_mq = pitch damping derivatives relative to pitch rate q, rad^-1 (deg^-1)
+        C_malpha = pitch damping derivative relative to angle of attack rate α̇ 
+        (slope of curve formed by C_alpha verses alpha), rad^-1 (deg^-1)
+        C_Ny = coefficient corresponding to component of normal force on yb-axis, dimensionless.
+        C_Nz = coefficient corresponding to component of normal force on zb-axis, dimensionless.
+        C_n = yaw damping derivative relative to yaw rate r_dot, rad^-1 (deg^-1)
+        C_nref = yawing moment coefficient about reference moment station, dimensionless.
+        C_nbeta = yaw damping derivative relative to angle of sideslip rate beta_dot, rad^-1 (deg^-1)
+        x_cm = instantaneous distance from rocket nose to center of mass, m
+        x_ref = distance from rocket nose to reference moment station, m
+        S_r = effective control surface deflection causing rolling moment, rad(deg)
+
+        """
+        
 
 
     # TODO: Fix priori and update step, make sure that names make sense, and add comments.
-    def priori(self):
-        xdot = np.array([[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1],
+    def priori(self, m:float, r:float, h:float, rho:float, cm:float, cp:float, roll_p:float, pitch_p:float, yaw_p:float, x_rot):
+        J_x = 1/2 * m * r**2
+        J_y = 1/3 * m * h**2 + 1/4 * m * r**2
+
+        J_z = J_y
+        
+        
+        Croll_a = 1 #aerodynamic roll moment coefficient
+        Cpitch_a = 1 #aerodynamic pitch moment coefficient
+        Cyaw_a = 1 #aerodynamic yaw moment coefficient
+
+        vel_x, vel_y, vel_z = self.x_k[1], self.x_k[4], self.x_k[7]
+        vel_mag = np.linalg.norm([vel_x, vel_y, vel_z])
+
+        roll_a = 0.5*rho*vel_mag*Croll_a*np.pi*(r)**2
+        pitch_a = 0.5*rho*vel_mag*Cpitch_a*np.pi*(r)**2
+        yaw_a = 0.5*rho*vel_mag*Cyaw_a*np.pi*(r)**2
+
+        pos_roll = self.x_k[0]
+        pos_pitch = self.x_k[1]
+        pos_yaw = self.x_k[2]
+
+        xdot = np.array([
+            [pos_roll]
+            [(roll_a + roll_p - pos_pitch*pos_yaw(J_z - J_y))/J_x]
+            [1.0],
+            [pos_pitch],
+            [(pitch_a + pitch_p - pos_roll*pos_yaw(J_x - J_z))/J_y],
+            [1.0],
+            [pos_yaw],
+            [(yaw_a + yaw_p - pos_roll*pos_pitch(J_y - J_x))/ J_z],
+            [1.0]
+
+            # roll_a = 0.5*rho*velocity^2*((cm - cp)/2)*rollmomentcoeff*rocketdia^2
+            # pitch_a = 0.5*rho*velocity^2*((cm - cp)/2)*pitchmomentcoeff*rocketdia^2            # roll_a = 0.5*rho*velocity^2*((cm - cp)/2)*rollingmomentcoeff*rocketdia^2
+            # yaw_a = 0.5*rho*velocity^2*((cm - cp)/2)*yawmomentcoeff*rocketdia^2
+
+            # vel_mag = (vel_x**2 + vel_y**2 + vel_z**2)**0.5
+        ])
+
+
+
+
+        F = np.array([[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1],
                         [0, 0, 0, 0, -w_z*(-J_y + J_z)/J_x, -w_y*(-J_y + J_z)/J_x], [0, 0, 0, -w_z*(J_x - J_z)/J_y, 0, -w_x*(J_x - J_z)/J_y], [0, 0, 0, -w_y*(-J_x + J_y)/J_z, -w_x*(-J_x + J_y)/J_z, 0]])
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q

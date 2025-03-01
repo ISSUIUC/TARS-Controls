@@ -52,7 +52,11 @@ class KalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
+<<<<<<< HEAD
     def priori(self, R: np.ndarray, T:float, m:float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho:float, bno_attitude:tuple, accel:tuple, timestep):
+=======
+    def priori(self, R: np.ndarray, T:float, m:float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho:float, bno_attitude:tuple, accel:tuple):
+>>>>>>> 6fa9f08 (Co-authored-by: sh1shir <sh1shir@users.noreply.github.com>)
         """Sets priori state and covariance
             Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
             But basically predicts step
@@ -61,6 +65,7 @@ class KalmanFilter:
         """
         # states tracked: x, vx, ax, y, vy, ay, z, vz, az
         # pos in x_k is every third element starting from 0
+<<<<<<< HEAD
         
         pos_x, pos_y, pos_z = self.x_k[0], self.x_k[3], self.x_k[6]
         vel_x, vel_y, vel_z = self.x_k[1], self.x_k[4], self.x_k[7]
@@ -75,14 +80,28 @@ class KalmanFilter:
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
 =======
         vel_x, vel_y, vel_z = self.x_priori[2:5]
+=======
+>>>>>>> 6fa9f08 (Co-authored-by: sh1shir <sh1shir@users.noreply.github.com>)
         
+        pos_x, pos_y, pos_z = self.x_k[0], self.x_k[3], self.x_k[6]
+        vel_x, vel_y, vel_z = self.x_k[1], self.x_k[4], self.x_k[7]
+        vel_mag = np.linalg.norm([vel_x, vel_y, vel_z])
+        acc_x, acc_y, acc_z = accel
+        w_acc = vct.body_to_world(*bno_attitude, np.array([acc_x, acc_y, acc_z])) + np.array([-9.81, 0, 0])
 
+<<<<<<< HEAD
         # xdot = np.array([[vel_x], [vel_y], [vel_z], 
         #                     [(Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y)], [(Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y)], [(Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x)],
         #                     [w_x], [w_y], [w_z],
         #                     [La + Lp - w_y*w_z*(J_z - J_y) / J_x], [Ma + Mp - w_z*w_x*(J_x - J_z) / J_y], [Na + Np - w_x*w_y*(J_y - J_x) / J_z]
         #                     ])
 >>>>>>> b9cced2 (Began refactoring r_ekf.py)
+=======
+        # approximate angular velocity
+        w_x, w_y, w_z = w_acc * self.s_dt
+        J_x = 1/2 * m * r**2
+        J_y = 1/3 * m * h**2 + 1/4 * m * r**2
+>>>>>>> 6fa9f08 (Co-authored-by: sh1shir <sh1shir@users.noreply.github.com>)
 
         J_z = J_y
 
@@ -90,8 +109,12 @@ class KalmanFilter:
         Fax = -0.5*rho*(vel_mag**2)*float(Ca)*(np.pi*r**2)             # drag force
 
         #TODO: Verify Cn is being pulled from Aneesh's lookup table
+<<<<<<< HEAD
         Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2) # take a look at only the Cn and see what happens
         # print(Cn.dtype)
+=======
+        Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
+>>>>>>> 6fa9f08 (Co-authored-by: sh1shir <sh1shir@users.noreply.github.com>)
         Faz = Fay
 
         g = 9.81 # Earth gravity
@@ -102,6 +125,7 @@ class KalmanFilter:
 
                                         # thrust forces in each direciton ( we assume that is in one direction)
         # states tracked: x, vx, ax, y, vy, ay, z, vz, az
+<<<<<<< HEAD
         xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 0.0,
                  vel_y, (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_z), 0.0,
                  vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0.0
@@ -128,6 +152,28 @@ class KalmanFilter:
         ##
         self.x_k = self.x_priori
         self.P_k = self.P_priori
+=======
+        xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 1.0,
+                 vel_y, (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_y), 1.0,
+                 vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 1.0
+                ])
+        self.x_priori = self.x_k + xdot * self.s_dt
+
+
+
+        # linearized dynamics are F
+        self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, -np.pi*Ca*r**2*rho*vel_x/m, 0, 0, -np.pi*Ca*r**2*rho*vel_y/m + w_z, 0, 0, -np.pi*Ca*r**2*rho*vel_z/m - w_y, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, np.pi*Cn*r**2*rho*vel_x/m - w_z, 0, 0, np.pi*Cn*r**2*rho*vel_y/m + w_x, 0, 0, np.pi*Cn*r**2*rho*vel_z/m, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, np.pi*Cn*r**2*rho*vel_x/m + w_y, 0, 0, np.pi*Cn*r**2*rho*vel_y/m - w_x, 0, 0, np.pi*Cn*r**2*rho*vel_z/m, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+        self.P_priori = self.F @ self.P_k @ self.F.T + self.Q
+>>>>>>> 6fa9f08 (Co-authored-by: sh1shir <sh1shir@users.noreply.github.com>)
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         """Updates state and covariance
@@ -170,6 +216,10 @@ class KalmanFilter:
         """Resets lateral position to 0
         """
         self.x_k[1:3] = [0, 0]
+<<<<<<< HEAD
         
 
 
+=======
+        
+>>>>>>> 6fa9f08 (Co-authored-by: sh1shir <sh1shir@users.noreply.github.com>)
