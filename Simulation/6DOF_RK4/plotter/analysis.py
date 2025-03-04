@@ -29,17 +29,17 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
 
     # Altitude Measurements vs Real Altitude vs Kalman Filter Graph (No Control)
     plt.xlabel("Time (s)", fontsize = 14);  
-    pos_nc.plot(sim_dict["time"][:9000], sim_dict["pos"][:9000,0], label="X", color="tab:red", linewidth = 2); 
-    # pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,1], label="Y", color="tab:green", linewidth = 2);   
-    # pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,2], label="Z", color="tab:blue", linewidth = 2);    
+    pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,0], label="X", color="tab:red", linewidth = 2); 
+    pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,1], label="Y", color="tab:green", linewidth = 2);   
+    pos_nc.plot(sim_dict["time"], sim_dict["pos"][:,2], label="Z", color="tab:blue", linewidth = 2);    
     # pos_nc.plot(sensor_dict["time"], sensor_dict["baro_alt"], label="Baro Alt", color="darkred", linestyle = ":",linewidth = 2);    
-    pos_nc.plot(kalman_dict["time"][:9000], kalman_dict["kalman_pos"][:9000,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);
-    pos_nc.plot(kalman_dict["time"][7500], kalman_dict["kalman_pos"][7500,0], marker='o', markersize=5, color="purple");   
-    # pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
-    # pos_nc.plot(kalman_dict["time"], kalman_dict["kalman_pos"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
+    pos_nc.plot(kalman_dict["time"][:8500], kalman_dict["kalman_pos"][:8500,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);
+    pos_nc.plot(kalman_dict["time"][6530], kalman_dict["kalman_pos"][6530,0], marker='o', markersize=5, color="purple");   
+    pos_nc.plot(kalman_dict["time"][:8500], kalman_dict["kalman_pos"][:8500,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
+    pos_nc.plot(kalman_dict["time"][:8500], kalman_dict["kalman_pos"][:8500,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
     # pos_nc.plot(sensor_dict["time"], sensor_dict["apogee_estimate"], label="Apogee Estimate",color="brown", linewidth = 2); 
-    pos_nc.axhline(y=sim_dict["pos"][-1,0], label="Sim Apogee", linestyle = "dashed", color="gray", linewidth = 2); 
-    pos_nc.axhline(y=config["desired_apogee"], label="Desired Apogee", linestyle = "dashed", color="orange", linewidth = 2); 
+    # pos_nc.axhline(y=sim_dict["pos"][-1,0], label="Sim Apogee", linestyle = "dashed", color="gray", linewidth = 2); 
+    # pos_nc.axhline(y=config["desired_apogee"], label="Desired Apogee", linestyle = "dashed", color="orange", linewidth = 2); 
     pos_nc.set_ylabel("Position (m)", fontsize = 10);   
     pos_nc.legend(fontsize=10, loc='upper left', ncol=3);   
 
@@ -47,9 +47,9 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     vel_nc.plot(sim_dict["time"], sim_dict["vel"][:,0],label="X",color="tab:red", linewidth = 2);  
     vel_nc.plot(sim_dict["time"], sim_dict["vel"][:,1],label="Y",color="tab:green", linewidth = 2);  
     vel_nc.plot(sim_dict["time"], sim_dict["vel"][:,2],label="Z",color="tab:blue", linewidth = 2);  
-    vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);   
-    vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
-    vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_vel"][:,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
+    vel_nc.plot(kalman_dict["time"][:8500], kalman_dict["kalman_vel"][:8500,0], label="X Estimate", color="purple", linestyle = "dashed",linewidth = 2);   
+    vel_nc.plot(kalman_dict["time"][:8500], kalman_dict["kalman_vel"][:8500,1], label="Y Estimate", color="lime", linestyle = "dashed",linewidth = 2); 
+    vel_nc.plot(kalman_dict["time"][:8500], kalman_dict["kalman_vel"][:8500,2], label="Z Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);  
     vel_nc.set_ylabel("Velocity (m/s)", fontsize = 10); 
     vel_nc.legend(fontsize=10, loc='upper left', ncol =2);  
 
