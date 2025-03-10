@@ -137,10 +137,15 @@ class KalmanFilter_R:
             [1.0]
 
             # roll_a = 0.5*rho*velocity^2*((cm - cp)/2)*rollmomentcoeff*rocketdia^2
-            # pitch_a = 0.5*rho*velocity^2*((cm - cp)/2)*pitchmomentcoeff*rocketdia^2            # roll_a = 0.5*rho*velocity^2*((cm - cp)/2)*rollingmomentcoeff*rocketdia^2
+            # pitch_a = 0.5*rho*velocity^2*((cm - cp)/2)*pitchmomentcoeff*rocketdia^2        
             # yaw_a = 0.5*rho*velocity^2*((cm - cp)/2)*yawmomentcoeff*rocketdia^2
 
             # vel_mag = (vel_x**2 + vel_y**2 + vel_z**2)**0.5
+
+            # For thrust calculations, mutiply Thrust by a rotation matrix in rollpitchyaw directions
+            # then take the cross product of moment arm with thrust to find the forces in relative directions
+            # To find moment arm distance, take scalar diff of cm and cp, and make a vector [x, 0, 0], then multiply by rotation matrix
+            # finally take the cross product between the two and it will return roll pitch yaw thrust moment coefficients
         ])
 
 
