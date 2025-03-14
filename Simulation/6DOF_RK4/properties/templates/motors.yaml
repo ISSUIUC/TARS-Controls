@@ -29,3 +29,19 @@ define: &motor_J244
   delay: 60
   motor_lookup_file: "../lookup/j244.csv"
   cm: !numpy/array [0.3755, 0., 0.]
+
+  define: &motor_O5500x
+    <<: *simulated_motor
+    impulse: 21384.0
+    motor_mass: 16.783
+    delay: 60
+    motor_lookup_file: "../lookup/o5500x.csv"
+    cm: !numpy/array [0.3755, 0., 0.]
+
+  define: &motor_M685w
+    <<: *simulated_motor
+    impulse: 7561.0
+    motor_mass: 7.008
+    delay: 60
+    motor_lookup_file: "../lookup/m685w.csv"
+    cm: !numpy/array [0.3755, 0., 0.]
