@@ -67,7 +67,9 @@ class Rocket:
 
         dir = os.path.dirname(os.path.dirname(os. path.abspath(__file__)))
         csv_path = os.path.join(dir, "LookUp", "ekf_cd_test.csv")
+        csv_path_gnc_coefficients = os.path.join(dir, "LookUp", "GNC_Coefficients.csv")
         self.coeffs_df = pd.read_csv(csv_path)
+        self.coeffs_gnc_df = pd.read.csv(csv_path_gnc_coefficients)
 
         self.coeffs_dict = {
             "CN": [0],
@@ -76,7 +78,10 @@ class Rocket:
             "CD Power-On": [0],
             "CD Power-Off": [0],
             "CL": [0],
-            "CP": [0]
+            "CP": [0],
+            "Croll_A" : [0], 
+            "Cpitch_A" : [0],
+            "Cyaw_A" : [0]
         }
 
 
@@ -387,6 +392,7 @@ class Rocket:
         if (a < 0.01):
             a = 0.01
         df_specific = self.coeffs_df[(self.coeffs_df["Alpha"] == 2) & (self.coeffs_df["Mach"] == round(a, 2))]
+        df_gnc_specific = self.coeffs_gnc_df[(self.coeffs_gnc_df["Mach number (â€‹)"] == round(a,2))]
         self.coeffs_dict["CN"].append(df_specific["CN"].values[0])
         self.coeffs_dict["CA Power-On"].append(df_specific["CA Power-On"].values[0])
         self.coeffs_dict["CA Power-Off"].append(df_specific["CA Power-Off"])
@@ -394,6 +400,10 @@ class Rocket:
         self.coeffs_dict["CD Power-Off"].append(df_specific["CD Power-Off"])
         self.coeffs_dict["CL"].append(df_specific["CL"])
         self.coeffs_dict["CP"].append(df_specific["CP"])
+        self.coeffs_gnc_df["Croll_A"].append(df_gnc_specific["Roll moment coefficient (â€‹)"])
+        self.coeffs_gnc_df["Cpitch_A"].append(df_gnc_specific["Pitch moment coefficient (â€‹)"])
+        self.coeffs_gnc_df["Cyaw_A"].append(df_gnc_specific["Yaw moment coefficient (â€‹)"])
+
 
     # Converts the data saved in this sim into csv
     def to_csv(self):

@@ -37,7 +37,6 @@ class Navigation:
         #self.r_kalman_filter = r_ekf.KalmanFilter_R(dt, 0.0, 0.0, 0.0, pitch, 0.0, 0.0, yaw, 0.0, 0.0)
         ## self.apogee_estimator = apg.Apogee(self.kalman_filter.get_state(), 0.1, 0.01, 3, 30, atm, self.rocket.stage_config)
         
-<<<<<<< HEAD
     def update_state(self, baro_alt, accel, gyro, bno_ang_pos, timestep):
         
         roll, pitch, yaw = bno_ang_pos
@@ -59,14 +58,5 @@ class Navigation:
         self.r_kalman_filter.priori()
         # self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         # self.r_kalman_filter.update(*gyro, *accel)
-=======
-    def update_state(self,baro_alt, accel, gyro, bno_ang_pos):
-        self.kalman_filter.priori()
-        self.r_kalman_filter.priori(self.kalman_filter.get.state())
-        #self.err_state_kalman_filter.priori()
-        self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
-        self.r_kalman_filter.update(*gyro, *accel)
-        #self.err_state_kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
->>>>>>> 6fa9f08 (Co-authored-by: sh1shir <sh1shir@users.noreply.github.com>)
         
         
