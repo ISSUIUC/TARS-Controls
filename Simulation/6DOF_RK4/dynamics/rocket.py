@@ -19,6 +19,7 @@ class Rocket:
     motor = None
     forces = None
     stage_config = None
+    multiplier = 1
 
     def init_dicts(self):
         self.sim_dict = {
