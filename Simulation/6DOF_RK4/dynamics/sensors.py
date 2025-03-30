@@ -14,7 +14,6 @@ def get_accelerometer_data(x_state, sensor_config):
     Returns:
         accel_reading (np.ndarray): The accelerometer data in the body frame of the rocket. (Specific force)
     """
-    # (GravConst * EarthMass)/ EarthRadius**2
     gravity = [(prop.G*prop.m_e)/((prop.r_e+x_state[0,0])**2), 0, 0]
     body_accel = vct.world_to_body(*x_state[3], x_state[2] + gravity)
     kx134_rms = sensor_config["high_g"]["RMS"] * 9.81/1000 # Convert to m/(s^2)

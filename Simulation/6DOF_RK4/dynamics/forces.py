@@ -16,8 +16,6 @@ import random
 
 # Define Objects
 
-
-
 class Forces:
     """Forces on rocket:
     
@@ -70,13 +68,6 @@ class Forces:
         density = self.atm.get_density(alt, noise=density_noise, position=x_state[0])
         thrust = self.motor.get_thrust(time_stamp)
         wind_vector = self.atm.get_wind_vector(time_stamp)
-
-        """
-        if 
-
-
-        """
-
         alpha = self.get_alpha(x_state, wind_vector) 
         drag = self.aerodynamic_force(x_state, density, wind_vector, alpha, self.rasaero, thrust.dot(thrust) > 0, flap_ext)
         grav = self.gravitational_force(alt, time_stamp)
@@ -209,7 +200,6 @@ class Forces:
         return aerodynamic_moment
         
     def get_alpha(self, x_state, wind_vector) -> float:
-
         incident_velocity = vct.world_to_body(*x_state[2], vct.norm(x_state[1] + wind_vector))
         orientation = vct.world_to_body(*x_state[2], np.array([1,0,0]))
         alpha = np.arccos(np.dot(incident_velocity, orientation))

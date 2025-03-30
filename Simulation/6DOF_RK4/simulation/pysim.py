@@ -29,8 +29,6 @@ import os
 import sys
 import shutil
 
-# hello is this working
-
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
@@ -46,7 +44,7 @@ import environment.atmosphere as atmosphere
 
 # Load desired config file
 config = dataloader.config
-angleCheck = input("Nominal or Tilted Angle of Attack?   ").lower()
+angleCheck = input("Nominal or Tilted Flight: ").lower()
 tiltCommand = "Tilt".lower()
 
 # Runs simulation for the specific component of the rocket
@@ -98,15 +96,12 @@ class Simulation:
 
             is_staging = start and self.rocket.current_stage != -1
             self.x, alpha = sim.RK4(self.x, dt, self.time_stamp, is_staging, 0)
-            # what are the exact parameters being passed through and for what?
-            # the function for RK4 is defined as:
-            # def RK4(self, y0, dt, time_stamp, flap_ext=0, staging=False, staging_noise= False, density_noise=False) -> np.ndarray:
 
             self.rocket.add_to_dict(self.x, baro_alt, accel, bno_ang_pos, gyro, current_state, current_covariance, current_state_r, alpha, self.rocket.get_rocket_dry_mass(), self.rocket.get_total_motor_mass(self.time_stamp), 0, dt)
             self.time_step()
             if start:
                 start = False
- 
+
     def run_stages(self):
         has_more_stages = True
         while has_more_stages: 
@@ -161,15 +156,8 @@ def simulator(x0, rocket, motor, dt) -> None:
     t_start = time.time()
     simulator.run_stages()
     simulator.coast()
-    
-    
-        
-
-
     t_end = time.time() - t_start
     print(f"Runtime: {t_end:.2f} seconds")
-
-
 
 
 if __name__ == '__main__':
@@ -190,10 +178,9 @@ if __name__ == '__main__':
     simulator(x0, rocket, motor, dt)
 
     print("Writing to file...")
-    
+
     record = rocket.to_csv()
    
-    
     motorCutoffCount = True
     while motorCutoffCount:
          for point in range(len(rocket.sim_dict["time"])):
@@ -203,19 +190,17 @@ if __name__ == '__main__':
                 break
          motorCutoffCount = False
 
-    output_dir = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir) 
-    output_file = os.path.join(output_dir, 'simulated_6dof.csv')
+    # output_dir = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
+    # if not os.path.exists(output_dir):
+    #     os.makedirs(output_dir) 
+    # output_file = os.path.join(output_dir, 'simulated_6dof.csv')
+    # with open(output_file, 'w') as f:
+    #     f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
+    #     for point in record:
+    #         f.write(f"{','.join(point)}\n")
+    output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
     with open(output_file, 'w') as f:
         f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
         for point in record:
             f.write(f"{','.join(point)}\n")
 
-"""
-output_file = os.path.join(os.path.dirname(__file__), config["meta"]["output_file"])
-    with open(output_file, 'w') as f:
-        f.write("time,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,accel_x,accel_y,accel_z,ang_pos_x,ang_pos_y,ang_pos_z,ang_vel_x,ang_vel_y,ang_vel_z,ang_accel_x,ang_accel_y,ang_accel_z,alpha,rocket_total_mass,motor_mass,flap_ext,baro_alt,imu_accel_x,imu_accel_y,imu_accel_z,imu_ang_pos_x,imu_ang_pos_y,imu_ang_pos_z,imu_gyro_x,imu_gyro_y,imu_gyro_z,kalman_pos_x,kalman_vel_x,kalman_accel_x,kalman_pos_y,kalman_vel_y,kalman_accel_y,kalman_pos_z,kalman_vel_z,kalman_accel_z,pos_cov_x,vel_cov_x,accel_cov_x,pos_cov_y,vel_cov_y,accel_cov_y,pos_cov_z,vel_cov_z,accel_cov_z,kalman_rpos_x,kalman_rvel_x,kalman_raccel_x,kalman_rpos_y,kalman_rvel_y,kalman_raccel_y,kalman_rpos_z,kalman_rvel_z,kalman_raccel_z\n")
-        for point in record:
-            f.write(f"{','.join(point)}\n")
-"""

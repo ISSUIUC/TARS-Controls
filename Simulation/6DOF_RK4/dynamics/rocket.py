@@ -339,7 +339,6 @@ class Rocket:
         self.sim_dict["motor_mass"].append(motor_mass)
 
     # Converts the data saved in this sim into csv
-    
     def to_csv(self):
         #Output
         record = []
