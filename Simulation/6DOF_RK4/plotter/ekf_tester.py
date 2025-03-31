@@ -44,7 +44,7 @@ def readData() :
    return df
 
 
-# TODO: Instantiate rocket object to pull thrust and mass (currently constant in implementKF()), worry about Ca, Cp, Cn later
+# TODO: Plotting works -> format and label properly, then verification
 
 def implementKF(measuredDict):
    global kf
@@ -146,16 +146,18 @@ def plotGraph(measuredDict):
    df_accel_z = list(measuredDict['highg.az'].dropna())
 
 
+   
+   fig_kalman, (state_est, barometer, accel_x) = plt.subplots(3,1,figsize=(15,10), sharex=True)
+   
+   fig_kalman.suptitle('Kalman Filter Position, Barometer Altitude, and Acceleration')
+   plt.xlabel("Time (s)", fontsize = 14)
+      
 
-   # plt.plot(df_lowG_timestamp[:10000], df_barometer_data[:10000], label = "Barometer Data")
-   plt.plot(df_lowG_timestamp[:1179038], kalman_dict['x'][:1179038], label = "State Estimate")
-   # plt.plot(df_lowG_timestamp[:1179038], df_accel_x[:1179038], label = "Acceleration (x)")
-   #plt.plot(df_lowG_timestamp, df_flight_state_est, label = "Flight State Estimate")
-
-   plt.title('State estimate vs Measurement')
-   plt.xlabel('Timestamp (ms)')
-   plt.ylabel('Altitude (m)')
-   plt.legend()
+   barometer.plot(df_lowG_timestamp[:10000], df_barometer_data[:10000], label = "Barometer Data")
+   state_est.plot(df_lowG_timestamp[:6368], kalman_dict['x'][:6368], label = "State Estimate")
+   accel_x.plot(df_lowG_timestamp[:1179038], df_accel_x[:1179038], label = "Acceleration (x)")
+   # plt.plot(df_lowG_timestamp, df_flight_state_est, label = "Flight State Estimate")
+   # plt.tight_layout()
    plt.show()
    
    # plt.title('Accel vs Time')
