@@ -109,7 +109,7 @@ def implementKF(measuredDict):
       if not any(component is None for component in velocity_arr):
          velocity = np.linalg.norm([state[1], state[4], state[7]])
          print(f"Velocity: {velocity}")
-
+         
          try:
             rocket.update_coeffs(velocity)
          except IndexError:
@@ -147,17 +147,25 @@ def plotGraph(measuredDict):
 
 
    
-   fig_kalman, (state_est, barometer, accel_x) = plt.subplots(3,1,figsize=(15,10), sharex=True)
+   fig_kalman, (state_est, barometer) = plt.subplots(2,1,figsize=(15,10), sharex=False)
    
    fig_kalman.suptitle('Kalman Filter Position, Barometer Altitude, and Acceleration')
-   plt.xlabel("Time (s)", fontsize = 14)
       
 
-   barometer.plot(df_lowG_timestamp[:10000], df_barometer_data[:10000], label = "Barometer Data")
-   state_est.plot(df_lowG_timestamp[:6368], kalman_dict['x'][:6368], label = "State Estimate")
-   accel_x.plot(df_lowG_timestamp[:1179038], df_accel_x[:1179038], label = "Acceleration (x)")
+   barometer.plot(df_lowG_timestamp[0:2000], df_barometer_data[0:2000], label = "Barometer Data")
+   barometer.set_ylabel("Barometer Altitude (m)", fontsize = 10)
+   barometer.set_xlabel("Time (ms)", fontsize = 10)
+   
+   state_est.plot(df_lowG_timestamp[0:6368], kalman_dict['x'][0:6368], label = "State Estimate")
+   barometer.set_ylabel("Flight State Estimate (m)", fontsize = 10)
+   barometer.set_xlabel("Time (ms)", fontsize = 10)
+   
+   # accel_x.plot(df_lowG_timestamp[0:200000], df_accel_x[0:200000], label = "Acceleration (x)")
+   # accel_x.set_ylabel("X-Acceleration (m/s^2)", fontsize = 10)
+   # accel_x.set_xlabel("Time (ms)", fontsize = 10)
+   
    # plt.plot(df_lowG_timestamp, df_flight_state_est, label = "Flight State Estimate")
-   # plt.tight_layout()
+   plt.tight_layout()
    plt.show()
    
    # plt.title('Accel vs Time')
