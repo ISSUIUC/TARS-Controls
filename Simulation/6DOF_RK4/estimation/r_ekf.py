@@ -33,7 +33,11 @@ class KalmanFilter_R:
         self.current_time = 0
         self.s_dt = dt
 
-        self.x_k = np.array([roll, pitch, yaw, w_x, w_y, w_z, a_x, a_y, a_z]).T
+
+        
+        self.x_k = np.array([roll, w_x, a_x, 
+                             pitch, w_y, a_y, 
+                             yaw, w_z, a_z]).T
 
         for i in range(3):
             self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
@@ -71,8 +75,8 @@ class KalmanFilter_R:
         yaw_a = 0.5*rho*vel_mag*Cyaw_a*np.pi*(r)**2
 
         pos_roll = self.x_k[0]
-        pos_pitch = self.x_k[1]
-        pos_yaw = self.x_k[2]
+        pos_pitch = self.x_k[3]
+        pos_yaw = self.x_k[6]
 
         tV = np.array([T, 0, 0])
         arm = np.array([np.abs(cp - cm), 0, 0])
@@ -87,32 +91,33 @@ class KalmanFilter_R:
         yaw_p = thrustMoments[2]
 
         xdot = np.array([
-            [pos_roll]
-            [(roll_a + roll_p - pos_pitch*pos_yaw(J_z - J_y))/J_x]
+            [vel_x], 
+            [(roll_a + roll_p - pos_pitch*pos_yaw(J_z - J_y))/J_x], 
+            [1.0], 
+            [vel_y], 
+            [(pitch_a + pitch_p - pos_roll*pos_yaw(J_x - J_z))/J_y], 
             [1.0],
-            [pos_pitch],
-            [(pitch_a + pitch_p - pos_roll*pos_yaw(J_x - J_z))/J_y],
-            [1.0],
-            [pos_yaw],
-            [(yaw_a + yaw_p - pos_roll*pos_pitch(J_y - J_x))/ J_z],
-            [1.0]
-
-            # roll_a = 0.5*rho*velocity^2*((cm - cp)/2)*rollmomentcoeff*rocketdia^2
-            # pitch_a = 0.5*rho*velocity^2*((cm - cp)/2)*pitchmomentcoeff*rocketdia^2        
-            # yaw_a = 0.5*rho*velocity^2*((cm - cp)/2)*yawmomentcoeff*rocketdia^2
-
-            # For thrust calculations, mutiply Thrust by a rotation matrix in rollpitchyaw directions
-            # then take the cross product of moment arm with thrust to find the forces in relative directions
-            # To find moment arm distance, take scalar diff of cm and cp, and make a vector [x, 0, 0], then multiply by rotation matrix
-            # finally take the cross product between the two and it will return roll pitch yaw thrust moment coefficients
-
+            [vel_z], 
+            [(yaw_a + yaw_p - pos_roll*pos_pitch(J_y - J_x))/ J_z], 
+            [1.0] 
         ])
 
 
 
 
-        F = np.array([[0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1],
-                        [0, 0, 0, 0, -w_z*(-J_y + J_z)/J_x, -w_y*(-J_y + J_z)/J_x], [0, 0, 0, -w_z*(J_x - J_z)/J_y, 0, -w_x*(J_x - J_z)/J_y], [0, 0, 0, -w_y*(-J_x + J_y)/J_z, -w_x*(-J_x + J_y)/J_z, 0]])
+        F = np.array([
+            [0, 0, 0, 0, pos_yaw(J_x - J_z)/J_y, 0, 0, pos_pitch(J_y - J_x)/ J_z, 0], # wrt roll
+            [1, 0, 0, 0, 0, 0, 0, 0, 0], # wrt roll_vel
+            [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt roll_accel?????
+
+            [0, pos_yaw(J_z - J_y)/J_x, 0, 0, 0, 0, 0,pos_roll*(J_y - J_x)/ J_z, 0], # wrt pitch
+            [0, 0, 0, 1, 0, 0, 0, 0, 0], # wrt pitch_vel
+            [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt pitch_accel?????
+
+            [0, pos_pitch(J_z - J_y)/J_x, 0, 0, pos_roll(J_x - J_z)/J_y, 0, 0, 0, 0], # wrt yaw
+            [0, 0, 0, 0, 0, 0, 1, 0, 0], # wrt yaw_vel
+            [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt yaw_accel?????
+        ])
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
