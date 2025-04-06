@@ -28,7 +28,7 @@ class KalmanFilter:
         self.P_priori = np.zeros((9,9))
         self.F = np.zeros((9,9))
         self.H = np.zeros((4,9))
-
+    
         self.current_time = 0
         self.s_dt = dt
 

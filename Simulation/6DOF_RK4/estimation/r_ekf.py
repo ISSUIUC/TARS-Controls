@@ -35,9 +35,9 @@ class KalmanFilter_R:
 
 
         
-        self.x_k = np.array([roll, w_x, a_x, 
+        self.x_k = np.array([[roll, w_x, a_x, 
                              pitch, w_y, a_y, 
-                             yaw, w_z, a_z]).T
+                             yaw, w_z, a_z]]).T
 
         for i in range(3):
             self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
@@ -67,8 +67,8 @@ class KalmanFilter_R:
         J_z = J_y
         
 
-        vel_x, vel_y, vel_z = self.x_k[1], self.x_k[4], self.x_k[7]
-        vel_mag = np.linalg.norm([vel_x, vel_y, vel_z])
+        vel_roll, vel_pitch, vel_yaw = self.x_k[1], self.x_k[4], self.x_k[7]
+        vel_mag = np.linalg.norm([vel_roll, vel_pitch, vel_yaw])
 
         roll_a = 0.5*rho*vel_mag*Croll_a*np.pi*(r)**2
         pitch_a = 0.5*rho*vel_mag*Cpitch_a*np.pi*(r)**2
@@ -91,33 +91,31 @@ class KalmanFilter_R:
         yaw_p = thrustMoments[2]
 
         xdot = np.array([
-            [vel_x], 
-            [(roll_a + roll_p - pos_pitch*pos_yaw(J_z - J_y))/J_x], 
+            [vel_roll], 
+            [(roll_a + roll_p - vel_pitch*vel_yaw(J_z - J_y))/J_x], 
             [1.0], 
-            [vel_y], 
-            [(pitch_a + pitch_p - pos_roll*pos_yaw(J_x - J_z))/J_y], 
+            [vel_pitch], 
+            [(pitch_a + pitch_p - vel_roll*vel_yaw(J_x - J_z))/J_y], 
             [1.0],
-            [vel_z], 
-            [(yaw_a + yaw_p - pos_roll*pos_pitch(J_y - J_x))/ J_z], 
+            [vel_yaw], 
+            [(yaw_a + yaw_p - vel_roll*vel_pitch(J_y - J_x))/ J_z], 
             [1.0] 
         ])
 
-
-
-
         F = np.array([
-            [0, 0, 0, 0, pos_yaw(J_x - J_z)/J_y, 0, 0, pos_pitch(J_y - J_x)/ J_z, 0], # wrt roll
-            [1, 0, 0, 0, 0, 0, 0, 0, 0], # wrt roll_vel
+            [0, 1, 0, 0, 0, 0, 0, 0, 0], # wrt roll
+            [0, 0, 0, 0, -vel_yaw*(-J_y + J_z)/J_x, 0, 0, -vel_pitch*(-J_y + J_z)/J_x, 0], # wrt roll_vel
             [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt roll_accel?????
 
-            [0, pos_yaw(J_z - J_y)/J_x, 0, 0, 0, 0, 0,pos_roll*(J_y - J_x)/ J_z, 0], # wrt pitch
-            [0, 0, 0, 1, 0, 0, 0, 0, 0], # wrt pitch_vel
+            [0, 0, 0, 0, 1, 0, 0, 0, 0], # wrt pitch
+            [0, -vel_yaw*(J_x - J_z)/J_y, 0, 0, 0, 0, 0, -vel_roll*(J_x - J_z)/J_y, 0], # wrt pitch_vel
             [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt pitch_accel?????
 
-            [0, pos_pitch(J_z - J_y)/J_x, 0, 0, pos_roll(J_x - J_z)/J_y, 0, 0, 0, 0], # wrt yaw
-            [0, 0, 0, 0, 0, 0, 1, 0, 0], # wrt yaw_vel
+            [0, 0, 0, 0, 0, 0, 0, 1, 0], # wrt yaw
+            [0, -vel_pitch*(-J_x + J_y)/J_z, 0, 0, -vel_roll*(-J_x + J_y)/J_z, 0, 0, 0, 0], # wrt yaw_vel
             [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt yaw_accel?????
         ])
+
         self.x_priori = self.F @ self.x_k
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
