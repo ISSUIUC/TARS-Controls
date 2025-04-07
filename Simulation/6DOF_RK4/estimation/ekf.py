@@ -80,29 +80,20 @@ class KalmanFilter:
 
         #TODO: Verify Cn is being pulled from Aneesh's lookup table
         Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2) # take a look at only the Cn and see what happens
-        # print(Cn.dtype)
         Faz = Fay
 
         g = 9.81 # Earth gravity
         Fg = np.array([-g, 0, 0])
         Fg_body = np.linalg.inv(R) @ Fg
-        Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]      # gravitational forces expressed on the body in each direction
+        Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]
         Ftx, Fty, Ftz = T[0],T[1],T[2]
 
-                                        # thrust forces in each direciton ( we assume that is in one direction)
         # states tracked: x, vx, ax, y, vy, ay, z, vz, az
         xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 0.0,
                  vel_y, (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_z), 0.0,
                  vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0.0
                 ])
         self.x_priori = self.x_k + xdot * self.s_dt
-        if Ftx == 0:
-           print("timestep: ", timestep)
-           print("Fax: ", Fax)
-           print("Fay: ", Fay)
-        
-        #self.x_k = self.x_priori
-        # linearized dynamics are F
         self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0], 
                            [0, 0, 0, 0, w_z, 0, 0, -w_y, 0], 
                            [0, 0, 0, 0, 0, 0, 0, 0, 0], 
@@ -114,9 +105,6 @@ class KalmanFilter:
                            [0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
         self.P_priori = self.F @ self.P_k @ self.F.T + self.Q
-        ##
-        self.x_k = self.x_priori
-        self.P_k = self.P_priori
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         """Updates state and covariance

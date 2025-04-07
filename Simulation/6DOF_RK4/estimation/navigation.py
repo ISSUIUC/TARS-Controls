@@ -49,13 +49,9 @@ class Navigation:
         m = self.rocket.get_rocket_total_mass(timestep)
         r = self.rocket.r_r
         h = self.rocket.l
-        # print("Time: ", timestep)
-        # print("Thrust: ", Thrust)
-        # print("Mass: ", m)
-        # print("Height: ", h)
 
         self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, h, Cn, Ca, Cp, rho, bno_ang_pos, accel, timestep)
-        self.r_kalman_filter.priori()
+        self.r_kalman_filter.priori(Rotational_matrix, m, Thrust, r, h, rho, cm:float, cp:float, Cx_aero: float, Cy_aero: float, Cz_aero: float) #TODO: get all the necessary coeff.
         # self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         # self.r_kalman_filter.update(*gyro, *accel)
         

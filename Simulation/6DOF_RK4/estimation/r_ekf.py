@@ -61,62 +61,50 @@ class KalmanFilter_R:
 
 
     # TODO: Fix priori and update step, make sure that names make sense, and add comments.
-    def priori(self, R: np.ndarray, m:float, T:float, r:float, h:float, rho:float, cm:float, cp:float, Croll_a: float, Cpitch_a: float, Cyaw_a: float):
-        J_x = 1/2 * m * r**2
-        J_y = 1/3 * m * h**2 + 1/4 * m * r**2
-        J_z = J_y
-        
+    def priori(self, R: np.ndarray, m:float, T:float, r:float, h:float, rho:float, cm:float, cp:float, Cx_aero: float, Cy_aero: float, Cz_aero: float):
 
-        vel_roll, vel_pitch, vel_yaw = self.x_k[1], self.x_k[4], self.x_k[7]
-        vel_mag = np.linalg.norm([vel_roll, vel_pitch, vel_yaw])
+        w_x, w_y, w_z = self.x_k[1], self.x_k[4], self.x_k[7]
+        w_mag = np.linalg.norm([w_x, w_y, w_z])
 
-        roll_a = 0.5*rho*vel_mag*Croll_a*np.pi*(r)**2
-        pitch_a = 0.5*rho*vel_mag*Cpitch_a*np.pi*(r)**2
-        yaw_a = 0.5*rho*vel_mag*Cyaw_a*np.pi*(r)**2
+        x_aero = 0.5 * rho * w_mag * Cx_aero * np.pi*(r)**2
+        y_aero = 0.5 * rho * w_mag * Cy_aero * np.pi*(r)**2
+        z_aero = 0.5 * rho * w_mag * Cz_aero * np.pi*(r)**2
 
-        pos_roll = self.x_k[0]
-        pos_pitch = self.x_k[3]
-        pos_yaw = self.x_k[6]
+        thrust = np.array([T, 0, 0])
+        vec_cp_to_cm = np.array([np.abs(cp - cm), 0, 0])
 
-        tV = np.array([T, 0, 0])
-        arm = np.array([np.abs(cp - cm), 0, 0])
+        thrust_world = thrust @ R
+        vec_cp_cm_world = vec_cp_to_cm @ R
 
-        tVec = tV @ R
-        armVec = arm @ R
+        Mt = np.cross(vec_cp_cm_world, thrust_world) 
 
-        thrustMoments = np.cross(armVec , tVec) 
-
-        roll_p = thrustMoments[0]
-        pitch_p = thrustMoments[1]
-        yaw_p = thrustMoments[2]
+        Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
 
         xdot = np.array([
-            [vel_roll], 
-            [(roll_a + roll_p - vel_pitch*vel_yaw(J_z - J_y))/J_x], 
+            [w_x], 
+            [(x_aero + Mtx - w_y*w_z*(J_z - J_y)) / J_x], 
             [1.0], 
-            [vel_pitch], 
-            [(pitch_a + pitch_p - vel_roll*vel_yaw(J_x - J_z))/J_y], 
+            [w_y], 
+            [(y_aero + Mty - w_x*w_z*(J_x - J_z)) / J_y], 
             [1.0],
-            [vel_yaw], 
-            [(yaw_a + yaw_p - vel_roll*vel_pitch(J_y - J_x))/ J_z], 
+            [w_z], 
+            [(z_aero + Mtz - w_x*w_y*(J_y - J_x)) / J_z], 
             [1.0] 
         ])
 
-        F = np.array([
-            [0, 1, 0, 0, 0, 0, 0, 0, 0], # wrt roll
-            [0, 0, 0, 0, -vel_yaw*(-J_y + J_z)/J_x, 0, 0, -vel_pitch*(-J_y + J_z)/J_x, 0], # wrt roll_vel
-            [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt roll_accel?????
+        self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0], 
+                      [0, 0, 0, 0, -w_z*(-J_y + J_z)/J_x, 0, 0, -w_y*(-J_y + J_z)/J_x, 0], 
+                      [0, 0, 0, 0, 0, 0, 0, 0, 0], 
 
-            [0, 0, 0, 0, 1, 0, 0, 0, 0], # wrt pitch
-            [0, -vel_yaw*(J_x - J_z)/J_y, 0, 0, 0, 0, 0, -vel_roll*(J_x - J_z)/J_y, 0], # wrt pitch_vel
-            [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt pitch_accel?????
+                      [0, 0, 0, 0, 1, 0, 0, 0, 0], 
+                      [0, -w_z*(J_x - J_z)/J_y, 0, 0, 0, 0, 0, -w_x*(J_x - J_z)/J_y, 0], 
+                      [0, 0, 0, 0, 0, 0, 0, 0, 0], 
 
-            [0, 0, 0, 0, 0, 0, 0, 1, 0], # wrt yaw
-            [0, -vel_pitch*(-J_x + J_y)/J_z, 0, 0, -vel_roll*(-J_x + J_y)/J_z, 0, 0, 0, 0], # wrt yaw_vel
-            [0, 0, 0, 0, 0, 0, 0, 0, 0], # wrt yaw_accel?????
-        ])
+                      [0, 0, 0, 0, 0, 0, 0, 1, 0], 
+                      [0, -w_y*(-J_x + J_y)/J_z, 0, 0, -w_x*(-J_x + J_y)/J_z, 0, 0, 0, 0], 
+                      [0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
-        self.x_priori = self.F @ self.x_k
+        self.x_priori = self.x_k + xdot * self.s_dt
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
     def update(self, vel_x,  vel_y,  vel_z, x_accel, y_accel, z_accel):
