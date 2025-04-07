@@ -152,7 +152,7 @@ def plotGraph(measuredDict):
    fig_kalman.suptitle('Kalman Filter Position, Barometer Altitude, and Acceleration')
       
 
-   barometer.plot(df_lowG_timestamp[0:2000], df_barometer_data[0:2000], label = "Barometer Data")
+   barometer.plot(df_lowG_timestamp[4000:10000], df_barometer_data[4000:10000], label = "Barometer Data")
    barometer.set_ylabel("Barometer Altitude (m)", fontsize = 10)
    barometer.set_xlabel("Time (ms)", fontsize = 10)
    
