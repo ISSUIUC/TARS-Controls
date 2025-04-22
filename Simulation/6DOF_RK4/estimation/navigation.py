@@ -43,15 +43,19 @@ class Navigation:
         Rotational_matrix = vct.body_to_world(roll, pitch, yaw, np.eye(3))
         rho = self.atm.get_density(baro_alt)
         Cn = self.rocket.get_cn()
-        Ca = self.rocket.get_ca_on()
+        Ca = self.rocket.get_ca_on() 
         Cp = self.rocket.get_cp()
+        Cm = self.rocket.get_CM()
+        Cx_aero = self.rocket.get_cx_aero()
+        Cy_aero = self.rocket.get_cy_aero()
+        Cz_aero = self.rocket.get_cz_aero()
         Thrust = self.rocket.get_motor().get_thrust(timestep)
         m = self.rocket.get_rocket_total_mass(timestep)
         r = self.rocket.r_r
         h = self.rocket.l
 
         self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, h, Cn, Ca, Cp, rho, bno_ang_pos, accel, timestep)
-        self.r_kalman_filter.priori(Rotational_matrix, m, Thrust, r, h, rho, cm:float, cp:float, Cx_aero: float, Cy_aero: float, Cz_aero: float) #TODO: get all the necessary coeff.
+        self.r_kalman_filter.priori(Rotational_matrix, m, Thrust, r, h, rho, Cm, Cp, Cx_aero, Cy_aero, Cz_aero) #TODO: get all the necessary coeff.
         # self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         # self.r_kalman_filter.update(*gyro, *accel)
         
