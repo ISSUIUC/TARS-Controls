@@ -86,11 +86,24 @@ class KalmanFilter:
         Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]      # gravitational forces expressed on the body in each direction
         Ftx, Fty, Ftz = T[0],T[1],T[2]
 
-                                        # thrust forces in each direciton ( we assume that is in one direction)
+                                        # thrust forces in each direction ( we assume that is in one direction)
         # states tracked: x, vx, ax, y, vy, ay, z, vz, az
+        # xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 0.0,
+        #          vel_y, (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_z), 0.0,
+        #          vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0.0
+        #         ])
+        acc_x = acc_x - 9.81
+        # xdot = np.array([vel_x + 1/2 * acc_x * self.s_dt, self.x_k[2], 0.0,
+        #          vel_y + 1/2 * acc_y * self.s_dt, self.x_k[5], 0.0,
+        #          vel_z + 1/2 * acc_z * self.s_dt, self.x_k[8], 0.0
+        #         ])
+        # (-Fay) / m * vel_y * accel_norm - (w_z*vel_x - w_x*vel_z)
+        accel_norm = 0
+        if (vel_y != 0 or vel_z != 0):
+            accel_norm = 1/np.sqrt(vel_y**2+vel_z**2)
         xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 0.0,
-                 vel_y, (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_z), 0.0,
-                 vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0.0
+                 vel_y, -(Fay) / m * vel_y * accel_norm - (w_z*vel_x - w_x*vel_z) + (Fty + Fgy)/m, 0.0,
+                 vel_z, (Faz) / m * accel_norm - (w_x*vel_y - w_y*vel_x) + (Ftz + Fgz)/m, 0.0
                 ])
         self.x_priori = self.x_k + xdot * self.s_dt
         
