@@ -61,7 +61,7 @@ class KalmanFilter:
         """
         # states tracked: x, vx, ax, y, vy, ay, z, vz, az
         # pos in x_k is every third element starting from 0
-        
+
         pos_x, pos_y, pos_z = self.x_k[0], self.x_k[3], self.x_k[6]
         vel_x, vel_y, vel_z = self.x_k[1], self.x_k[4], self.x_k[7]
         vel_mag = np.linalg.norm([vel_x, vel_y, vel_z])

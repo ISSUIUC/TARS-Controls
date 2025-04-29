@@ -67,42 +67,28 @@ class KalmanFilter_R:
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
 
-        w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
-        print("type of Cx_aero: ", type(Cx_aero))
-        print("value of Cx_aero: ", Cx_aero)
+        # mass, height, radius are all floats
 
+        # coming up as floats so we good
+        w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
         w_mag = np.linalg.norm([w_x, w_y, w_z])
+
+        if Cy_aero > 0:
+            print("cyaero: ", Cy_aero)
+
         x_aero = 0.5 * rho * w_mag * Cx_aero * np.pi*(r)**2
         y_aero = 0.5 * rho * w_mag * Cy_aero * np.pi*(r)**2
         z_aero = 0.5 * rho * w_mag * Cz_aero * np.pi*(r)**2
 
         cp_val = float(cp)
-        
-        print("cm:", cm)
-        print("type(cm):", type(cm))
-        print("cm.shape:", getattr(cm, "shape", "No shape attr"))
-        print("cm[0]:", cm[0], "type:", type(cm[0]))
-
-
-        print("cm:", cm, type(cm))
         thrust = T    
         cP = np.array([cp_val, 0.0 , 0.0])
-                     
         vec_cp_to_cm =  cP - cm
-
 
         thrust_world = R @ thrust
         vec_cp_cm_world = R @ vec_cp_to_cm
-        print(f"vec_cp_cm_world: {vec_cp_cm_world}")
-        print(f"thrust_world: {thrust_world}")
-
-
-        print("vec_cp_cm_world shape:", vec_cp_cm_world.shape)
-        print("thrust_world shape:", thrust_world.shape)
-
 
         Mt = np.cross(vec_cp_cm_world, thrust_world)  
-
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
 
         xdot = np.array([
@@ -116,6 +102,8 @@ class KalmanFilter_R:
             [(z_aero + Mtz - w_x*w_y*(J_y - J_x)) / J_z], 
             [1.0] 
         ])
+        if xdot[1].item() > 1:
+            print("roll position: ", xdot[1])
 
         self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0], 
                       [0, 0, 0, 0, -w_z*(-J_y + J_z)/J_x, 0, 0, -w_y*(-J_y + J_z)/J_x, 0], 
@@ -126,9 +114,6 @@ class KalmanFilter_R:
                       [0, 0, 0, 0, 0, 0, 0, 1, 0], 
                       [0, -w_y*(-J_x + J_y)/J_z, 0, 0, -w_x*(-J_x + J_y)/J_z, 0, 0, 0, 0], 
                       [0, 0, 0, 0, 0, 0, 0, 0, 0]])
-
-        print("self.x_k type: ", type(self.x_k))  # Print the type of self.x_k
-        print("xdot type: ", type(xdot)) 
 
         self.x_priori = self.x_k + xdot * self.s_dt
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
