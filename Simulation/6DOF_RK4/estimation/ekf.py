@@ -60,15 +60,27 @@ class KalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-    def priori(self, R: np.ndarray, T:float, m:float, r:float, h:float, Cn:float, Ca:float, Cp:float, rho:float, gyro:tuple, bno_attitude:tuple, accel:tuple, timestep):
-        """Sets priori state and covariance
-            Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
-            But basically predicts step
-        Args:
-            u (float): control input
+    def priori(self, R: np.ndarray, T:float, m:float, r:float, Cn:float, Ca:float, rho:float, gyro:tuple, bno_attitude:tuple):
+        """
+        Predicts the next state and covariance of the system using the Extended Kalman Filter (EKF) approach.
+            R (np.ndarray): Rotation matrix representing the orientation of the body frame relative to the world frame.
+            T (float): Thrust vector in the body frame.
+            m (float): Mass of the current state of the rocket.
+            r (float): Radius of the system (used for aerodynamic calculations).
+            Cn (float): Normal force coefficient for aerodynamic forces.
+            Ca (float): Axial force coefficient for aerodynamic forces.
+            rho (float): Air density.
+            gyro (tuple): Angular velocity of the system in the body frame (gyroscope readings).
+            bno_attitude (tuple): Attitude of the system (e.g., roll, pitch, yaw) from the BNO sensor.
+        Attributes Updated:
+            x_priori (np.ndarray): Predicted state vector after applying the dynamics.
+            P_priori (np.ndarray): Predicted covariance matrix after applying the dynamics.
+            F (np.ndarray): Linearized dynamics matrix.
+
+        Try reading this: https://en.wikipedia.org/wiki/Kalman_filter#Details
+        Dynamics: https://www.intechopen.com/chapters/64567
         """
         # states tracked: x, vx, ax, y, vy, ay, z, vz, az
-        # pos in x_k is every third element starting from 0
 
         g = 9.81 # Earth gravity
         vel_x, vel_y, vel_z = self.x_k[1], self.x_k[4], self.x_k[7]
@@ -80,24 +92,21 @@ class KalmanFilter:
         if (vel_y != 0 or vel_z != 0):
             accel_norm_inv = 1/np.sqrt(vel_y**2+vel_z**2)
 
-        # approximate angular velocity
+        # TODO: grab angular velocity from r_EKF instead of gyro
         self.w_k = gyro
         w_x, w_y, w_z = self.w_k[0], self.w_k[1], self.w_k[2]
 
-        Fax = -0.5*rho*(vel_mag**2)*float(Ca)*(np.pi*r**2)             # drag force
+        # Calculate aerodynamic forces in body frame
+        Fax = -0.5*rho*(vel_mag**2)*float(Ca)*(np.pi*r**2)
         Fay = 0.5*rho*(vel_mag**2)*(-Cn*vel_y*accel_norm_inv)*(np.pi*r**2)
         Faz = 0.5*rho*(vel_mag**2)*(Cn*accel_norm_inv)*(np.pi*r**2)
 
+        # Transform forces to body frame
         Fg = np.array([-g, 0, 0])
         Fg_body = np.linalg.inv(R) @ Fg
-        Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]      # gravitational forces expressed on the body in each direction
+        Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]
         Ftx, Fty, Ftz = T[0],T[1],T[2]
 
-        # xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 0.0,
-        #          vel_y, (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_z), 0.0,
-        #          vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0.0
-        #         ])
-        
         
         xdot = np.array([vel_x, ((Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y) + acc_x) / 2, 0.0,
                  vel_y, ((Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_z) + acc_y) / 2, 0.0,
