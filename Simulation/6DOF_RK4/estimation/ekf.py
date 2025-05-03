@@ -60,7 +60,7 @@ class KalmanFilter:
                            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
 
-    def priori(self, R: np.ndarray, T:float, m:float, r:float, Cn:float, Ca:float, rho:float, gyro:tuple, bno_attitude:tuple):
+    def priori(self, R: np.ndarray, T:float, m:float, r:float, Cn:float, Ca:float, rho:float, gyro:tuple):
         """
         Predicts the next state and covariance of the system using the Extended Kalman Filter (EKF) approach.
             R (np.ndarray): Rotation matrix representing the orientation of the body frame relative to the world frame.
@@ -86,11 +86,10 @@ class KalmanFilter:
         vel_x, vel_y, vel_z = self.x_k[1], self.x_k[4], self.x_k[7]
         vel_mag = np.linalg.norm([vel_x, vel_y, vel_z])
         acc_x, acc_y, acc_z = self.x_k[2], self.x_k[5], self.x_k[8]
-        w_acc = vct.world_to_body(*bno_attitude, np.array([acc_x, acc_y, acc_z])) + np.array([-9.81, 0, 0])
 
-        accel_norm_inv = 0
+        vel_norm_inv = 0
         if (vel_y != 0 or vel_z != 0):
-            accel_norm_inv = 1/np.sqrt(vel_y**2+vel_z**2)
+            vel_norm_inv = 1/np.sqrt(vel_y**2+vel_z**2)
 
         # TODO: grab angular velocity from r_EKF instead of gyro
         self.w_k = gyro
@@ -98,8 +97,8 @@ class KalmanFilter:
 
         # Calculate aerodynamic forces in body frame
         Fax = -0.5*rho*(vel_mag**2)*float(Ca)*(np.pi*r**2)
-        Fay = 0.5*rho*(vel_mag**2)*(-Cn*vel_y*accel_norm_inv)*(np.pi*r**2)
-        Faz = 0.5*rho*(vel_mag**2)*(Cn*accel_norm_inv)*(np.pi*r**2)
+        Fay = 0.5*rho*(vel_mag**2)*(-Cn*vel_y*vel_norm_inv)*(np.pi*r**2)
+        Faz = 0.5*rho*(vel_mag**2)*(Cn*vel_norm_inv)*(np.pi*r**2)
 
         # Transform forces to body frame
         Fg = np.array([-g, 0, 0])

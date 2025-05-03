@@ -50,7 +50,7 @@ class Navigation:
         r = self.rocket.r_r
         h = self.rocket.l
 
-        self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, Cn, Ca, rho, gyro, bno_ang_pos)
+        self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, Cn, Ca, rho, gyro)
         self.r_kalman_filter.priori()
         self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
         self.r_kalman_filter.update(*gyro, *accel)
