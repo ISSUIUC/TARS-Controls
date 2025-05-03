@@ -73,49 +73,51 @@ class KalmanFilter:
         g = 9.81 # Earth gravity
         vel_x, vel_y, vel_z = self.x_k[1], self.x_k[4], self.x_k[7]
         vel_mag = np.linalg.norm([vel_x, vel_y, vel_z])
-        acc_x, acc_y, acc_z = accel
+        acc_x, acc_y, acc_z = self.x_k[2], self.x_k[5], self.x_k[8]
         w_acc = vct.world_to_body(*bno_attitude, np.array([acc_x, acc_y, acc_z])) + np.array([-9.81, 0, 0])
+
+        accel_norm_inv = 0
+        if (vel_y != 0 or vel_z != 0):
+            accel_norm_inv = 1/np.sqrt(vel_y**2+vel_z**2)
 
         # approximate angular velocity
         self.w_k = gyro
         w_x, w_y, w_z = self.w_k[0], self.w_k[1], self.w_k[2]
 
         Fax = -0.5*rho*(vel_mag**2)*float(Ca)*(np.pi*r**2)             # drag force
-        Fay = 0.5*rho*(vel_mag**2)*Cn*(np.pi*r**2)
-        Faz = Fay
+        Fay = 0.5*rho*(vel_mag**2)*(-Cn*vel_y*accel_norm_inv)*(np.pi*r**2)
+        Faz = 0.5*rho*(vel_mag**2)*(Cn*accel_norm_inv)*(np.pi*r**2)
 
         Fg = np.array([-g, 0, 0])
         Fg_body = np.linalg.inv(R) @ Fg
         Fgx, Fgy, Fgz = Fg_body[0], Fg_body[1], Fg_body[2]      # gravitational forces expressed on the body in each direction
         Ftx, Fty, Ftz = T[0],T[1],T[2]
 
-        acc_x = acc_x - 9.81
-        accel_norm = 0
-        if (vel_y != 0 or vel_z != 0):
-            accel_norm = 1/np.sqrt(vel_y**2+vel_z**2)
-
-        xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 0.0,
-                 vel_y, -(Fay) / m * vel_y * accel_norm - (w_z*vel_x - w_x*vel_z) + (Fty + Fgy)/m, 0.0,
-                 vel_z, (Faz) / m * accel_norm - (w_x*vel_y - w_y*vel_x) + (Ftz + Fgz)/m, 0.0
+        # xdot = np.array([vel_x, (Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y), 0.0,
+        #          vel_y, (Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_z), 0.0,
+        #          vel_z, (Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x), 0.0
+        #         ])
+        
+        
+        xdot = np.array([vel_x, ((Fax + Ftx + Fgx) / m - (w_y*vel_z - w_z*vel_y) + acc_x) / 2, 0.0,
+                 vel_y, ((Fay + Fty + Fgy) / m - (w_z*vel_x - w_x*vel_z) + acc_y) / 2, 0.0,
+                 vel_z, ((Faz + Ftz + Fgz) / m - (w_x*vel_y - w_y*vel_x) + acc_z) / 2, 0.0
                 ])
         
         self.x_priori = self.x_k + xdot * self.s_dt
         
         # linearized dynamics are F
-        self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, w_z, 0, 0, -w_y, 0], 
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, 1, 0, 0, 0, 0], 
-                           [0, -w_z, 0, 0, 0, 0, 0, w_x, 0], 
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, 0, 0, 0, 1, 0], 
-                           [0, w_y, 0, 0, -w_x, 0, 0, 0, 0], 
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0]])
+        self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 1/2, 0, w_z/2, 0, 0, -w_y/2, 0], 
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                        [0, 0, 0, 0, 1, 0, 0, 0, 0], 
+                        [0, -w_z/2, 0, 0, 0, 1/2, 0, w_x/2, 0], 
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+                        [0, 0, 0, 0, 0, 0, 0, 1, 0], 
+                        [0, w_y/2, 0, 0, -w_x/2, 0, 0, 0, 1/2], 
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
         self.P_priori = self.F @ self.P_k @ self.F.T + self.Q
-        ##
-        # self.x_k = self.x_priori
-        # self.P_k = self.P_priori
 
     def update(self, bno_attitude, x_pos, x_accel, y_accel, z_accel):
         """Updates state and covariance
