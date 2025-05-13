@@ -1,4 +1,4 @@
-# TARS-CONTROLS
+# ISS-CONTROLS
 Illinois Space Society's Large Rocketry Guidance, Navigation, and Controls Team simulation tools repository
 
 We test various control design methodologies here with Python before implementing them in [SILSIM](https://github.com/ISSUIUC/ISS_SILSIM) and [flight software](https://github.com/ISSUIUC/MIDAS-Software).
