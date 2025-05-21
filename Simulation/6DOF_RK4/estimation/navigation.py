@@ -57,6 +57,4 @@ class Navigation:
         self.kalman_filter.priori(Rotational_matrix, Thrust, m, r, h, Cn, Ca, Cp, rho, bno_ang_pos, accel, timestep)
         self.r_kalman_filter.priori(Rotational_matrix, m, Thrust, r, h, rho, Cm, Cp, Cx_aero, Cy_aero, Cz_aero) #TODO: get all the necessary coeff.
         # self.kalman_filter.update(bno_ang_pos, baro_alt, accel[0], accel[1], accel[2])
-        # self.r_kalman_filter.update(*gyro, *accel)
-        
-        
+        self.r_kalman_filter.update(*gyro, *accel)

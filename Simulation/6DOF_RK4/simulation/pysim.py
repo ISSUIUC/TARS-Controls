@@ -26,6 +26,10 @@
 # 2024-2025 Guidance, Navigation, and Control Main Contributors #
 # Sub-Team Lead: Shishir Bhatta (2026)
 # Ishaan Kandamuri (2026)
+# Keshav Balaji (2026)
+# William Yeh (2026)
+# Divij Garg (2026)
+# Adi Srikanth (2026)
 # Aneesh Ganti (2028)
 
 import numpy as np

@@ -49,12 +49,15 @@ class KalmanFilter_R:
         # IMU 3 axes
         # a_x, w_x, a_y, w_y, a_z, w_z
 
-        self.H = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
+        self.H = np.array([
+            [0, 1, 0, 0, 0, 0, 0, 0, 0],  # ω_x
+            [0, 0, 0, 0, 1, 0, 0, 0, 0],  # ω_y
+            [0, 0, 0, 1, 0, 0, 0, 0, 0],  # pitch
+            [0, 0, 0, 0, 0, 0, 0, 1, 0],  # ω_z
+            [0, 0, 0, 0, 0, 0, 1, 0, 0],  # yaw (not really a measurement — just placeholder)
+            [0, 0, 0, 0, 0, 0, 0, 0, 1]   # α_z (or leave zero if unused)
+        ])
+
         
     
         
@@ -70,11 +73,14 @@ class KalmanFilter_R:
         # mass, height, radius are all floats
 
         # coming up as floats so we good
+        self.x_k = self.x_k.flatten()
         w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
+
         w_mag = np.linalg.norm([w_x, w_y, w_z])
 
-        if Cy_aero > 0:
-            print("cyaero: ", Cy_aero)
+
+        # if Cy_aero > 0:
+        #     print("cyaero: ", Cy_aero)
 
         x_aero = 0.5 * rho * w_mag * Cx_aero * np.pi*(r)**2
         y_aero = 0.5 * rho * w_mag * Cy_aero * np.pi*(r)**2
@@ -90,20 +96,21 @@ class KalmanFilter_R:
 
         Mt = np.cross(vec_cp_cm_world, thrust_world)  
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
+            
 
         xdot = np.array([
-            [w_x], 
-            [(x_aero + Mtx - w_y*w_z*(J_z - J_y)) / J_x], 
-            [1.0], 
-            [w_y], 
-            [(y_aero + Mty - w_x*w_z*(J_x - J_z)) / J_y], 
-            [1.0],
-            [w_z], 
-            [(z_aero + Mtz - w_x*w_y*(J_y - J_x)) / J_z], 
-            [1.0] 
+            w_x, 
+            (x_aero + Mtx - w_y*w_z*(J_z - J_y)) / J_x, 
+            1.0, 
+            w_y, 
+            (y_aero + Mty - w_x*w_z*(J_x - J_z)) / J_y, 
+            1.0,
+            w_z, 
+            (z_aero + Mtz - w_x*w_y*(J_y - J_x)) / J_z, 
+            1.0 
         ])
-        if xdot[1].item() > 1:
-            print("roll position: ", xdot[1])
+
+        
 
         self.F = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0], 
                       [0, 0, 0, 0, -w_z*(-J_y + J_z)/J_x, 0, 0, -w_y*(-J_y + J_z)/J_x, 0], 
@@ -115,20 +122,27 @@ class KalmanFilter_R:
                       [0, -w_y*(-J_x + J_y)/J_z, 0, 0, -w_x*(-J_x + J_y)/J_z, 0, 0, 0, 0], 
                       [0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
+        #self.x_priori = self.F @ self.x_k
         self.x_priori = self.x_k + xdot * self.s_dt
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
     def update(self, vel_x,  vel_y,  vel_z, x_accel, y_accel, z_accel):
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
         body_rot_rate = np.array([vel_x,vel_y,vel_z])
-        world_rot_rate = vct.body_to_world(self.x_k[0], self.x_k[3], self.x_k[6], body_rot_rate)
-        yaw = np.arctan2(y_accel,x_accel)
-        pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
-        y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
+        # world_rot_rate = vct.body_to_world(self.x_k[0], self.x_k[3], self.x_k[6], body_rot_rate)
+        # yaw = np.arctan2(y_accel, x_accel)
+        # pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
+        # y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
+
+
+        pitch = np.arctan2(z_accel, x_accel)
+        roll = np.arctan2(y_accel, z_accel)
+        yaw  = self.x_k[6]  + vel_z * self.s_dt # yaw also unobservable from accel
+
+        y_k = np.array([roll, body_rot_rate[0], pitch, body_rot_rate[1], yaw, body_rot_rate[2]]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
-        self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori
-
+        self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori 
         self.current_time += self.s_dt
 
     def get_state(self):
