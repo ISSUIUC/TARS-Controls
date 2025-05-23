@@ -24,11 +24,11 @@ class KalmanFilter_R:
         self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
         self.R = np.diag([1.9, 1.9, 1.9, 1.9, 1.9, 1.9])
-        self.P_k = np.zeros((9,9))
+        self.P_k = np.eye(9)
         self.x_priori = np.zeros((9,1))
         self.P_priori = np.zeros((9,9))
         self.F = np.zeros((9,9))
-        self.H = np.zeros((4,9))
+        self.H = np.zeros((6,9))
 
         self.current_time = 0
         self.s_dt = dt
@@ -46,17 +46,15 @@ class KalmanFilter_R:
             self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 13.)
 
 
-        # IMU 3 axes
-        # a_x, w_x, a_y, w_y, a_z, w_z
-
         self.H = np.array([
-            [0, 1, 0, 0, 0, 0, 0, 0, 0],  # ω_x
-            [0, 0, 0, 0, 1, 0, 0, 0, 0],  # ω_y
-            [0, 0, 0, 1, 0, 0, 0, 0, 0],  # pitch
-            [0, 0, 0, 0, 0, 0, 0, 1, 0],  # ω_z
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],  # yaw (not really a measurement — just placeholder)
-            [0, 0, 0, 0, 0, 0, 0, 0, 1]   # α_z (or leave zero if unused)
+            [1, 0, 0, 0, 0, 0, 0, 0, 0],  
+            [0, 1, 0, 0, 0, 0, 0, 0, 0],  
+            [0, 0, 0, 1, 0, 0, 0, 0, 0], 
+            [0, 0, 0, 0, 1, 0, 0, 0, 0],  
+            [0, 0, 0, 0, 0, 0, 1, 0, 0],  
+            [0, 0, 0, 0, 0, 0, 0, 1, 0],  
         ])
+
 
         
     
@@ -65,22 +63,13 @@ class KalmanFilter_R:
 
     # TODO: Fix priori and update step, make sure that names make sense, and add comments.
     def priori(self, R: np.ndarray, m:float, T:float, r:float, h:float, rho:float, cm:float, cp:float, Cx_aero: float, Cy_aero: float, Cz_aero: float):
-        # m, r, and h are being returned as floats
         J_x = 1/2 * m * r**2
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
 
-        # mass, height, radius are all floats
-
-        # coming up as floats so we good
         self.x_k = self.x_k.flatten()
         w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
-
         w_mag = np.linalg.norm([w_x, w_y, w_z])
-
-
-        # if Cy_aero > 0:
-        #     print("cyaero: ", Cy_aero)
 
         x_aero = 0.5 * rho * w_mag * Cx_aero * np.pi*(r)**2
         y_aero = 0.5 * rho * w_mag * Cy_aero * np.pi*(r)**2
@@ -129,18 +118,11 @@ class KalmanFilter_R:
     def update(self, vel_x,  vel_y,  vel_z, x_accel, y_accel, z_accel):
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
         body_rot_rate = np.array([vel_x,vel_y,vel_z])
-        # world_rot_rate = vct.body_to_world(self.x_k[0], self.x_k[3], self.x_k[6], body_rot_rate)
-        # yaw = np.arctan2(y_accel, x_accel)
-        # pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
-        # y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
-
-
-        pitch = np.arctan2(z_accel, x_accel)
-        roll = np.arctan2(y_accel, z_accel)
-        yaw  = self.x_k[6]  + vel_z * self.s_dt # yaw also unobservable from accel
-
-        y_k = np.array([roll, body_rot_rate[0], pitch, body_rot_rate[1], yaw, body_rot_rate[2]]).T
-
+        world_rot_rate = vct.body_to_world(self.x_k[0], self.x_k[3], self.x_k[6], body_rot_rate)
+        yaw = np.arctan2(y_accel,x_accel)
+        pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
+        y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
+        
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori 
         self.current_time += self.s_dt
