@@ -23,7 +23,7 @@ class KalmanFilter_R:
         self.dt = dt
         self.x_k = np.zeros((9,1))
         self.Q = np.zeros((9,9))
-        self.R = np.diag([0.05, 0.05, 0.05, 1, 1, 1])
+        self.R = np.diag([1.9, 1.9, 1.9, 1.9, 1.9, 1.9])
         self.P_k = np.eye(9)
         self.x_priori = np.zeros((9,1))
         self.P_priori = np.zeros((9,9))
@@ -51,7 +51,7 @@ class KalmanFilter_R:
             [0, 1, 0, 0, 0, 0, 0, 0, 0],  
             [0, 0, 0, 1, 0, 0, 0, 0, 0], 
             [0, 0, 0, 0, 1, 0, 0, 0, 0],  
-            [0, 0, 0, 0, 0, 0, 1, 0, 0],  
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],  
             [0, 0, 0, 0, 0, 0, 0, 1, 0],  
         ])
 
@@ -90,13 +90,13 @@ class KalmanFilter_R:
         xdot = np.array([
             w_x, 
             (x_aero + Mtx - w_y*w_z*(J_z - J_y)) / J_x, 
-            1.0, 
+            0.0, 
             w_y, 
             (y_aero + Mty - w_x*w_z*(J_x - J_z)) / J_y, 
-            1.0,
+            0.0,
             w_z, 
             (z_aero + Mtz - w_x*w_y*(J_y - J_x)) / J_z, 
-            1.0 
+            0.0 
         ])
 
         
@@ -119,17 +119,24 @@ class KalmanFilter_R:
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
         body_rot_rate = np.array([vel_x,vel_y,vel_z])
         world_rot_rate = vct.body_to_world(self.x_k[0], self.x_k[3], self.x_k[6], body_rot_rate)
-        # yaw = np.arctan2(y_accel,x_accel)
-        # pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
-        # y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
+        yaw = np.arctan2(y_accel,x_accel)
+        pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
+        y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
         
-        roll = np.arctan2(y_accel,z_accel)
-        pitch = np.arctan2(x_accel, np.sqrt(y_accel**2 + z_accel**2))
-        y_k = np.array([roll, world_rot_rate[0], pitch, world_rot_rate[1], 0, world_rot_rate[2]]).T
+        # roll = np.arctan2(y_accel,z_accel)
+        # pitch = np.arctan2(x_accel, np.sqrt(y_accel**2 + z_accel**2))
+        # y_k = np.array([roll, world_rot_rate[0], pitch, world_rot_rate[1], 0, world_rot_rate[2]]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori 
         self.current_time += self.s_dt
+
+
+        # print(np.diag(self.Q[3:6, 3:6]))
+        # print("P_priori[3,3] =", self.P_priori[3,3])
+        # print("K[3] =", K[3])
+        # print("y_k[2] =", y_k[2], "x_k[3] =", self.x_k[3])
+
 
     def get_state(self):
         return self.x_k

@@ -66,7 +66,7 @@ class Simulation:
         self.baro = 0
         self.time_stamp = time_stamp
         self.sensor_config = self.rocket.stage_config['sensors']
-
+ 
     # Call on Navigation class?
 
     def time_step(self):
