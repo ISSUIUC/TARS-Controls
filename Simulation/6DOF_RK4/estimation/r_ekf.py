@@ -30,6 +30,9 @@ class KalmanFilter_R:
         self.F = np.zeros((9,9))
         self.H = np.zeros((6,9))
 
+        # used for aerodynamic force calc
+        self.vel = np.zeros(1,3)
+
         self.current_time = 0
         self.s_dt = dt
 
@@ -64,33 +67,39 @@ class KalmanFilter_R:
 
 
     # TODO: Fix priori and update step, make sure that names make sense, and add comments.
-    def priori(self, R: np.ndarray, m:float, T:float, r:float, h:float, rho:float, cm:float, cp:float, Cx_aero: float, Cy_aero: float, Cz_aero: float):
+    def priori(self, R, m, T, r, h, rho, cm, cp, Cx_aero, Cy_aero, Cz_aero, bno_attitude, x_accel, y_accel, z_accel):
         J_x = 1/2 * m * r**2
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
-
-        self.x_k = self.x_k.flatten()
-        w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
-        w_mag = np.linalg.norm([w_x, w_y, w_z])
-
-        # these are wrong, need to multiply by lever arm
-        # also its not angular velocity magnitude, i need translational velocity
-        x_aero = 0.5 * rho * w_mag * Cx_aero * np.pi*(r)**2 
-        y_aero = 0.5 * rho * w_mag * Cy_aero * np.pi*(r)**2
-        z_aero = 0.5 * rho * w_mag * Cz_aero * np.pi*(r)**2
 
         cp_val = float(cp)
         thrust = T    
         # this jawn was printing out to be 128.45, 0, 0. guessing its cm so i divided by 100
         cP = np.array([cp_val/100, 0.0 , 0.0])
-        vec_cp_to_cm =  cP - cm
+        momentVector =  cP - cm
+
+        acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
+        self.vel[0] += acc[0] * self.dt
+        self.vel[1] += acc[1] * self.dt
+        self.vel[2] += acc[2] * self.dt
+        vel_mag = np.linalg.norm(self.vel)
 
 
-        thrust_world = R @ thrust
-        vec_cp_cm_world = R @ vec_cp_to_cm
+        self.x_k = self.x_k.flatten()
+        w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
 
-        Mt = np.cross(vec_cp_cm_world, thrust_world)  
-        # this also is jsut the force, not the moment, need to multiply by lever arm
+        # these are wrong, need to multiply by lever arm
+        # also its not angular velocity magnitude, i need translational velocity
+        x_force = 0.5 * rho * vel_mag * Cx_aero * np.pi*(r)**2 
+        y_force = 0.5 * rho * vel_mag * Cy_aero * np.pi*(r)**2
+        z_force = 0.5 * rho * vel_mag * Cz_aero * np.pi*(r)**2
+
+        aForce = np.array([x_force, y_force, z_force])
+        aMoment = np.cross([momentVector, aForce])
+        x_aero, y_aero, z_aero = aMoment
+
+
+        Mt = np.cross(momentVector, thrust)  
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
             
         # atleast this is setup right 💀
