@@ -87,29 +87,23 @@ class KalmanFilter_R:
         aBody = accBody - gBody
         self.vel += aBody * self.dt
         vel_mag = np.linalg.norm(self.vel)
+        print("accBody: ", accBody)
+        print("aBody: ", aBody)
+        print("self.vel: ", self.vel)
+        print("vel_mag: ", vel_mag)
+
 
         self.x_k = self.x_k.flatten()
         w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
 
-
         A = np.pi * r**2
-        # x_force = -0.5 * rho * self.vel[0]**2 * Cx_aero * A * np.sign(self.vel[0])
-        # y_force = -0.5 * rho * self.vel[1]**2 * Cy_aero * A * np.sign(self.vel[1])
-        # z_force = -0.5 * rho * self.vel[2]**2 * Cz_aero * A * np.sign(self.vel[2])
-
-        x_force = -0.5 * rho * vel_mag * Cx_aero * A * np.sign(self.vel[0])
-        y_force = -0.5 * rho * vel_mag * Cz_aero * A * np.sign(self.vel[1])
-        z_force = -0.5 * rho * vel_mag * Cy_aero * A * np.sign(self.vel[2])
-        # i switched cy and cz and it gives a better graph????? no clue why or if its dumb luck lmfao
-
-        aForce = np.array([x_force, y_force, z_force])  # body frame
-        aMoment = np.cross(momentVector, aForce)
-        x_aero, y_aero, z_aero = aMoment
+        x_aero = 0.5 * rho * vel_mag * Cx_aero * A * h 
+        y_aero = 0.5 * rho * vel_mag * Cy_aero * A * h 
+        z_aero = 0.5 * rho * vel_mag * Cz_aero * A * h 
 
         Mt = np.cross(momentVector, thrust)  
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
             
-        # atleast this is setup right 💀
         xdot = np.array([
             w_x, 
             (x_aero + Mtx - w_y*w_z*(J_z - J_y)) / J_x, 
