@@ -31,7 +31,7 @@ class KalmanFilter_R:
         self.H = np.zeros((6,9))
 
         # used for aerodynamic force calc
-        self.vel = np.zeros(1,3)
+        self.vel = np.zeros(3)
 
         self.current_time = 0
         self.s_dt = dt
@@ -56,7 +56,7 @@ class KalmanFilter_R:
             [0, 1, 0, 0, 0, 0, 0, 0, 0],  
             [0, 0, 0, 1, 0, 0, 0, 0, 0], 
             [0, 0, 0, 0, 1, 0, 0, 0, 0],  
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],  
+            [0, 0, 0, 0, 0, 0, 1, 0, 0],  
             [0, 0, 0, 0, 0, 0, 0, 1, 0],  
         ])
 
@@ -72,32 +72,39 @@ class KalmanFilter_R:
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
 
+        grav = -9.81
+        g = np.array([grav, 0, 0])
+        gBody = vct.world_to_body(*bno_attitude, g)
+
         cp_val = float(cp)
         thrust = T    
         # this jawn was printing out to be 128.45, 0, 0. guessing its cm so i divided by 100
         cP = np.array([cp_val/100, 0.0 , 0.0])
         momentVector =  cP - cm
 
-        acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
-        self.vel[0] += acc[0] * self.dt
-        self.vel[1] += acc[1] * self.dt
-        self.vel[2] += acc[2] * self.dt
+        # acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
+        accBody = np.array([x_accel,y_accel,z_accel])
+        aBody = accBody - gBody
+        self.vel += aBody * self.dt
         vel_mag = np.linalg.norm(self.vel)
-
 
         self.x_k = self.x_k.flatten()
         w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
 
-        # these are wrong, need to multiply by lever arm
-        # also its not angular velocity magnitude, i need translational velocity
-        x_force = 0.5 * rho * vel_mag * Cx_aero * np.pi*(r)**2 
-        y_force = 0.5 * rho * vel_mag * Cy_aero * np.pi*(r)**2
-        z_force = 0.5 * rho * vel_mag * Cz_aero * np.pi*(r)**2
 
-        aForce = np.array([x_force, y_force, z_force])
-        aMoment = np.cross([momentVector, aForce])
+        A = np.pi * r**2
+        # x_force = -0.5 * rho * self.vel[0]**2 * Cx_aero * A * np.sign(self.vel[0])
+        # y_force = -0.5 * rho * self.vel[1]**2 * Cy_aero * A * np.sign(self.vel[1])
+        # z_force = -0.5 * rho * self.vel[2]**2 * Cz_aero * A * np.sign(self.vel[2])
+
+        x_force = -0.5 * rho * vel_mag * Cx_aero * A * np.sign(self.vel[0])
+        y_force = -0.5 * rho * vel_mag * Cy_aero * A * np.sign(self.vel[1])
+        z_force = -0.5 * rho * vel_mag * Cz_aero * A * np.sign(self.vel[2])
+
+
+        aForce = np.array([x_force, y_force, z_force])  # body frame
+        aMoment = np.cross(momentVector, aForce)
         x_aero, y_aero, z_aero = aMoment
-
 
         Mt = np.cross(momentVector, thrust)  
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
@@ -131,13 +138,15 @@ class KalmanFilter_R:
         self.x_priori = self.x_k + xdot * self.s_dt
         self.P_priori = (self.F @ self.P_k @ self.F.T) + self.Q
 
-    def update(self, vel_x,  vel_y,  vel_z, x_accel, y_accel, z_accel):
+    def update(self, vel_x,  vel_y,  vel_z, x_accel, y_accel, z_accel, bno_roll, bno_pitch, bno_yaw):
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
+
         body_rot_rate = np.array([vel_x,vel_y,vel_z])
         world_rot_rate = vct.body_to_world(self.x_k[0], self.x_k[3], self.x_k[6], body_rot_rate)
-        yaw = np.arctan2(y_accel,x_accel)
-        pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
-        y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
+        # yaw = np.arctan2(y_accel,x_accel)
+        # pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
+        # y_k = np.array([bno_roll, world_rot_rate[0], bno_pitch, world_rot_rate[1], bno_yaw, world_rot_rate[2]]).T
+        y_k = np.array([bno_roll, vel_x, bno_pitch, vel_y, 0, vel_z]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori 
