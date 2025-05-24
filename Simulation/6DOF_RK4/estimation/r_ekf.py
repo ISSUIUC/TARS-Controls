@@ -40,12 +40,14 @@ class KalmanFilter_R:
                              yaw, w_z, a_z]]).T
 
         for i in range(3):
+            # why is F initialized here? didnt see this in the onb-errorekfraa branch for ekf.py
             self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
                                             [0.0, 1.0, dt],
                                             [0.0, 0.0, 1.0]]
             self.Q[3*i:3*i+3, 3*i:3*i+3] = Q_continuous_white_noise(3, dt, 13.)
+            
 
-
+        # double check if this is right
         self.H = np.array([
             [1, 0, 0, 0, 0, 0, 0, 0, 0],  
             [0, 1, 0, 0, 0, 0, 0, 0, 0],  
@@ -71,22 +73,27 @@ class KalmanFilter_R:
         w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
         w_mag = np.linalg.norm([w_x, w_y, w_z])
 
-        x_aero = 0.5 * rho * w_mag * Cx_aero * np.pi*(r)**2
+        # these are wrong, need to multiply by lever arm
+        # also its not angular velocity magnitude, i need translational velocity
+        x_aero = 0.5 * rho * w_mag * Cx_aero * np.pi*(r)**2 
         y_aero = 0.5 * rho * w_mag * Cy_aero * np.pi*(r)**2
         z_aero = 0.5 * rho * w_mag * Cz_aero * np.pi*(r)**2
 
         cp_val = float(cp)
         thrust = T    
-        cP = np.array([cp_val, 0.0 , 0.0])
+        # this jawn was printing out to be 128.45, 0, 0. guessing its cm so i divided by 100
+        cP = np.array([cp_val/100, 0.0 , 0.0])
         vec_cp_to_cm =  cP - cm
+
 
         thrust_world = R @ thrust
         vec_cp_cm_world = R @ vec_cp_to_cm
 
         Mt = np.cross(vec_cp_cm_world, thrust_world)  
+        # this also is jsut the force, not the moment, need to multiply by lever arm
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
             
-
+        # atleast this is setup right 💀
         xdot = np.array([
             w_x, 
             (x_aero + Mtx - w_y*w_z*(J_z - J_y)) / J_x, 
@@ -122,20 +129,10 @@ class KalmanFilter_R:
         yaw = np.arctan2(y_accel,x_accel)
         pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
         y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
-        
-        # roll = np.arctan2(y_accel,z_accel)
-        # pitch = np.arctan2(x_accel, np.sqrt(y_accel**2 + z_accel**2))
-        # y_k = np.array([roll, world_rot_rate[0], pitch, world_rot_rate[1], 0, world_rot_rate[2]]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori 
         self.current_time += self.s_dt
-
-
-        # print(np.diag(self.Q[3:6, 3:6]))
-        # print("P_priori[3,3] =", self.P_priori[3,3])
-        # print("K[3] =", K[3])
-        # print("y_k[2] =", y_k[2], "x_k[3] =", self.x_k[3])
 
 
     def get_state(self):
