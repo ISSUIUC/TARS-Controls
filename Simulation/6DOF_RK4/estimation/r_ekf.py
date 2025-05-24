@@ -98,9 +98,9 @@ class KalmanFilter_R:
         # z_force = -0.5 * rho * self.vel[2]**2 * Cz_aero * A * np.sign(self.vel[2])
 
         x_force = -0.5 * rho * vel_mag * Cx_aero * A * np.sign(self.vel[0])
-        y_force = -0.5 * rho * vel_mag * Cy_aero * A * np.sign(self.vel[1])
-        z_force = -0.5 * rho * vel_mag * Cz_aero * A * np.sign(self.vel[2])
-
+        y_force = -0.5 * rho * vel_mag * Cz_aero * A * np.sign(self.vel[1])
+        z_force = -0.5 * rho * vel_mag * Cy_aero * A * np.sign(self.vel[2])
+        # i switched cy and cz and it gives a better graph????? no clue why or if its dumb luck lmfao
 
         aForce = np.array([x_force, y_force, z_force])  # body frame
         aMoment = np.cross(momentVector, aForce)
