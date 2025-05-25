@@ -81,30 +81,31 @@ class KalmanFilter_R:
         # this jawn was printing out to be 128.45, 0, 0. guessing its cm so i divided by 100
         cP = np.array([cp_val/100, 0.0 , 0.0])
         momentVector =  cP - cm
+        leverarm = momentVector[0]
 
-        # acc = vct.body_to_world(*bno_attitude, np.array([x_accel, y_accel, z_accel])) + np.array([-9.81, 0, 0])
         accBody = np.array([x_accel,y_accel,z_accel])
-        aBody = accBody - gBody
+        aBody = accBody + gBody
         self.vel += aBody * self.dt
         vel_mag = np.linalg.norm(self.vel)
 
         self.x_k = self.x_k.flatten()
         w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
-
+        if Cy_aero > 0:
+            print("Cy_aero: ", Cy_aero)
+            print("mach???: ", vel_mag/340.29)
 
         A = np.pi * r**2
-        # x_force = -0.5 * rho * self.vel[0]**2 * Cx_aero * A * np.sign(self.vel[0])
-        # y_force = -0.5 * rho * self.vel[1]**2 * Cy_aero * A * np.sign(self.vel[1])
-        # z_force = -0.5 * rho * self.vel[2]**2 * Cz_aero * A * np.sign(self.vel[2])
+        x_aero = 0.5 * rho * vel_mag**2 * Cx_aero * A * 0
+        y_aero = 0.5 * rho * vel_mag**2 * Cy_aero * A * leverarm
+        z_aero = 0.5 * rho * vel_mag**2 * Cz_aero * A * leverarm
 
-        x_force = -0.5 * rho * vel_mag * Cx_aero * A * np.sign(self.vel[0])
-        y_force = -0.5 * rho * vel_mag * Cz_aero * A * np.sign(self.vel[1])
-        z_force = -0.5 * rho * vel_mag * Cy_aero * A * np.sign(self.vel[2])
-        # i switched cy and cz and it gives a better graph????? no clue why or if its dumb luck lmfao
 
-        aForce = np.array([x_force, y_force, z_force])  # body frame
-        aMoment = np.cross(momentVector, aForce)
-        x_aero, y_aero, z_aero = aMoment
+        # x_force = 0.5 * rho * vel_mag**2 * Cx_aero * A  
+        # y_force = 0.5 * rho * vel_mag**2 * Cy_aero * A  
+        # z_force = 0.5 * rho * vel_mag**2 * Cz_aero * A  
+        # aForce = np.array([x_force, y_force, z_force])  # body frame
+        # aMoment = np.cross(momentVector, aForce)
+        # x_aero, y_aero, z_aero = aMoment
 
         Mt = np.cross(momentVector, thrust)  
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
@@ -143,10 +144,10 @@ class KalmanFilter_R:
 
         body_rot_rate = np.array([vel_x,vel_y,vel_z])
         world_rot_rate = vct.body_to_world(self.x_k[0], self.x_k[3], self.x_k[6], body_rot_rate)
-        # yaw = np.arctan2(y_accel,x_accel)
-        # pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
-        # y_k = np.array([bno_roll, world_rot_rate[0], bno_pitch, world_rot_rate[1], bno_yaw, world_rot_rate[2]]).T
-        y_k = np.array([bno_roll, vel_x, bno_pitch, vel_y, 0, vel_z]).T
+        yaw = np.arctan2(y_accel,x_accel)
+        pitch = np.arctan2(z_accel, np.sqrt(y_accel**2 + x_accel**2))
+        y_k = np.array([0, world_rot_rate[0], pitch, world_rot_rate[1], yaw, world_rot_rate[2]]).T
+        # y_k = np.array([bno_roll, vel_x, bno_pitch, vel_y, bno_yaw, vel_z]).T
 
         self.x_k = self.x_priori + K @ (y_k - self.H @ self.x_priori)
         self.P_k = (np.eye(len(K)) - K @ self.H) @ self.P_priori 

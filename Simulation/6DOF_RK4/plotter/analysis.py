@@ -88,14 +88,21 @@ def plotter(sim_dict, sensor_dict=0, kalman_dict=0):
     ang_pos_nc.legend(fontsize=10, loc='upper left',ncol=2)
 
 
-    ang_vel_nc.plot(sim_dict["time"][:10000], sim_dict["ang_vel"][:10000, 0],label="Roll",color="tab:red", linewidth = 2); 
-    ang_vel_nc.plot(sim_dict["time"][:10000], sim_dict["ang_vel"][:10000, 1],label="Pitch",color="tab:green", linewidth = 2);  
-    ang_vel_nc.plot(sim_dict["time"][:10000], sim_dict["ang_vel"][:10000, 2],label="Yaw",color="tab:blue", linewidth = 2);
+    # ang_vel_nc.plot(sim_dict["time"][:10000], sim_dict["ang_vel"][:10000, 0],label="Roll",color="tab:red", linewidth = 2); 
+    # ang_vel_nc.plot(sim_dict["time"][:10000], sim_dict["ang_vel"][:10000, 1],label="Pitch",color="tab:green", linewidth = 2);  
+    # ang_vel_nc.plot(sim_dict["time"][:10000], sim_dict["ang_vel"][:10000, 2],label="Yaw",color="tab:blue", linewidth = 2);
 
-    
-    ang_vel_nc.plot(kalman_dict["time"][:10000], kalman_dict["kalman_rvel"][:10000, 0], label="Roll Estimate", color="purple", linestyle = "dashed",linewidth = 2);  
-    ang_vel_nc.plot(kalman_dict["time"][:10000], kalman_dict["kalman_rvel"][:10000, 1], label="Pitch Estimate", color="lime", linestyle = "dashed",linewidth = 2);    
-    ang_vel_nc.plot(kalman_dict["time"][:10000], kalman_dict["kalman_rvel"][:10000, 2], label="Yaw Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);
+    # ang_vel_nc.plot(kalman_dict["time"][:10000], kalman_dict["kalman_rvel"][:10000, 0], label="Roll Estimate", color="purple", linestyle = "dashed",linewidth = 2);  
+    # ang_vel_nc.plot(kalman_dict["time"][:10000], kalman_dict["kalman_rvel"][:10000, 1], label="Pitch Estimate", color="lime", linestyle = "dashed",linewidth = 2);    
+    # ang_vel_nc.plot(kalman_dict["time"][:10000], kalman_dict["kalman_rvel"][:10000, 2], label="Yaw Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);
+
+    ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:, 0],label="Roll",color="tab:red", linewidth = 2); 
+    ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:, 1],label="Pitch",color="tab:green", linewidth = 2);  
+    ang_vel_nc.plot(sim_dict["time"], sim_dict["ang_vel"][:, 2],label="Yaw",color="tab:blue", linewidth = 2);
+
+    ang_vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_rvel"][:, 0], label="Roll Estimate", color="purple", linestyle = "dashed",linewidth = 2);  
+    ang_vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_rvel"][:, 1], label="Pitch Estimate", color="lime", linestyle = "dashed",linewidth = 2);    
+    ang_vel_nc.plot(kalman_dict["time"], kalman_dict["kalman_rvel"][:, 2], label="Yaw Estimate", color="skyblue", linestyle = "dashed",linewidth = 2);
     
     ang_vel_nc.set_ylabel("Velocity (rad/s)", fontsize = 10);  
     ang_vel_nc.legend(fontsize=10, loc='upper left',ncol=2)
