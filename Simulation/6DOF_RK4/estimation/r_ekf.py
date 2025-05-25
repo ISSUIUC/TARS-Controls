@@ -97,9 +97,9 @@ class KalmanFilter_R:
         w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
 
         A = np.pi * r**2
-        x_aero = 0.5 * rho * vel_mag * Cx_aero * A * h 
-        y_aero = 0.5 * rho * vel_mag * Cy_aero * A * h 
-        z_aero = 0.5 * rho * vel_mag * Cz_aero * A * h 
+        x_aero = 0.5 * rho * vel_mag**2 * Cx_aero * A 
+        y_aero = 0.5 * rho * vel_mag**2 * Cy_aero * A 
+        z_aero = 0.5 * rho * vel_mag**2 * Cz_aero * A 
 
         Mt = np.cross(momentVector, thrust)  
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
