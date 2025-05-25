@@ -3,6 +3,16 @@ from filterpy.common import Q_continuous_white_noise
 import numpy as np
 import util.vectors as vct
 
+"""
+Things to double-check/fix
+- Make sure the initialized matricies are done accordingly, like R, H, F, Q, and so on
+- Double check velocity estimates, not sure if they are too high or too low
+- Figure out how to correctly implement aerodynamic moments
+- tweak update step, not sure if trig functions are used correctly
+
+The real values for angles only show a change in pitch, ignoring roll spiking at the very end.
+the estimates are real close, but not colinear and a little too high
+"""
 class KalmanFilter_R:
     """Kalman Filter for 3D rotational estimation
 
@@ -43,7 +53,6 @@ class KalmanFilter_R:
                              yaw, w_z, a_z]]).T
 
         for i in range(3):
-            # why is F initialized here? didnt see this in the onb-errorekfraa branch for ekf.py
             self.F[3*i:3*i+3, 3*i:3*i+3] = [[1.0, dt, (dt**2) / 2],
                                             [0.0, 1.0, dt],
                                             [0.0, 0.0, 1.0]]
@@ -72,6 +81,7 @@ class KalmanFilter_R:
         J_y = 1/3 * m * h**2 + 1/4 * m * r**2
         J_z = J_y
 
+        # using this for accelerometer data to get velocity estimates for aerodynamic forces
         grav = -9.81
         g = np.array([grav, 0, 0])
         gBody = vct.world_to_body(*bno_attitude, g)
@@ -83,24 +93,33 @@ class KalmanFilter_R:
         momentVector =  cP - cm
         leverarm = momentVector[0]
 
+        # this is for calculating velocities
         accBody = np.array([x_accel,y_accel,z_accel])
         aBody = accBody + gBody
         self.vel += aBody * self.dt
         vel_mag = np.linalg.norm(self.vel)
-        print("accBody: ", accBody)
-        print("aBody: ", aBody)
-        print("self.vel: ", self.vel)
-        print("vel_mag: ", vel_mag)
-
 
         self.x_k = self.x_k.flatten()
         w_x, w_y, w_z = self.x_k[1].item(), self.x_k[4].item(), self.x_k[7].item()
 
+        # using the formula on the state-space website, not sure if i should multiply by height of rocket or just lever arm
+        # this currently just has force, but I need moment
         A = np.pi * r**2
         x_aero = 0.5 * rho * vel_mag**2 * Cx_aero * A 
-        y_aero = 0.5 * rho * vel_mag**2 * Cy_aero * A 
+        y_aero = 0.5 * rho * vel_mag**2 * Cy_aero * A * leverarm
         z_aero = 0.5 * rho * vel_mag**2 * Cz_aero * A 
 
+        # x_Force = 0.5 * rho * vel_mag**2 * Cx_aero * A 
+        # y_Force = 0.5 * rho * vel_mag**2 * Cz_aero * A 
+        # z_Force = 0.5 * rho * vel_mag**2 * Cy_aero * A 
+
+        # aero_force = np.array([x_Force, y_Force, z_Force])
+        # aeroMom = np.cross(momentVector, aero_force)
+        # x_aero, y_aero, z_aero = aeroMom 
+
+
+
+        # this should be fine
         Mt = np.cross(momentVector, thrust)  
         Mtx = Mt[0]; Mty = Mt[1]; Mtz = Mt[2]
             
@@ -135,6 +154,7 @@ class KalmanFilter_R:
     def update(self, vel_x,  vel_y,  vel_z, x_accel, y_accel, z_accel, bno_roll, bno_pitch, bno_yaw):
         K = (self.P_priori @ self.H.T) @ np.linalg.inv(self.H @ self.P_priori @ self.H.T + self.R)
 
+        # these formulas lowkey sus, wanted to see if I could use ang pos data to estimate angles, not sure if i did it right
         body_rot_rate = np.array([vel_x,vel_y,vel_z])
         world_rot_rate = vct.body_to_world(self.x_k[0], self.x_k[3], self.x_k[6], body_rot_rate)
         yaw = np.arctan2(y_accel,x_accel)
